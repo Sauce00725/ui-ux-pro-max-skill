@@ -19,6 +19,9 @@ export interface DiscoveryCard {
   sharedActivities: string[]
   otherActivities: string[]
   photos: string[]
+  goals: string[]
+  sharedGoals: string[]
+  helpsBeginners: boolean
 }
 
 export interface ChatMessage {

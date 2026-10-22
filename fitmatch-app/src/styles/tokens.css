@@ -33,6 +33,7 @@
   --color-primary-hover: #7cf1ff;
   --color-on-primary: #001218;
   --color-secondary: #7b61ff;     /* interference violet */
+  --color-secondary-fg: #b3a5ff;  /* violet text on dark (≥4.5:1; raw secondary is ~4.2:1) */
   --color-accent: #ff3df2;        /* quantum magenta */
   --color-on-accent: #1a0018;
   --color-like: #22e6ff;

@@ -9,7 +9,7 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], v
 
 export const metadata: Metadata = {
   title: 'FitMatch',
-  description: 'Dating, gym buddies and local fitness events for people who move.',
+  description: 'Dating, gym buddies and local fitness events for active people and anyone getting in shape.',
 }
 
 export const viewport: Viewport = {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { BadgeCheck, ChevronUp, Clock, Dumbbell, MapPin, Sparkles } from 'lucide-react'
-import { FITNESS_LEVELS, TRAINING_TIME_LABELS } from '@/lib/validation'
+import { BadgeCheck, ChevronUp, Clock, Dumbbell, HeartHandshake, MapPin, Sparkles, Sprout, Target } from 'lucide-react'
+import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, TRAINING_TIME_LABELS } from '@/lib/validation'
 import type { AppMode, DiscoveryCard } from '@/lib/types'
 
 const MAX_CHIPS = 4
@@ -39,6 +39,8 @@ export function ProfileCard({
     ...card.otherActivities.map((name) => ({ name, shared: false })),
   ]
   const level = card.fitnessLevel ? FITNESS_LEVELS[card.fitnessLevel - 1] : null
+  const startingOut = card.fitnessLevel !== null && card.fitnessLevel <= BEGINNER_MAX_LEVEL
+  const goalLabel = (g: string) => GOAL_LABELS[g as keyof typeof GOAL_LABELS] ?? g
   const times = card.trainingTimes
     .map((t) => TRAINING_TIME_LABELS[t as keyof typeof TRAINING_TIME_LABELS] ?? t)
     .join(' · ')
@@ -135,8 +137,40 @@ export function ProfileCard({
             </button>
           </div>
 
+          {(card.helpsBeginners || startingOut) && (
+            <div className="flex flex-wrap gap-(--space-chip-gap)">
+              {card.helpsBeginners && (
+                <span className="chip border-accent/60 text-accent">
+                  <HeartHandshake className="size-3.5" aria-hidden /> Beginner-friendly
+                </span>
+              )}
+              {startingOut && (
+                <span className="chip border-secondary/60 text-secondary-fg">
+                  <Sprout className="size-3.5" aria-hidden /> Starting out
+                </span>
+              )}
+            </div>
+          )}
+
           {card.headline && (
             <p className="border-l border-primary/60 pl-3 text-[1.0625rem] leading-snug text-fg/90">{card.headline}</p>
+          )}
+
+          {card.goals.length > 0 && (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <Target className="size-4 shrink-0 text-primary" aria-hidden />
+              <span className="sr-only">Goals: </span>
+              {card.goals.map((g, i) => {
+                const shared = card.sharedGoals.includes(g)
+                return (
+                  <span key={g} className={shared ? 'font-semibold text-primary' : 'text-fg/85'}>
+                    {goalLabel(g)}
+                    {shared && <span className="sr-only"> (your goal too)</span>}
+                    {i < card.goals.length - 1 && <span className="ml-2 text-muted-fg" aria-hidden>·</span>}
+                  </span>
+                )
+              })}
+            </p>
           )}
 
           {chips.length > 0 && (

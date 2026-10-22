@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import type { AppMode, DiscoveryCard } from '@/lib/types'
+import { GOAL_LABELS } from '@/lib/validation'
 
 export function MatchDialog({
   mode,
@@ -42,7 +43,9 @@ export function MatchDialog({
       </h2>
       <p className="mt-2 text-muted-fg">
         You and {card.name} {mode === 'dating' ? 'liked each other.' : 'both want to train together.'}
-        {card.sharedActivities[0] && ` You both do ${card.sharedActivities[0].toLowerCase()}.`}
+        {card.sharedGoals[0]
+          ? ` You’re both working to ${GOAL_LABELS[card.sharedGoals[0] as keyof typeof GOAL_LABELS]?.toLowerCase() ?? 'reach your goals'}.`
+          : card.sharedActivities[0] && ` You both do ${card.sharedActivities[0].toLowerCase()}.`}
       </p>
       <div className="mt-7 flex flex-col gap-3">
         <Link href={`/matches/${matchId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-primary font-semibold text-on-primary transition-colors duration-200 hover:bg-primary-hover">

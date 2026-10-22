@@ -28,6 +28,29 @@ export const TRAINING_TIME_LABELS: Record<(typeof TRAINING_TIMES)[number], strin
 
 export const FITNESS_LEVELS = ['Just starting', 'Casual', 'Regular', 'Dedicated', 'Competitive'] as const
 
+/** Level 1–2 counts as "starting out" for beginner ↔ helper matching (mirrors 0003 SQL). */
+export const BEGINNER_MAX_LEVEL = 2
+
+export const GOALS = [
+  'get_in_shape',
+  'lose_weight',
+  'build_strength',
+  'build_endurance',
+  'train_for_event',
+  'stay_consistent',
+  'feel_better',
+] as const
+export const GOAL_LABELS: Record<(typeof GOALS)[number], string> = {
+  get_in_shape: 'Get in shape',
+  lose_weight: 'Lose weight',
+  build_strength: 'Build strength',
+  build_endurance: 'Build endurance',
+  train_for_event: 'Train for an event',
+  stay_consistent: 'Stay consistent',
+  feel_better: 'Feel better',
+}
+export const MAX_GOALS = 3
+
 export const US_STATES = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA',
   'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM',
@@ -93,6 +116,8 @@ export const fitnessSchema = z.object({
   activityIds: z.array(z.number().int().positive()).min(1, 'Pick at least one activity').max(8, 'Pick up to 8'),
   fitnessLevel: z.number({ invalid_type_error: 'Choose your level' }).int().min(1).max(5),
   trainingTimes: z.array(z.enum(TRAINING_TIMES)).max(TRAINING_TIMES.length),
+  goals: z.array(z.enum(GOALS)).max(MAX_GOALS, `Pick up to ${MAX_GOALS}`),
+  helpsBeginners: z.boolean(),
 })
 
 const modePrefsSchema = z

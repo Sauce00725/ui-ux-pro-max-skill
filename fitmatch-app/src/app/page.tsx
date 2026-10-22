@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 
 const FEATURES = [
   { icon: Heart, title: 'Dating', body: 'Match with people who share your training, schedule and goals.' },
-  { icon: Users, title: 'Gym Buddies', body: 'Find a spotter, a running partner or a pickleball fourth. Friends only.' },
+  { icon: Users, title: 'Gym Buddies', body: 'Find a spotter, a running partner, or someone patient to start with. Friends only.' },
   { icon: CalendarDays, title: 'Events', body: 'Run clubs, CrossFit, open play: what’s happening near you.' },
 ]
 
@@ -29,7 +29,9 @@ export default async function Home() {
       <h1 className="mt-3 font-display text-5xl font-black uppercase leading-[0.95] [text-shadow:0_0_30px_rgb(34_230_255/0.35)]">
         Meet people <span className="text-primary">who move.</span>
       </h1>
-      <p className="mt-4 text-lg text-muted-fg">Dates, training partners and local events, for active people.</p>
+      <p className="mt-4 text-lg text-muted-fg">
+        Dates, training partners and local events, whether you’re already active or just getting started.
+      </p>
 
       <ul className="mt-10 space-y-3">
         {FEATURES.map(({ icon: Icon, title, body }) => (

@@ -17,6 +17,10 @@ import {
   GENDER_LABELS,
   TRAINING_TIMES,
   TRAINING_TIME_LABELS,
+  BEGINNER_MAX_LEVEL,
+  GOALS,
+  GOAL_LABELS,
+  MAX_GOALS,
   US_STATES,
   type ModePrefs,
 } from '@/lib/validation'
@@ -24,6 +28,7 @@ import { completeOnboarding } from './actions'
 
 type Gender = (typeof GENDERS)[number]
 type TrainingTime = (typeof TRAINING_TIMES)[number]
+type Goal = (typeof GOALS)[number]
 
 interface Values {
   displayName: string
@@ -37,6 +42,8 @@ interface Values {
   activityIds: number[]
   fitnessLevel: number | null
   trainingTimes: TrainingTime[]
+  goals: Goal[]
+  helpsBeginners: boolean
   modes: { buddy: ModePrefs; dating: ModePrefs }
   photos: UploadedPhoto[]
 }
@@ -52,14 +59,19 @@ const defaultMode = (enabled: boolean): ModePrefs => ({
 
 const STEPS = [
   { title: 'The basics', subtitle: 'Only your first name, age and city are public.', schema: basicsSchema, keys: ['displayName', 'birthdate', 'gender', 'bio', 'city', 'state', 'lat', 'lng'] },
-  { title: 'How you move', subtitle: 'We match you on shared activities and schedules.', schema: fitnessSchema, keys: ['activityIds', 'fitnessLevel', 'trainingTimes'] },
+  { title: 'How you move', subtitle: 'Already training or just getting started, we match you on activities, goals and schedules.', schema: fitnessSchema, keys: ['activityIds', 'fitnessLevel', 'trainingTimes', 'goals', 'helpsBeginners'] },
   { title: 'What you’re here for', subtitle: 'Dating and Gym Buddies are separate. Nobody sees a mode you haven’t turned on.', schema: modesSchema, keys: ['modes'] },
   { title: 'Add photos', subtitle: 'Clear, recent photos get far more matches. Training shots welcome.', schema: photosSchema, keys: ['photoPaths'] },
 ] as const
 
 const PLURAL_GENDER_LABELS: Record<Gender, string> = { woman: 'Women', man: 'Men', nonbinary: 'Nonbinary people' }
 
-const toPayload = ({ photos, ...rest }: Values) => ({ ...rest, photoPaths: photos.map((p) => p.path) })
+const toPayload = ({ photos, ...rest }: Values) => ({
+  ...rest,
+  // Only offered at level 3+; don't keep a stale opt-in if the level changed.
+  helpsBeginners: rest.helpsBeginners && (rest.fitnessLevel ?? 0) > BEGINNER_MAX_LEVEL,
+  photoPaths: photos.map((p) => p.path),
+})
 
 const stepForError = (key: string) =>
   Math.max(0, STEPS.findIndex((s) => s.keys.some((k) => key === k || key.startsWith(`${k}.`))))
@@ -89,6 +101,8 @@ export function OnboardingForm({
     activityIds: [],
     fitnessLevel: null,
     trainingTimes: [],
+    goals: [],
+    helpsBeginners: false,
     modes: { buddy: defaultMode(true), dating: defaultMode(false) },
     photos: [],
   })
@@ -129,6 +143,7 @@ export function OnboardingForm({
   }
 
   const current = STEPS[step]
+  const isBeginner = values.fitnessLevel !== null && values.fitnessLevel <= BEGINNER_MAX_LEVEL
 
   return (
     <main className="mx-auto w-full max-w-lg px-4 pb-32 pt-6">
@@ -220,20 +235,8 @@ export function OnboardingForm({
         {step === 1 && (
           <>
             <fieldset>
-              <legend className="mb-3 text-sm font-medium text-muted-fg">Activities (up to 8)</legend>
-              <div className="flex flex-wrap gap-2">
-                {activities.map((a) => (
-                  <Chip key={a.id} selected={values.activityIds.includes(a.id)}
-                    onClick={() => set('activityIds', toggle(values.activityIds, a.id))}>
-                    {a.name}
-                  </Chip>
-                ))}
-              </div>
-              {errors.activityIds && <p role="alert" className="mt-2 text-sm text-danger">{errors.activityIds}</p>}
-            </fieldset>
-
-            <fieldset>
-              <legend className="mb-3 text-sm font-medium text-muted-fg">Fitness level</legend>
+              <legend className="mb-1 text-sm font-medium text-muted-fg">Where are you starting from?</legend>
+              <p className="mb-3 text-sm text-muted-fg/80">Every level is welcome, including day one.</p>
               <div className="grid grid-cols-5 gap-2">
                 {FITNESS_LEVELS.map((label, i) => (
                   <button key={label} type="button" aria-pressed={values.fitnessLevel === i + 1}
@@ -251,7 +254,43 @@ export function OnboardingForm({
             </fieldset>
 
             <fieldset>
-              <legend className="mb-3 text-sm font-medium text-muted-fg">When do you usually train?</legend>
+              <legend className="mb-3 text-sm font-medium text-muted-fg">What are you working toward? (up to {MAX_GOALS})</legend>
+              <div className="flex flex-wrap gap-2">
+                {GOALS.map((g) => (
+                  <Chip key={g} selected={values.goals.includes(g)}
+                    onClick={() => {
+                      if (!values.goals.includes(g) && values.goals.length >= MAX_GOALS) return
+                      set('goals', toggle(values.goals, g))
+                    }}>
+                    {GOAL_LABELS[g]}
+                  </Chip>
+                ))}
+              </div>
+              {errors.goals && <p role="alert" className="mt-2 text-sm text-danger">{errors.goals}</p>}
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-1 text-sm font-medium text-muted-fg">Activities you do, or want to try (up to 8)</legend>
+              {isBeginner && (
+                <p className="mb-3 text-sm text-muted-fg/80">
+                  New to this? Walking, home workouts and learning the gym are great places to start.
+                </p>
+              )}
+              <div className={cn('flex flex-wrap gap-2', !isBeginner && 'mt-3')}>
+                {activities.map((a) => (
+                  <Chip key={a.id} selected={values.activityIds.includes(a.id)}
+                    onClick={() => set('activityIds', toggle(values.activityIds, a.id))}>
+                    {a.name}
+                  </Chip>
+                ))}
+              </div>
+              {errors.activityIds && <p role="alert" className="mt-2 text-sm text-danger">{errors.activityIds}</p>}
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-3 text-sm font-medium text-muted-fg">
+                {isBeginner ? 'When could you fit in a workout?' : 'When do you usually train?'}
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {TRAINING_TIMES.map((t) => (
                   <Chip key={t} selected={values.trainingTimes.includes(t)}
@@ -261,6 +300,23 @@ export function OnboardingForm({
                 ))}
               </div>
             </fieldset>
+
+            {values.fitnessLevel !== null && !isBeginner && (
+              <label className="flex cursor-pointer items-start gap-4 rounded-2xl border bg-surface p-4">
+                <input
+                  type="checkbox"
+                  checked={values.helpsBeginners}
+                  onChange={(e) => set('helpsBeginners', e.target.checked)}
+                  className="mt-1 size-5 shrink-0 accent-primary"
+                />
+                <span>
+                  <span className="block font-semibold">Happy to train with beginners</span>
+                  <span className="block text-sm text-muted-fg">
+                    People just getting in shape will see you first. You set the pace, no coaching required.
+                  </span>
+                </span>
+              </label>
+            )}
           </>
         )}
 

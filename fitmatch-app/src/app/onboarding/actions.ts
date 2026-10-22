@@ -45,6 +45,8 @@ export async function completeOnboarding(input: unknown): Promise<ActionResult> 
     state: v.state,
     fitness_level: v.fitnessLevel,
     training_times: v.trainingTimes,
+    goals: v.goals,
+    helps_beginners: v.helpsBeginners,
   }
   const { data: existing } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()
   const { error: profileError } = existing

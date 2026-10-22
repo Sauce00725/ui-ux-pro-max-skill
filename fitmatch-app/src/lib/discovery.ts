@@ -17,6 +17,9 @@ interface DiscoveryRow {
   shared_activities: string[]
   other_activities: string[]
   photo_paths: string[]
+  goals: string[]
+  shared_goals: string[]
+  helps_beginners: boolean
 }
 
 const PHOTOS_PER_CARD = 4
@@ -24,7 +27,8 @@ const PHOTOS_PER_CARD = 4
 /**
  * Feed for the signed-in user. All filtering and ranking happens in the
  * `get_discovery` Postgres function (mutual age/distance/gender prefs, already
- * swiped, blocked, passed-on-me, approved photo), so this only signs photo URLs.
+ * swiped, blocked, passed-on-me, approved photo; ranking by shared activities
+ * and goals, beginner ↔ helper fit), so this only signs photo URLs.
  */
 export async function getDiscoveryFeed(supabase: SupabaseClient, mode: AppMode, limit = 20): Promise<DiscoveryCard[]> {
   const { data, error } = await supabase.rpc('get_discovery', { p_mode: mode, p_limit: limit })
@@ -51,6 +55,9 @@ export async function getDiscoveryFeed(supabase: SupabaseClient, mode: AppMode, 
       .slice(0, PHOTOS_PER_CARD)
       .map((p) => urls.get(p))
       .filter((u): u is string => !!u),
+    goals: r.goals,
+    sharedGoals: r.shared_goals,
+    helpsBeginners: r.helps_beginners,
   }))
 }
 
