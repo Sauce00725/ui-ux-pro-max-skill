@@ -11,7 +11,7 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], v
 export const metadata: Metadata = {
   title: { default: 'Gym Buddy', template: '%s · Gym Buddy' },
   applicationName: 'Gym Buddy',
-  description: 'Your pace. Your people. Dating, training partners and local fitness events for every body and every level.',
+  description: 'Spot the one. Dating, training partners and local fitness events for every body and every level.',
 }
 
 export const viewport: Viewport = {

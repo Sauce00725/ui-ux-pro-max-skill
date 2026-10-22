@@ -24,7 +24,8 @@ color palette) and these ui-ux-pro-max database matches:
 
 ## Voice
 
-- **Slogan:** "Your pace. Your people." Eyebrow on the landing page: "Every body welcome".
+- **Slogan:** "Spot the one." Dates, a spotter, a running partner, an event: the one is whatever
+  you came for. Eyebrow on the landing page: "Every body welcome".
 - **Write for every body and every level.** Never assume someone is already fit, able-bodied,
   a certain size, age or gender. Movement words are fine for actions ("train", "run"), never as a
   condition for belonging; "Meet people who move" was retired for that reason.

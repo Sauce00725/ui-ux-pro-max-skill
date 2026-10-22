@@ -1,6 +1,6 @@
 # Gym Buddy
 
-Your pace. Your people. Dating, Training Partners and local fitness events for every body and every level.
+Spot the one. Dating, Training Partners and local fitness events for every body and every level.
 Next.js 15 (App Router) + Supabase (Postgres/PostGIS, Auth, Storage, Realtime) + Tailwind v4.
 Visual direction: "Volt": graphite and electric lime, condensed italic type, speed lines (see `design-system/gym-buddy/MASTER.md`).
 

@@ -862,7 +862,7 @@
 
   /* ─── Landing hero ───────────────────────────────────────────────────── */
 
-  /* With text-hero (container units), the longer hero line ("Your people.") spans the column at this stretch. */
+  /* With text-hero (container units), the longer hero line ("the one.") spans the column at this stretch. */
   .hero-title {
     font-stretch: 68%;
     animation: var(--animate-stretch-in);

@@ -54,7 +54,7 @@
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   /* Hierarchy: hero → display → title → body → eyebrow */
-  --text-hero: clamp(3.25rem, 24cqi, 6rem); /* cqi: sized to its column (the hero sits in a size container) */
+  --text-hero: clamp(3.75rem, 32cqi, 8rem); /* cqi: sized to its column (the hero sits in a size container) */
   --text-hero--line-height: 0.86;
   --text-hero--letter-spacing: -0.02em;
   --text-display: clamp(2.25rem, 1.9rem + 1.8vw, 2.875rem);
