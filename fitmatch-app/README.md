@@ -2,6 +2,7 @@
 
 Dating, Gym Buddies and local fitness events for active people.
 Next.js 15 (App Router) + Supabase (Postgres/PostGIS, Auth, Storage, Realtime) + Tailwind v4.
+Visual direction: holographic HUD (see `design-system/fitmatch/MASTER.md`).
 
 ## Setup
 
@@ -36,6 +37,7 @@ other, turn on the same mode, and like each other.
 | Slow-dating quota (10 swipes / 6 h per mode) | `supabase/migrations/0002_swipe_quota.sql` |
 | Daily Selection deck | `src/components/deck/` (see below) |
 | Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
+| Design system rationale | `design-system/fitmatch/MASTER.md` |
 | Chat (real-time) | `src/components/chat/useChat.ts`, `src/components/chat/ChatWindow.tsx` |
 | Block / report / unmatch | `src/app/(app)/matches/actions.ts` |
 | Session refresh + route protection | `src/middleware.ts`, `src/lib/supabase/` |

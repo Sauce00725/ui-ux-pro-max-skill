@@ -39,6 +39,8 @@
   }
   /* Glows fill the viewport behind the stage, so there's no hard edge where the stage box ends. */
   .deck-orbs {
+    --grid-floor-offset: 4rem; /* sits above the bottom nav */
+    --grid-floor-height: 34%;
     position: fixed;
     inset: 0;
     z-index: -1;
@@ -161,9 +163,10 @@
     border: 2px solid currentColor;
     border-radius: var(--radius-chip);
     font-family: var(--font-display);
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-shadow: var(--hud-glow) currentColor;
     text-transform: uppercase;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -222,12 +225,15 @@
     align-items: center;
     gap: calc(var(--step) * 1.5);
     min-height: calc(var(--step) * 7);
-    padding-inline: calc(var(--step) * 3);
-    border-radius: 9999px;
-    border: 1px solid var(--glass-stroke);
+    padding-inline: calc(var(--step) * 2.5);
+    border-radius: var(--radius-chip);
+    border: var(--hud-line) solid var(--glass-stroke);
     background: var(--glass-fill);
-    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--color-fg);
   }
   .chip--shared {
@@ -310,7 +316,7 @@
   .ctl--pass {
     --ctl-glow: var(--color-pass);
     --ctl-drive: var(--pass-strength);
-    color: #ff9db5;
+    color: #ff8fa3;
   }
   .ctl--pass:not(:disabled):hover,
   [data-dragging] .ctl--pass {
@@ -321,23 +327,49 @@
     --ctl-size: calc(var(--step) * 20);
     --ctl-glow: var(--color-like);
     --ctl-drive: var(--like-strength);
-    border-color: rgb(255 255 255 / 0.32);
-    background: linear-gradient(150deg, #ffad5c 0%, #ff7a1a 55%, #e5560a 100%);
+    border-color: rgb(200 250 255 / 0.55);
+    background:
+      radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.45), transparent 55%),
+      linear-gradient(155deg, var(--color-primary) 0%, #3fb0ff 50%, var(--color-secondary) 100%);
     color: var(--color-on-primary);
+  }
+  /* Orbiting ring: a second hairline circle that tightens with energy. */
+  .ctl--like::after {
+    content: '';
+    position: absolute;
+    inset: calc(-6px - var(--ctl-energy) * 3px);
+    border-radius: 9999px;
+    border: var(--hud-line) solid color-mix(in oklab, var(--color-primary) calc(35% + var(--ctl-energy) * 50%), transparent);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    transform: rotate(calc(var(--ctl-energy) * 90deg));
+    transition: inset var(--dur-hover) var(--ease-soft), transform var(--dur-snap) var(--ease-out-back), border-color var(--dur-hover);
+    pointer-events: none;
+  }
+  .ctl--pass::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 9999px;
+    border: var(--hud-line) dashed color-mix(in oklab, var(--color-pass) calc(20% + var(--ctl-energy) * 60%), transparent);
+    transition: border-color var(--dur-hover);
+    pointer-events: none;
   }
   @media (hover: hover) {
     .ctl--like:hover:not(:disabled) {
-      background: linear-gradient(150deg, #ffbb73 0%, #ff8a2e 55%, #f0620f 100%);
+      background:
+        radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.6), transparent 55%),
+        linear-gradient(155deg, var(--color-primary-hover) 0%, #5cc0ff 50%, #9580ff 100%);
     }
   }
 
   /* ─── Quota meter ────────────────────────────────────────────────────── */
 
   .quota-pip {
-    width: calc(var(--step) * 1.5);
+    width: calc(var(--step) * 1.25);
     height: calc(var(--step) * 4);
-    border-radius: 9999px;
-    background: rgb(255 255 255 / 0.14);
+    border-radius: 1px;
+    background: rgb(140 220 255 / 0.14);
     transition:
       background-color var(--dur-stack) var(--ease-soft),
       box-shadow var(--dur-stack) var(--ease-soft),
@@ -346,6 +378,128 @@
   .quota-pip[data-filled] {
     background: var(--color-primary);
     box-shadow: 0 0 10px -1px color-mix(in oklab, var(--color-primary) 80%, transparent);
+  }
+
+
+  /* ─── HUD layer ──────────────────────────────────────────────────────── */
+
+  /* Mono readout label: the HUD's "data" voice. Never used for body copy. */
+  .hud-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-eyebrow);
+    line-height: var(--text-eyebrow--line-height);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-muted-fg);
+  }
+
+  /*
+   * Glowing corner brackets on any positioned element. One pseudo-element,
+   * eight gradients (two arms per corner). Tint with --hud-color.
+   */
+  .hud-frame::after {
+    --c: var(--hud-color, var(--color-primary));
+    --arm: var(--hud-bracket);
+    --w: 1.5px;
+    content: '';
+    position: absolute;
+    inset: var(--hud-inset, 0);
+    pointer-events: none;
+    background:
+      linear-gradient(var(--c), var(--c)) top left / var(--arm) var(--w) no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / var(--w) var(--arm) no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / var(--arm) var(--w) no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / var(--w) var(--arm) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / var(--arm) var(--w) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--arm) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / var(--arm) var(--w) no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--arm) no-repeat;
+    filter: drop-shadow(var(--hud-glow) var(--c));
+    opacity: 0.85;
+  }
+
+  /* The top card locks on: brackets tint toward the intended action. */
+  .deck-card[data-top] {
+    --hud-inset: calc(var(--step) * 2.5);
+    --hud-color: color-mix(
+      in oklab,
+      color-mix(in oklab, var(--color-primary) calc(100% - var(--pass-strength) * 100%), var(--color-pass)),
+      white calc(var(--like-strength) * 25%)
+    );
+  }
+  .deck-card:not([data-top]).hud-frame::after {
+    opacity: 0;
+  }
+
+  /* One-time scan sweep when a card arrives on top (the per-view "key" motion). */
+  .deck-scan {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 9%;
+    background: linear-gradient(to bottom, transparent, rgb(34 230 255 / 0.22) 70%, rgb(200 250 255 / 0.7) 98%, transparent);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .deck-card[data-top] .deck-scan {
+    animation: var(--animate-scan);
+  }
+
+  /* Photo scanlines: static, very faint, sells the "display" feel. */
+  .hud-scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 3px);
+    mix-blend-mode: overlay;
+  }
+
+  /* Perspective grid floor under the deck: the one ambient loop. */
+  .deck-grid {
+    position: absolute;
+    inset: auto -50% var(--grid-floor-offset) -50%;
+    height: var(--grid-floor-height);
+    background:
+      linear-gradient(to bottom, rgb(34 230 255 / 0.38) 1px, transparent 1px) 0 0 / 100% var(--grid-size),
+      linear-gradient(to right, rgb(123 97 255 / 0.34) 1px, transparent 1px) 0 0 / var(--grid-size) 100%;
+    transform: perspective(420px) rotateX(62deg);
+    transform-origin: 50% 100%;
+    mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, black 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, black 20%, transparent 75%);
+    animation: var(--animate-grid-flow);
+  }
+
+  /* Horizon line where the grid meets the void. */
+  .deck-horizon {
+    position: absolute;
+    inset: auto 0 calc(var(--grid-floor-offset) + var(--grid-floor-height) * 0.47) 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgb(34 230 255 / 0.5), transparent);
+    box-shadow: 0 0 24px 2px rgb(34 230 255 / 0.25);
+  }
+
+  /* Readouts get out of the way of the intent stamps while handling. */
+  .deck-readout {
+    opacity: calc(1 - var(--swipe-amount) * 1.5);
+    transition: opacity var(--dur-hover) var(--ease-soft);
+  }
+  [data-dragging] .deck-readout {
+    transition: none;
+  }
+
+  /* Segmented meter (e.g. shared-activity overlap). */
+  .hud-meter {
+    display: flex;
+    gap: 3px;
+  }
+  .hud-meter > span {
+    width: 10px;
+    height: 4px;
+    background: rgb(140 220 255 / 0.16);
+  }
+  .hud-meter > span[data-on] {
+    background: var(--color-primary);
+    box-shadow: 0 0 6px var(--color-primary);
   }
 
   /* ─── Kbd hint ───────────────────────────────────────────────────────── */
@@ -359,13 +513,15 @@
     border-radius: calc(var(--step) * 1.5);
     border: 1px solid var(--glass-stroke-strong);
     background: var(--glass-fill);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-muted-fg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .deck-orb {
+  .deck-grid,
+  .deck-scan {
     animation: none !important;
   }
   /* No rotation or travel: cards cross-fade instead (see useSwipeGesture). */

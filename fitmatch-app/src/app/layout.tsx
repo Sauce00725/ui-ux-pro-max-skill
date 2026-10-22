@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow, Barlow_Condensed } from 'next/font/google'
+import { Exo_2, JetBrains_Mono, Orbitron } from 'next/font/google'
 import './globals.css'
 
-const barlow = Barlow({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-barlow' })
-const barlowCondensed = Barlow_Condensed({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-barlow-condensed',
-})
+// Orbitron for display, Exo 2 for reading, JetBrains Mono for HUD readouts.
+const orbitron = Orbitron({ subsets: ['latin'], weight: ['500', '700', '900'], variable: '--font-orbitron' })
+const exo = Exo_2({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-exo' })
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-jetbrains' })
 
 export const metadata: Metadata = {
   title: 'FitMatch',
@@ -18,12 +16,12 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#111827',
+  themeColor: '#050510',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${barlow.variable} ${barlowCondensed.variable}`}>
+    <html lang="en" className={`${orbitron.variable} ${exo.variable} ${jetbrains.variable}`}>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   )

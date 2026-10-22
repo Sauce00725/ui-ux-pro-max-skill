@@ -15,7 +15,7 @@ export function QuotaMeter({ quota }: { quota: SwipeQuota }) {
           <span key={i} className="quota-pip" data-filled={i < quota.remaining || undefined} />
         ))}
       </div>
-      <span className="text-sm font-semibold tabular-nums" aria-hidden>
+      <span className="font-mono text-sm tabular-nums" aria-hidden>
         {quota.remaining}
         <span className="font-normal text-muted-fg">/{quota.limit}</span>
       </span>

@@ -26,17 +26,17 @@ export function MatchDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby="match-title"
-      className="glass-strong isolate m-auto w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-card p-8 text-center text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm"
+      className="glass-strong hud-frame isolate m-auto w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-card p-8 text-center text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       style={{ '--like-strength': 1 } as React.CSSProperties}
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="deck-orb deck-orb--ember animate-drift" />
+        <div className="deck-orb deck-orb--ember" />
       </div>
       {card.photos[0] && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={card.photos[0]} alt="" className="mx-auto size-28 rounded-full object-cover ring-2 ring-primary ring-offset-4 ring-offset-transparent" />
+        <img src={card.photos[0]} alt="" className="mx-auto size-28 rounded-full object-cover ring-1 ring-primary ring-offset-4 ring-offset-transparent shadow-[0_0_32px_rgb(34_230_255/0.5)]" />
       )}
-      <p className="mt-6 text-eyebrow font-semibold uppercase text-primary">{mode === 'dating' ? 'Mutual like' : 'Mutual'}</p>
+      <p className="hud-label mt-6 text-primary">{mode === 'dating' ? '// Signal returned' : '// Link established'}</p>
       <h2 id="match-title" className="font-display text-display font-bold uppercase">
         {mode === 'dating' ? 'It’s a match' : 'New gym buddy'}
       </h2>

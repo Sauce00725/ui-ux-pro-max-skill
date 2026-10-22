@@ -37,3 +37,10 @@ export function formatRemaining(ms: number) {
   if (totalMin > 1) return `${m}m`
   return `${Math.ceil(ms / 1000)}s`
 }
+
+/** HUD clock: T-04:12:08 */
+export function formatClock(ms: number) {
+  const total = Math.ceil(ms / 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `T-${pad(Math.floor(total / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`
+}

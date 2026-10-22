@@ -5,7 +5,7 @@ import { CalendarDays, Hourglass, MessageCircle, RefreshCw, Users } from 'lucide
 import { Button } from '@/components/ui/Button'
 import type { AppMode } from '@/lib/types'
 import type { DeckView } from './deckState'
-import { formatRemaining, useCountdown } from './useCountdown'
+import { formatClock, formatRemaining, useCountdown } from './useCountdown'
 
 type EmptyView = Exclude<DeckView, { kind: 'deck' }>
 
@@ -47,16 +47,16 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
       icon={
         <div className="relative grid size-32 place-items-center">
           <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
-            <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(255 255 255 / 0.1)" strokeWidth="6" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(140 220 255 / 0.12)" strokeWidth="2" strokeDasharray="2 4" />
             <circle
-              cx="60" cy="60" r={R} fill="none" stroke="var(--color-primary)" strokeWidth="6" strokeLinecap="round"
+              cx="60" cy="60" r={R} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="butt"
               strokeDasharray={C} strokeDashoffset={C * (1 - elapsed)}
               style={{ transition: 'stroke-dashoffset 1s linear', filter: 'drop-shadow(0 0 6px var(--color-primary))' }}
             />
           </svg>
           <div className="text-center">
             <Hourglass className="mx-auto size-5 text-primary" aria-hidden />
-            <p className="mt-1 font-display text-2xl font-bold tabular-nums">{ms === null ? '—' : formatRemaining(ms)}</p>
+            <p className="mt-1 font-mono text-sm tabular-nums text-fg [text-shadow:0_0_12px_rgb(34_230_255/0.6)]">{ms === null ? '—' : formatClock(ms)}</p>
           </div>
         </div>
       }
@@ -76,9 +76,10 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
 
 function Panel({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section className="glass absolute inset-0 bottom-[calc(var(--space-stack)*2)] flex flex-col items-center justify-center rounded-card p-(--space-card) text-center">
+    <section className="glass hud-frame absolute inset-0 bottom-[calc(var(--space-stack)*2)] flex flex-col items-center justify-center rounded-card p-(--space-card) text-center">
       <div className="text-primary">{icon}</div>
       <h2 className="mt-5 font-display text-title font-bold uppercase">{title}</h2>
+      <p className="hud-label mt-1 text-primary" aria-hidden>// standby</p>
       <div className="mt-2 max-w-xs text-muted-fg">{children}</div>
     </section>
   )

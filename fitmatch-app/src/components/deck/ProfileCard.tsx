@@ -46,7 +46,7 @@ export function ProfileCard({
   return (
     <article
       ref={ref}
-      className="deck-card"
+      className="deck-card hud-frame"
       data-top={isTop || undefined}
       style={{ '--depth': depth } as React.CSSProperties}
       inert={!isTop}
@@ -65,6 +65,13 @@ export function ProfileCard({
         />
       )}
       <div className="deck-scrim" />
+      <div className="hud-scanlines" />
+      <div className="deck-scan" />
+
+      {/* Range readout */}
+      <p className="deck-readout hud-label glass absolute left-(--space-card) top-[calc(var(--space-card)+14px)] rounded-chip px-2 py-1 text-fg shadow-none">
+        <span className="text-primary" aria-hidden>◢</span> {String(card.distanceMi).padStart(2, '0')} mi
+      </p>
 
       {/* Photo segments + tap zones (taps stay clicks: the gesture only captures after 6px) */}
       {card.photos.length > 1 && (
@@ -100,20 +107,21 @@ export function ProfileCard({
       {/* Info panel */}
       <div className="absolute inset-x-0 bottom-0 p-(--space-panel-gap)">
         <div className="glass-strong space-y-(--space-panel-gap) rounded-panel p-(--space-card)">
-          <p className="flex items-center gap-1.5 text-eyebrow font-semibold uppercase text-muted-fg">
-            <MapPin className="size-3.5" aria-hidden />
-            {card.distanceMi} mi away{card.city ? ` · ${card.city}` : ''}
+          <p className="hud-label flex items-center gap-1.5">
+            <MapPin className="size-3.5 text-primary" aria-hidden />
+            {card.city ?? 'Nearby'}
+            {card.state ? `, ${card.state}` : ''}
             {card.isVerified && (
-              <span className="ml-auto flex items-center gap-1 text-accent">
+              <span className="ml-auto flex items-center gap-1 text-primary">
                 <BadgeCheck className="size-3.5" aria-hidden /> Verified
               </span>
             )}
           </p>
 
           <div className="flex items-end justify-between gap-3">
-            <h2 className="font-display text-display font-bold text-fg">
+            <h2 className="min-w-0 truncate font-display text-display font-bold uppercase text-fg">
               {card.name}
-              <span className="ml-2 font-sans text-title font-light text-muted-fg">{card.age}</span>
+              <span className="ml-2 font-mono text-title font-normal text-primary">{card.age}</span>
             </h2>
             <button
               type="button"
@@ -127,7 +135,22 @@ export function ProfileCard({
             </button>
           </div>
 
-          {card.headline && <p className="text-[1.0625rem] leading-snug text-fg/90">{card.headline}</p>}
+          {card.headline && (
+            <p className="border-l border-primary/60 pl-3 text-[1.0625rem] leading-snug text-fg/90">{card.headline}</p>
+          )}
+
+          {chips.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="hud-label">Shared</span>
+              <span className="hud-meter" aria-hidden>
+                {chips.map(({ name, shared }) => <span key={name} data-on={shared || undefined} />)}
+              </span>
+              <span className="hud-label text-fg">
+                {card.sharedActivities.length}/{chips.length}
+                <span className="sr-only"> activities in common</span>
+              </span>
+            </div>
+          )}
 
           {chips.length > 0 && (
             <ul className="flex flex-wrap gap-(--space-chip-gap)" aria-label="Activities">

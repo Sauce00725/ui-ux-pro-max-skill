@@ -13,67 +13,72 @@
  */
 
 @theme {
-  /* Surfaces: near-black with a cool blue cast so glass and glows read deeper */
-  --color-bg: #06080d;
-  --color-surface: #0d121b;
-  --color-card: #151b26;
-  --color-muted: #222a37;
-  --color-border: #2a3341;
+  /*
+   * "Quantum Interface" palette (ui-ux-pro-max color DB) applied in the
+   * HUD / Sci-Fi FUI style: near-void background, holographic cyan as the
+   * brand + positive signal, violet secondary, magenta accent, alert red.
+   */
+  --color-bg: #050510;
+  --color-surface: #0a0b1c;
+  --color-card: #10122a;
+  --color-muted: #1b1e3d;
+  --color-border: #262a52;
 
   /* Text */
-  --color-fg: #f5f7fb;
-  --color-muted-fg: #a9b3c4;
+  --color-fg: #eef3ff;
+  --color-muted-fg: #9ba6c9;
 
   /* Brand + intent */
-  --color-primary: #ff7a1a;
-  --color-primary-hover: #ff9442;
-  --color-on-primary: #1a0b01;
-  --color-accent: #2dd4a7;
-  --color-on-accent: #04140f;
-  --color-like: #ff8a3d;
-  --color-pass: #f43f6b;
-  --color-danger: #ef4444;
+  --color-primary: #22e6ff;       /* holographic cyan (softened from #00FFFF for long viewing) */
+  --color-primary-hover: #7cf1ff;
+  --color-on-primary: #001218;
+  --color-secondary: #7b61ff;     /* interference violet */
+  --color-accent: #ff3df2;        /* quantum magenta */
+  --color-on-accent: #1a0018;
+  --color-like: #22e6ff;
+  --color-pass: #ff4d6d;          /* HUD alert red */
+  --color-danger: #ff4d6d;
 
-  /* Ambient glow hues (radial shapes under the glass) */
-  --color-glow-ember: #ff6a1a;
-  --color-glow-rose: #e11d74;
-  --color-glow-tide: #0ea5a4;
+  /* Ambient glow hues */
+  --color-glow-ember: #22e6ff;    /* reacts to like */
+  --color-glow-rose: #ff3df2;     /* reacts to pass */
+  --color-glow-tide: #7b61ff;
 
-  /* Type: condensed display for names/headlines, humanist sans for reading */
-  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-barlow-condensed), var(--font-barlow), ui-sans-serif, sans-serif;
+  /* Type: Orbitron display · Exo 2 reading · JetBrains Mono HUD readouts */
+  --font-sans: var(--font-exo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-orbitron), var(--font-exo), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  /* Typographic hierarchy: display → title → body → eyebrow */
-  --text-display: clamp(2.25rem, 1.85rem + 2vw, 3rem);
-  --text-display--line-height: 0.92;
-  --text-display--letter-spacing: -0.01em;
-  --text-title: 1.625rem;
-  --text-title--line-height: 1.05;
+  /* Hierarchy: display → title → body → eyebrow (Orbitron runs wide, so sizes sit lower) */
+  --text-display: clamp(1.75rem, 1.45rem + 1.6vw, 2.375rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: 0.02em;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: 0.04em;
   --text-eyebrow: 0.6875rem;
   --text-eyebrow--line-height: 1rem;
-  --text-eyebrow--letter-spacing: 0.16em;
+  --text-eyebrow--letter-spacing: 0.2em;
 
-  /* Shape */
-  --radius-card: 1.75rem;
-  --radius-panel: 1.25rem;
-  --radius-chip: 0.875rem;
+  /* Shape: tighter radii read as machined rather than soft */
+  --radius-card: 1rem;
+  --radius-panel: 0.75rem;
+  --radius-chip: 0.25rem;
 
-  /* Easing: soft for UI, expo for throws, back for organic snap-back */
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
 
-  --animate-drift: drift 22s ease-in-out infinite alternate;
-  --animate-breathe: breathe 6s ease-in-out infinite;
+  --animate-grid-flow: grid-flow 9s linear infinite;
+  --animate-scan: scan 1.5s var(--ease-soft) 1 both;
 
-  @keyframes drift {
-    0% { transform: translate3d(0, 0, 0) scale(1); }
-    50% { transform: translate3d(6%, -4%, 0) scale(1.08); }
-    100% { transform: translate3d(-5%, 5%, 0) scale(0.96); }
+  @keyframes grid-flow {
+    to { background-position: 0 var(--grid-size), 0 0; }
   }
-  @keyframes breathe {
-    0%, 100% { opacity: 0.55; }
-    50% { opacity: 0.8; }
+  @keyframes scan {
+    0% { transform: translateY(-10%); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(1100%); opacity: 0; }
   }
 }
 
@@ -88,15 +93,15 @@
   --space-controls: calc(var(--step) * 6);      /* 24px between control buttons */
 
   /* ── Glass recipes ────────────────────────────────────────────────────── */
-  --glass-fill: rgb(255 255 255 / 0.055);
-  --glass-fill-hover: rgb(255 255 255 / 0.09);
-  --glass-fill-strong: rgb(10 14 22 / 0.58);
-  --glass-stroke: rgb(255 255 255 / 0.12);
-  --glass-stroke-strong: rgb(255 255 255 / 0.22);
+  --glass-fill: rgb(120 200 255 / 0.05);
+  --glass-fill-hover: rgb(120 200 255 / 0.1);
+  --glass-fill-strong: rgb(6 8 24 / 0.62);
+  --glass-stroke: rgb(140 220 255 / 0.16);
+  --glass-stroke-strong: rgb(140 220 255 / 0.3);
   --glass-blur: 18px;
   --glass-blur-deep: 36px;
   --glass-saturate: 165%;
-  --glass-sheen: inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  --glass-sheen: inset 0 1px 0 0 rgb(180 240 255 / 0.14);
   --shadow-float: 0 30px 60px -24px rgb(0 0 0 / 0.75);
 
   /* ── Motion (fling/snap are overridden from TS so JS + CSS share one value) */
@@ -105,6 +110,12 @@
   --dur-stack: 420ms;
   --dur-snap: 560ms;
   --dur-fling: 380ms;
+
+  /* ── HUD details ─────────────────────────────────────────────────────── */
+  --hud-line: 1px;
+  --hud-bracket: calc(var(--step) * 4);           /* 16px corner bracket arm */
+  --hud-glow: 0 0 6px;
+  --grid-size: 44px;
 
   /* ── Deck geometry ────────────────────────────────────────────────────── */
   --stack-scale-step: 0.05;

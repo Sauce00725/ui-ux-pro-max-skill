@@ -19,25 +19,26 @@ export default async function Home() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-10">
       <div className="inline-flex items-center gap-2 font-display text-2xl font-bold uppercase tracking-wide">
-        <span className="grid size-10 place-items-center rounded-xl bg-primary text-on-primary">
+        <span className="grid size-10 place-items-center rounded-chip bg-primary text-on-primary shadow-[0_0_20px_rgb(34_230_255/0.5)]">
           <Dumbbell className="size-5" aria-hidden />
         </span>
         FitMatch
       </div>
 
-      <h1 className="mt-16 font-display text-6xl font-bold uppercase leading-[0.9]">
+      <p className="hud-label mt-16 text-primary">// v2.0 · active-lifestyle network</p>
+      <h1 className="mt-3 font-display text-5xl font-black uppercase leading-[0.95] [text-shadow:0_0_30px_rgb(34_230_255/0.35)]">
         Meet people <span className="text-primary">who move.</span>
       </h1>
       <p className="mt-4 text-lg text-muted-fg">Dates, training partners and local events, for active people.</p>
 
       <ul className="mt-10 space-y-3">
         {FEATURES.map(({ icon: Icon, title, body }) => (
-          <li key={title} className="flex gap-4 rounded-2xl bg-surface p-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+          <li key={title} className="glass hud-frame relative flex gap-4 rounded-panel p-4 shadow-none [--hud-bracket:10px]">
+            <span className="grid size-11 shrink-0 place-items-center rounded-chip border border-primary/40 bg-primary/10 text-primary">
               <Icon className="size-5" aria-hidden />
             </span>
             <div>
-              <h2 className="font-display text-xl font-bold uppercase">{title}</h2>
+              <h2 className="font-display text-base font-bold uppercase tracking-wider">{title}</h2>
               <p className="text-sm text-muted-fg">{body}</p>
             </div>
           </li>
