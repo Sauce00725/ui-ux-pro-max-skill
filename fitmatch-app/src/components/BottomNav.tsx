@@ -20,7 +20,7 @@ export function BottomNav() {
   if (/^\/matches\/.+/.test(pathname)) return null
 
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav aria-label="Main" className="glass-strong fixed inset-x-0 bottom-0 z-40 rounded-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] shadow-none">
       <ul className="mx-auto grid h-16 max-w-md grid-cols-4">
         {TABS.map(({ href, label, icon: Icon, isActive }) => {
           const active = isActive(pathname, mode)

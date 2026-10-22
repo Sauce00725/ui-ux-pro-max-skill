@@ -1,0 +1,121 @@
+/*
+ * Design tokens, in two layers:
+ *
+ * 1. @theme: primitives Tailwind turns into utilities (bg-primary, rounded-card,
+ *    ease-out-expo, text-display, …). Anything a component might use as a
+ *    class lives here.
+ * 2. :root: semantic + runtime tokens that are only consumed by component CSS
+ *    (glass recipes, motion durations, live swipe signals). No utilities generated.
+ *
+ * Spacing has ONE source: Tailwind's --spacing step (0.25rem). Every semantic
+ * spacing token below is a multiple of it, so `p-5` in markup and
+ * `--space-card` in CSS can never drift apart.
+ */
+
+@theme {
+  /* Surfaces: near-black with a cool blue cast so glass and glows read deeper */
+  --color-bg: #06080d;
+  --color-surface: #0d121b;
+  --color-card: #151b26;
+  --color-muted: #222a37;
+  --color-border: #2a3341;
+
+  /* Text */
+  --color-fg: #f5f7fb;
+  --color-muted-fg: #a9b3c4;
+
+  /* Brand + intent */
+  --color-primary: #ff7a1a;
+  --color-primary-hover: #ff9442;
+  --color-on-primary: #1a0b01;
+  --color-accent: #2dd4a7;
+  --color-on-accent: #04140f;
+  --color-like: #ff8a3d;
+  --color-pass: #f43f6b;
+  --color-danger: #ef4444;
+
+  /* Ambient glow hues (radial shapes under the glass) */
+  --color-glow-ember: #ff6a1a;
+  --color-glow-rose: #e11d74;
+  --color-glow-tide: #0ea5a4;
+
+  /* Type: condensed display for names/headlines, humanist sans for reading */
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), ui-sans-serif, sans-serif;
+
+  /* Typographic hierarchy: display → title → body → eyebrow */
+  --text-display: clamp(2.25rem, 1.85rem + 2vw, 3rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.01em;
+  --text-title: 1.625rem;
+  --text-title--line-height: 1.05;
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow--letter-spacing: 0.16em;
+
+  /* Shape */
+  --radius-card: 1.75rem;
+  --radius-panel: 1.25rem;
+  --radius-chip: 0.875rem;
+
+  /* Easing: soft for UI, expo for throws, back for organic snap-back */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --animate-drift: drift 22s ease-in-out infinite alternate;
+  --animate-breathe: breathe 6s ease-in-out infinite;
+
+  @keyframes drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+    100% { transform: translate3d(-5%, 5%, 0) scale(0.96); }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.8; }
+  }
+}
+
+:root {
+  /* ── Spacing (all multiples of the Tailwind step) ─────────────────────── */
+  --step: var(--spacing, 0.25rem);
+  --space-gutter: calc(var(--step) * 4);        /* 16px page edge */
+  --space-card: calc(var(--step) * 5);          /* 20px card inner padding */
+  --space-panel-gap: calc(var(--step) * 3);     /* 12px between panel rows */
+  --space-chip-gap: calc(var(--step) * 2);      /* 8px between chips */
+  --space-stack: calc(var(--step) * 3);         /* 12px per card behind the top */
+  --space-controls: calc(var(--step) * 6);      /* 24px between control buttons */
+
+  /* ── Glass recipes ────────────────────────────────────────────────────── */
+  --glass-fill: rgb(255 255 255 / 0.055);
+  --glass-fill-hover: rgb(255 255 255 / 0.09);
+  --glass-fill-strong: rgb(10 14 22 / 0.58);
+  --glass-stroke: rgb(255 255 255 / 0.12);
+  --glass-stroke-strong: rgb(255 255 255 / 0.22);
+  --glass-blur: 18px;
+  --glass-blur-deep: 36px;
+  --glass-saturate: 165%;
+  --glass-sheen: inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  --shadow-float: 0 30px 60px -24px rgb(0 0 0 / 0.75);
+
+  /* ── Motion (fling/snap are overridden from TS so JS + CSS share one value) */
+  --dur-press: 110ms;
+  --dur-hover: 240ms;
+  --dur-stack: 420ms;
+  --dur-snap: 560ms;
+  --dur-fling: 380ms;
+
+  /* ── Deck geometry ────────────────────────────────────────────────────── */
+  --stack-scale-step: 0.05;
+  --stack-depth-fade: 0.55;
+
+  /*
+   * ── Live swipe signals ─────────────────────────────────────────────────
+   * Written by useSwipeGesture on the deck stage element every frame, read by
+   * anything inside it (stamps, stacked cards, buttons, glows). Unitless 0–1.
+   */
+  --swipe-amount: 0;
+  --like-strength: 0;
+  --pass-strength: 0;
+}

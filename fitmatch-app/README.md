@@ -6,8 +6,9 @@ Next.js 15 (App Router) + Supabase (Postgres/PostGIS, Auth, Storage, Realtime) +
 ## Setup
 
 1. **Create a Supabase project** at supabase.com.
-2. **Apply the schema.** Either paste `supabase/migrations/0001_init.sql` into the SQL editor,
-   or with the Supabase CLI: `supabase link --project-ref <ref> && supabase db push`.
+2. **Apply the schema.** Either paste the files in `supabase/migrations/` into the SQL editor
+   in order (`0001_init.sql`, then `0002_swipe_quota.sql`), or with the Supabase CLI:
+   `supabase link --project-ref <ref> && supabase db push`.
 3. **Auth settings** (Authentication → URL Configuration): set Site URL to `http://localhost:3000`
    and add `http://localhost:3000/auth/callback` to Redirect URLs.
 4. **Env vars:** `cp .env.example .env.local` and fill in the URL and anon/publishable key.
@@ -32,9 +33,29 @@ other, turn on the same mode, and like each other.
 | Onboarding (4 steps + photo upload) | `src/app/onboarding/`, `src/components/PhotoUploader.tsx` |
 | Validation (shared client + server) | `src/lib/validation.ts` |
 | Discovery feed + swipe | `src/lib/discovery.ts`, `src/app/(app)/discover/` |
+| Slow-dating quota (10 swipes / 6 h per mode) | `supabase/migrations/0002_swipe_quota.sql` |
+| Daily Selection deck | `src/components/deck/` (see below) |
+| Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
 | Chat (real-time) | `src/components/chat/useChat.ts`, `src/components/chat/ChatWindow.tsx` |
 | Block / report / unmatch | `src/app/(app)/matches/actions.ts` |
 | Session refresh + route protection | `src/middleware.ts`, `src/lib/supabase/` |
+
+## Daily Selection deck
+
+Two state layers that never mix:
+
+- **Domain** (`deckState.ts`, `useDailyDeck.ts`): cards, quota, match. A pure reducer;
+  `selectDeckView()` is the only place that decides *deck / loading / quota-exhausted /
+  pool-exhausted*.
+- **Visual** (`useSwipeGesture.ts`): pointer physics written straight to CSS variables
+  (`--drag-x/y/rot` on the card; `--swipe-amount`, `--like-strength`, `--pass-strength` on the
+  stage). No React re-render during a drag. Stamps, stacked cards, glows and buttons all read
+  the same inherited variables.
+
+They meet at two callbacks: `onCommit` (released, start the server call) and `onExited`
+(card has left the screen). `DailyDeck.tsx` wires them; every other file is presentational.
+`useDailyDeck` takes an optional `api` prop, so the deck runs against mocks in tests or a
+Storybook.
 
 ## Not built yet
 

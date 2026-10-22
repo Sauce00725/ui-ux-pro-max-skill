@@ -1,49 +1,55 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getDiscoveryFeed } from '@/lib/discovery'
+import { getSelection, getSwipeQuota } from '@/lib/discovery'
 import { swipeSchema } from '@/lib/validation'
-import type { ActionResult, AppMode, DiscoveryCard } from '@/lib/types'
+import type { ActionResult, AppMode, Selection, SwipeResult } from '@/lib/types'
 
-export async function swipe(input: unknown): Promise<ActionResult<{ matchId: string | null }>> {
+export async function swipe(input: unknown): Promise<SwipeResult> {
   const parsed = swipeSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, message: 'Invalid swipe.' }
+  if (!parsed.success) return { ok: false, reason: 'error', message: 'Invalid swipe.' }
   const { targetId, mode, action } = parsed.data
 
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return { ok: false, message: 'Your session expired. Log in again.' }
+  if (!user) return { ok: false, reason: 'error', message: 'Your session expired. Log in again.' }
 
-  // The on_swipe trigger creates the match if this like is mutual.
+  // BEFORE trigger enforces the quota; AFTER trigger creates the match if mutual.
   const { error } = await supabase
     .from('swipes')
     .insert({ swiper_id: user.id, swiped_id: targetId, mode, action })
 
+  if (error?.message.includes('swipe_limit_reached')) {
+    return {
+      ok: false,
+      reason: 'limit',
+      message: 'That’s your selection for now.',
+      quota: await getSwipeQuota(supabase, mode),
+    }
+  }
   // 23505 = already swiped (double tap / second tab): treat as success.
   if (error && error.code !== '23505') {
     console.error('[swipe]', error.message)
-    return { ok: false, message: 'Couldn’t save that. Try again.' }
+    return { ok: false, reason: 'error', message: 'Couldn’t save that. Try again.' }
   }
-  if (action === 'pass') return { ok: true, data: { matchId: null } }
 
   const [a, b] = [user.id, targetId].sort()
-  const { data: match } = await supabase
-    .from('matches')
-    .select('id')
-    .eq('user_a', a)
-    .eq('user_b', b)
-    .eq('mode', mode)
-    .maybeSingle()
+  const [quota, match] = await Promise.all([
+    getSwipeQuota(supabase, mode),
+    action === 'like'
+      ? supabase.from('matches').select('id').eq('user_a', a).eq('user_b', b).eq('mode', mode).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
-  return { ok: true, data: { matchId: match?.id ?? null } }
+  return { ok: true, matchId: match.data?.id ?? null, quota }
 }
 
-export async function loadMore(mode: AppMode): Promise<DiscoveryCard[]> {
+/** Fresh selection: used when a window refills or the user taps refresh. */
+export async function refreshSelection(mode: AppMode): Promise<Selection> {
   const supabase = await createClient()
-  // Already-swiped profiles are excluded server-side, so "more" is just a refetch.
-  return getDiscoveryFeed(supabase, mode === 'dating' ? 'dating' : 'buddy')
+  return getSelection(supabase, mode === 'dating' ? 'dating' : 'buddy')
 }
 
 export async function enableMode(mode: AppMode): Promise<ActionResult> {

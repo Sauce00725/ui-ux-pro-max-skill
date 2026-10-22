@@ -31,3 +31,20 @@ export interface ChatMessage {
   read_at: string | null
   status: 'sending' | 'sent' | 'failed'
 }
+
+/** Slow-dating allowance for one mode. `resetsAt` is null until the first swipe opens a window. */
+export interface SwipeQuota {
+  remaining: number
+  limit: number
+  windowSeconds: number
+  resetsAt: string | null
+}
+
+export type SwipeResult =
+  | { ok: true; matchId: string | null; quota: SwipeQuota }
+  | { ok: false; reason: 'limit' | 'error'; message: string; quota?: SwipeQuota }
+
+export interface Selection {
+  cards: DiscoveryCard[]
+  quota: SwipeQuota
+}

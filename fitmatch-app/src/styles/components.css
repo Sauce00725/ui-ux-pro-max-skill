@@ -1,0 +1,375 @@
+/*
+ * Component styling rules. Layout (flex/grid/gaps) stays in Tailwind classes
+ * in the markup; anything stateful, layered or driven by live CSS variables
+ * lives here, so visual behavior is defined in one place per component.
+ */
+
+/* ─── Glass primitives (utilities, so variants like md:glass work) ───────── */
+
+@utility glass {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-sheen), var(--shadow-float);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+@utility glass-strong {
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-stroke-strong);
+  box-shadow: var(--glass-sheen), var(--shadow-float);
+  backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
+}
+
+/* No backdrop-filter support → fall back to an opaque panel so text stays legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-strong {
+    background: rgb(13 18 27 / 0.94);
+  }
+}
+
+@layer components {
+  /* ─── Deck stage: ambient glows that react to the swipe ──────────────── */
+
+  .deck-stage {
+    position: relative;
+    isolation: isolate;
+  }
+  /* Glows fill the viewport behind the stage, so there's no hard edge where the stage box ends. */
+  .deck-orbs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .deck-orb {
+    position: absolute;
+    z-index: -1;
+    border-radius: 9999px;
+    pointer-events: none;
+    filter: blur(70px);
+    will-change: transform, opacity;
+    transition: opacity var(--dur-hover) var(--ease-soft);
+  }
+  .deck-orb--ember {
+    inset: 18% -22% auto auto;
+    width: 70%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 40% 40%, var(--color-glow-ember), transparent 68%);
+    opacity: calc(0.38 + var(--like-strength) * 0.45);
+  }
+  .deck-orb--rose {
+    inset: 8% auto auto -26%;
+    width: 64%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 60% 50%, var(--color-glow-rose), transparent 68%);
+    opacity: calc(0.28 + var(--pass-strength) * 0.5);
+  }
+  .deck-orb--tide {
+    inset: auto 10% -6% 10%;
+    height: 40%;
+    background: radial-gradient(ellipse at 50% 60%, var(--color-glow-tide), transparent 70%);
+    opacity: 0.22;
+  }
+  [data-dragging] .deck-orb {
+    transition-duration: 0ms;
+  }
+
+  /* ─── Card stack ─────────────────────────────────────────────────────── */
+
+  .deck-card {
+    --depth: 0;
+    /* Cards behind the top "rise" toward depth 0 as the top card is dragged away. */
+    --depth-live: max(0, calc(var(--depth) - var(--swipe-amount)));
+
+    position: absolute;
+    inset: 0;
+    z-index: calc(10 - var(--depth));
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--glass-stroke-strong);
+    background: var(--color-card);
+    box-shadow: var(--glass-sheen), var(--shadow-float);
+    transform-origin: 50% 100%;
+    transform: translate3d(0, calc(var(--depth-live) * var(--space-stack)), 0)
+      scale(calc(1 - var(--depth-live) * var(--stack-scale-step)));
+    opacity: calc(1 - max(0, var(--depth-live) - 1) * var(--stack-depth-fade));
+    transition:
+      transform var(--dur-stack) var(--ease-soft),
+      opacity var(--dur-stack) var(--ease-soft);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* The top card follows the pointer instead of the stack formula. */
+  .deck-card[data-top] {
+    --drag-x: 0;
+    --drag-y: 0;
+    --drag-rot: 0;
+    touch-action: pan-y; /* let the page scroll vertically; we own horizontal */
+    cursor: grab;
+    transform-origin: var(--drag-origin, 50% 120%);
+    transform: translate3d(calc(var(--drag-x) * 1px), calc(var(--drag-y) * 1px), 0)
+      rotate(calc(var(--drag-rot) * 1deg));
+    /* Edge glow tints toward the intended action. */
+    box-shadow:
+      var(--glass-sheen),
+      var(--shadow-float),
+      0 0 calc(var(--like-strength) * 48px) calc(var(--like-strength) * 2px)
+        color-mix(in oklab, var(--color-like) calc(var(--like-strength) * 55%), transparent),
+      0 0 calc(var(--pass-strength) * 48px) calc(var(--pass-strength) * 2px)
+        color-mix(in oklab, var(--color-pass) calc(var(--pass-strength) * 55%), transparent);
+    /* Release without a commit: organic overshoot back to rest. */
+    transition:
+      transform var(--dur-snap) var(--ease-out-back),
+      box-shadow var(--dur-snap) var(--ease-soft),
+      opacity var(--dur-fling) var(--ease-soft);
+  }
+
+  [data-dragging] .deck-card {
+    transition: none;
+    cursor: grabbing;
+  }
+  .deck-card[data-flinging] {
+    transition:
+      transform var(--dur-fling) var(--ease-out-expo),
+      opacity var(--dur-fling) var(--ease-soft);
+    pointer-events: none;
+  }
+  .deck-card[data-fade] {
+    opacity: 0;
+  }
+
+  /* Photo scrim keeps glass text at ≥4.5:1 over any photo. */
+  .deck-scrim {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 62%;
+    background: linear-gradient(to top, rgb(4 6 10 / 0.92), rgb(4 6 10 / 0.5) 45%, transparent);
+    pointer-events: none;
+  }
+
+  /* LIKE / NOPE stamps fade + settle in with drag strength. */
+  .deck-stamp {
+    position: absolute;
+    top: calc(var(--step) * 12);
+    padding: calc(var(--step) * 1.5) calc(var(--step) * 3.5);
+    border: 2px solid currentColor;
+    border-radius: var(--radius-chip);
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+  .deck-stamp--like {
+    left: var(--space-card);
+    color: var(--color-like);
+    background: color-mix(in oklab, var(--color-like) 14%, transparent);
+    opacity: var(--like-strength);
+    transform: rotate(-14deg) scale(calc(0.82 + var(--like-strength) * 0.18));
+  }
+  .deck-stamp--pass {
+    right: var(--space-card);
+    color: var(--color-pass);
+    background: color-mix(in oklab, var(--color-pass) 14%, transparent);
+    opacity: var(--pass-strength);
+    transform: rotate(14deg) scale(calc(0.82 + var(--pass-strength) * 0.18));
+  }
+
+  /* Only the card being handled shows intent; cards behind inherit the same
+     stage signals but stay neutral. */
+  .deck-card:not([data-top]) .deck-stamp {
+    display: none;
+  }
+
+  /* Photo progress segments */
+  .deck-segment {
+    height: 3px;
+    flex: 1;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.28);
+    transition: background-color var(--dur-hover) var(--ease-soft);
+  }
+  .deck-segment[data-active] {
+    background: rgb(255 255 255 / 0.95);
+  }
+
+  /* Expandable details: animates height with the grid-rows trick. */
+  .deck-details {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-stack) var(--ease-soft);
+  }
+  .deck-details[data-open] {
+    grid-template-rows: 1fr;
+  }
+  .deck-details > * {
+    overflow: hidden;
+  }
+
+  /* ─── Chips ──────────────────────────────────────────────────────────── */
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--step) * 1.5);
+    min-height: calc(var(--step) * 7);
+    padding-inline: calc(var(--step) * 3);
+    border-radius: 9999px;
+    border: 1px solid var(--glass-stroke);
+    background: var(--glass-fill);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-fg);
+  }
+  .chip--shared {
+    border-color: color-mix(in oklab, var(--color-primary) 70%, transparent);
+    background: color-mix(in oklab, var(--color-primary) 18%, transparent);
+    box-shadow: 0 0 18px -6px var(--color-primary);
+  }
+
+  /* ─── Control buttons ────────────────────────────────────────────────── */
+  /*
+   * One "energy" value (0–1) drives lift, scale and glow, fed by whichever is
+   * stronger: hover, or the live drag strength toward this button's action.
+   * So dragging a card right makes the Like button glow before release, the
+   * same cue as hovering it.
+   */
+
+  .ctl {
+    --ctl-size: calc(var(--step) * 16);
+    --ctl-glow: var(--color-fg);
+    --ctl-hover: 0;
+    --ctl-press: 0;
+    --ctl-drive: 0;
+    --ctl-energy: max(var(--ctl-hover), var(--ctl-drive));
+
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: var(--ctl-size);
+    block-size: var(--ctl-size);
+    border-radius: 9999px;
+    border: 1px solid var(--glass-stroke-strong);
+    background: var(--glass-fill);
+    color: var(--color-fg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    transform: translateY(calc(var(--ctl-energy) * -3px))
+      scale(calc(1 + var(--ctl-energy) * 0.06 - var(--ctl-press) * 0.14));
+    box-shadow:
+      var(--glass-sheen),
+      0 0 0 calc(var(--ctl-energy) * 6px) color-mix(in oklab, var(--ctl-glow) calc(var(--ctl-energy) * 16%), transparent),
+      0 calc(10px + var(--ctl-energy) * 8px) calc(24px + var(--ctl-energy) * 30px) -8px
+        color-mix(in oklab, var(--ctl-glow) calc(20% + var(--ctl-energy) * 55%), transparent);
+    transition:
+      transform var(--dur-hover) var(--ease-out-back),
+      box-shadow var(--dur-hover) var(--ease-soft),
+      background-color var(--dur-hover) var(--ease-soft),
+      border-color var(--dur-hover) var(--ease-soft);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ctl svg {
+    transition: transform var(--dur-hover) var(--ease-out-back);
+  }
+
+  @media (hover: hover) {
+    .ctl:hover:not(:disabled) {
+      --ctl-hover: 1;
+      background: var(--glass-fill-hover);
+    }
+  }
+  .ctl:active:not(:disabled) {
+    --ctl-press: 1;
+    transition-duration: var(--dur-press);
+  }
+  .ctl:active:not(:disabled) svg {
+    transform: scale(0.88);
+  }
+  .ctl:focus-visible {
+    outline: 2px solid var(--color-fg);
+    outline-offset: 4px;
+  }
+  .ctl:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    box-shadow: var(--glass-sheen);
+  }
+  [data-dragging] .ctl {
+    transition-duration: 60ms;
+  }
+
+  .ctl--pass {
+    --ctl-glow: var(--color-pass);
+    --ctl-drive: var(--pass-strength);
+    color: #ff9db5;
+  }
+  .ctl--pass:not(:disabled):hover,
+  [data-dragging] .ctl--pass {
+    border-color: color-mix(in oklab, var(--color-pass) calc(30% + var(--ctl-energy) * 50%), transparent);
+  }
+
+  .ctl--like {
+    --ctl-size: calc(var(--step) * 20);
+    --ctl-glow: var(--color-like);
+    --ctl-drive: var(--like-strength);
+    border-color: rgb(255 255 255 / 0.32);
+    background: linear-gradient(150deg, #ffad5c 0%, #ff7a1a 55%, #e5560a 100%);
+    color: var(--color-on-primary);
+  }
+  @media (hover: hover) {
+    .ctl--like:hover:not(:disabled) {
+      background: linear-gradient(150deg, #ffbb73 0%, #ff8a2e 55%, #f0620f 100%);
+    }
+  }
+
+  /* ─── Quota meter ────────────────────────────────────────────────────── */
+
+  .quota-pip {
+    width: calc(var(--step) * 1.5);
+    height: calc(var(--step) * 4);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.14);
+    transition:
+      background-color var(--dur-stack) var(--ease-soft),
+      box-shadow var(--dur-stack) var(--ease-soft),
+      transform var(--dur-stack) var(--ease-out-back);
+  }
+  .quota-pip[data-filled] {
+    background: var(--color-primary);
+    box-shadow: 0 0 10px -1px color-mix(in oklab, var(--color-primary) 80%, transparent);
+  }
+
+  /* ─── Kbd hint ───────────────────────────────────────────────────────── */
+
+  .kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: calc(var(--step) * 6);
+    height: calc(var(--step) * 6);
+    padding-inline: calc(var(--step) * 1.5);
+    border-radius: calc(var(--step) * 1.5);
+    border: 1px solid var(--glass-stroke-strong);
+    background: var(--glass-fill);
+    font-size: 0.75rem;
+    color: var(--color-muted-fg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-orb {
+    animation: none !important;
+  }
+  /* No rotation or travel: cards cross-fade instead (see useSwipeGesture). */
+  .deck-card[data-top] {
+    --drag-rot: 0 !important;
+  }
+}

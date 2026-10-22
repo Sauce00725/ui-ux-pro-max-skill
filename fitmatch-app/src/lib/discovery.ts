@@ -1,6 +1,6 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AppMode, DiscoveryCard } from './types'
+import type { AppMode, DiscoveryCard, Selection, SwipeQuota } from './types'
 
 interface DiscoveryRow {
   user_id: string
@@ -63,4 +63,30 @@ export async function signPhotoUrls(supabase: SupabaseClient, paths: string[], e
     if (item.path && item.signedUrl) map.set(item.path, item.signedUrl)
   }
   return map
+}
+
+export async function getSwipeQuota(supabase: SupabaseClient, mode: AppMode): Promise<SwipeQuota> {
+  const { data, error } = await supabase.rpc('get_swipe_quota', { p_mode: mode }).single<{
+    remaining: number
+    swipe_limit: number
+    window_seconds: number
+    resets_at: string | null
+  }>()
+  if (error || !data) throw new Error(`get_swipe_quota failed: ${error?.message}`)
+  return {
+    remaining: data.remaining,
+    limit: data.swipe_limit,
+    windowSeconds: data.window_seconds,
+    resetsAt: data.resets_at,
+  }
+}
+
+/**
+ * The user's current Daily Selection: never more cards than swipes left in
+ * this window, so the deck *is* the allowance.
+ */
+export async function getSelection(supabase: SupabaseClient, mode: AppMode): Promise<Selection> {
+  const quota = await getSwipeQuota(supabase, mode)
+  const cards = quota.remaining > 0 ? await getDiscoveryFeed(supabase, mode, quota.remaining) : []
+  return { cards, quota }
 }
