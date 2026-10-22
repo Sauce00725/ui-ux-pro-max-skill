@@ -23,13 +23,13 @@ export default async function Home() {
     <main className="@container mx-auto flex min-h-dvh max-w-md flex-col overflow-hidden px-(--space-gutter) pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <Logo size="md" />
 
-      <p className="hud-label mt-14 text-primary">// Active-lifestyle network</p>
+      <p className="hud-label mt-14 text-primary">// Every body welcome</p>
       <h1 className="hero-title mt-3 font-display text-hero font-black uppercase">
-        <span className="block whitespace-nowrap">Meet people</span>
-        <span className="block whitespace-nowrap text-primary">who move.</span>
+        <span className="block whitespace-nowrap">Your pace.</span>
+        <span className="block whitespace-nowrap text-primary">Your people.</span>
       </h1>
       <p className="mt-5 text-lg text-muted-fg">
-        Dates, training partners and local events, whether you’re already active or just getting started.
+        Dates, training partners and local events for every level. Brand new or years in, you belong here.
       </p>
 
       {/* What's inside, as slanted panes, each a lane further over */}

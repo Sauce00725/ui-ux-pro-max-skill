@@ -5,7 +5,7 @@ Tokens live in `src/styles/tokens.css`; component rules in `src/styles/component
 
 ## Direction: "Volt" (v3)
 
-Built like race telemetry for people who move: graphite, an electric volt brand color, and type
+Built like race telemetry, at every pace: graphite, an electric volt brand color, and type
 that leans forward. Numbers read like a scoreboard; feedback arrives as speed lines and
 slammed-on tags. Chosen over two alternatives compared side by side on the same screens:
 "Spatial Holo" (v2: liquid glass, 3D-tilting holographic cards) and "Signal" (dot-matrix
@@ -21,6 +21,15 @@ color palette) and these ui-ux-pro-max database matches:
 | Palette | color DB: "Fitness/Gym App" (energy colors on dark) | Pushed to volt (brand, like), heat (pass) and ultraviolet (Super Like) on graphite |
 | Type | typography DB: "Sports/Fitness" pairing (Barlow Condensed + Barlow) | Informed the condensed athletic voice; Saira used instead for its width axis (names condense to fit) and italics |
 | Data type | JetBrains Mono (kept) | `.hud-label` readouts, counters, clocks. **Never body copy** |
+
+## Voice
+
+- **Slogan:** "Your pace. Your people." Eyebrow on the landing page: "Every body welcome".
+- **Write for every body and every level.** Never assume someone is already fit, able-bodied,
+  a certain size, age or gender. Movement words are fine for actions ("train", "run"), never as a
+  condition for belonging; "Meet people who move" was retired for that reason.
+- **Beginners are first-class:** "Brand new or years in, you belong here."
+- **Dating copy is gender-neutral:** dates, matches, partners.
 
 ## Color tokens
 
