@@ -8,7 +8,7 @@ Visual direction: holographic HUD (see `design-system/fitmatch/MASTER.md`).
 
 1. **Create a Supabase project** at supabase.com.
 2. **Apply the schema.** Either paste the files in `supabase/migrations/` into the SQL editor
-   in order (`0001_init.sql`, `0002_swipe_quota.sql`, `0003_goals_beginners.sql`), or with the Supabase CLI:
+   in order (`0001_init.sql` → `0004_superlikes_prompts_comments.sql`), or with the Supabase CLI:
    `supabase link --project-ref <ref> && supabase db push`.
 3. **Auth settings** (Authentication → URL Configuration): set Site URL to `http://localhost:3000`
    and add `http://localhost:3000/auth/callback` to Redirect URLs.
@@ -36,6 +36,9 @@ other, turn on the same mode, and like each other.
 | Discovery feed + swipe | `src/lib/discovery.ts`, `src/app/(app)/discover/` |
 | Slow-dating quota (10 swipes / 6 h per mode) | `supabase/migrations/0002_swipe_quota.sql` |
 | Goals, beginner ↔ helper matching, starter activities | `supabase/migrations/0003_goals_beginners.sql` |
+| Super Likes (1/day), prompts, like-a-photo/prompt with a comment | `supabase/migrations/0004_superlikes_prompts_comments.sql` |
+| Likes inbox (who liked you, before matching) | `src/app/(app)/likes/`, `src/components/likes/LikesInbox.tsx` |
+| Like composer (comment on a photo/prompt) | `src/components/deck/LikeComposer.tsx` |
 | Daily Selection deck | `src/components/deck/` (see below) |
 | Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
 | Design system rationale | `design-system/fitmatch/MASTER.md` |

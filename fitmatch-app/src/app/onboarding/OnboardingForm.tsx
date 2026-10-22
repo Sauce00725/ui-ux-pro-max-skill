@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ArrowLeft, Heart, LocateFixed, MapPin, Users } from 'lucide-react'
+import { ArrowLeft, Heart, LocateFixed, MapPin, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Chip, Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { PhotoUploader, type UploadedPhoto } from '@/components/PhotoUploader'
@@ -11,6 +11,12 @@ import {
   fitnessSchema,
   modesSchema,
   photosSchema,
+  promptsSchema,
+  MAX_PROMPTS,
+  PROMPTS,
+  PROMPT_ANSWER_MAX,
+  PROMPT_KEYS,
+  type PromptKey,
   toFieldErrors,
   FITNESS_LEVELS,
   GENDERS,
@@ -45,6 +51,7 @@ interface Values {
   goals: Goal[]
   helpsBeginners: boolean
   modes: { buddy: ModePrefs; dating: ModePrefs }
+  prompts: { key: PromptKey; answer: string }[]
   photos: UploadedPhoto[]
 }
 
@@ -61,6 +68,7 @@ const STEPS = [
   { title: 'The basics', subtitle: 'Only your first name, age and city are public.', schema: basicsSchema, keys: ['displayName', 'birthdate', 'gender', 'bio', 'city', 'state', 'lat', 'lng'] },
   { title: 'How you move', subtitle: 'Already training or just getting started, we match you on activities, goals and schedules.', schema: fitnessSchema, keys: ['activityIds', 'fitnessLevel', 'trainingTimes', 'goals', 'helpsBeginners'] },
   { title: 'What you’re here for', subtitle: 'Dating and Gym Buddies are separate. Nobody sees a mode you haven’t turned on.', schema: modesSchema, keys: ['modes'] },
+  { title: 'Add prompts', subtitle: 'Optional, but prompts give people something to like and an easy first message.', schema: promptsSchema, keys: ['prompts'] },
   { title: 'Add photos', subtitle: 'Clear, recent photos get far more matches. Training shots welcome.', schema: photosSchema, keys: ['photoPaths'] },
 ] as const
 
@@ -104,6 +112,7 @@ export function OnboardingForm({
     goals: [],
     helpsBeginners: false,
     modes: { buddy: defaultMode(true), dating: defaultMode(false) },
+    prompts: [],
     photos: [],
   })
 
@@ -345,6 +354,14 @@ export function OnboardingForm({
         )}
 
         {step === 3 && (
+          <PromptsEditor
+            prompts={values.prompts}
+            errors={errors}
+            onChange={(prompts) => set('prompts', prompts)}
+          />
+        )}
+
+        {step === 4 && (
           <PhotoUploader userId={userId} photos={values.photos} error={errors.photoPaths}
             onChange={(photos) => set('photos', photos)} />
         )}
@@ -513,5 +530,65 @@ function ModeCard({
         </div>
       )}
     </section>
+  )
+}
+
+function PromptsEditor({
+  prompts,
+  errors,
+  onChange,
+}: {
+  prompts: { key: PromptKey; answer: string }[]
+  errors: Record<string, string>
+  onChange: (prompts: { key: PromptKey; answer: string }[]) => void
+}) {
+  const used = new Set(prompts.map((p) => p.key))
+  const nextFree = PROMPT_KEYS.find((k) => !used.has(k))
+  const update = (i: number, patch: Partial<{ key: PromptKey; answer: string }>) =>
+    onChange(prompts.map((p, j) => (j === i ? { ...p, ...patch } : p)))
+
+  return (
+    <div className="space-y-4">
+      {prompts.map((p, i) => {
+        const err = errors[`prompts.${i}.answer`]
+        return (
+          <section key={i} className="space-y-3 rounded-2xl border bg-surface p-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor={`prompt-${i}`} className="sr-only">Prompt {i + 1}</label>
+              <Select id={`prompt-${i}`} value={p.key} onChange={(e) => update(i, { key: e.target.value as PromptKey })}>
+                {PROMPT_KEYS.map((k) => (
+                  <option key={k} value={k} disabled={k !== p.key && used.has(k)}>{PROMPTS[k]}</option>
+                ))}
+              </Select>
+              <button
+                type="button"
+                onClick={() => onChange(prompts.filter((_, j) => j !== i))}
+                aria-label={`Remove prompt ${i + 1}`}
+                className="grid size-11 shrink-0 place-items-center rounded-full text-muted-fg hover:bg-card hover:text-fg"
+              >
+                <X className="size-5" aria-hidden />
+              </button>
+            </div>
+            <Field id={`prompt-answer-${i}`} label="Your answer" error={err} hint={`${p.answer.length}/${PROMPT_ANSWER_MAX}`}>
+              <Textarea
+                id={`prompt-answer-${i}`}
+                maxLength={PROMPT_ANSWER_MAX}
+                value={p.answer}
+                error={err}
+                hint={`${p.answer.length}/${PROMPT_ANSWER_MAX}`}
+                onChange={(e) => update(i, { answer: e.target.value })}
+              />
+            </Field>
+          </section>
+        )
+      })}
+
+      {prompts.length < MAX_PROMPTS && nextFree && (
+        <Button type="button" variant="secondary" className="w-full" onClick={() => onChange([...prompts, { key: nextFree, answer: '' }])}>
+          + Add a prompt ({prompts.length}/{MAX_PROMPTS})
+        </Button>
+      )}
+      {errors.prompts && <p role="alert" className="text-sm text-danger">{errors.prompts}</p>}
+    </div>
   )
 }

@@ -2,13 +2,15 @@
 
 import { useCallback, useMemo, useReducer, useRef } from 'react'
 import { refreshSelection, swipe } from '@/app/(app)/discover/actions'
-import type { AppMode, DiscoveryCard, Selection, SwipeQuota, SwipeResult } from '@/lib/types'
+import type { AppMode, DiscoveryCard, LikeExtras, Selection, SuperQuota, SwipeQuota, SwipeResult } from '@/lib/types'
 import { deckReducer, initDeck, selectDeckView, type DeckAction, type SwipeDirection } from './deckState'
 
 type RejectAction = Extract<DeckAction, { type: 'rejected' }>
 
 export interface DeckApi {
-  swipe: (input: { targetId: string; mode: AppMode; action: SwipeDirection }) => Promise<SwipeResult>
+  swipe: (
+    input: { targetId: string; mode: AppMode; action: 'like' | 'pass'; super?: boolean } & LikeExtras,
+  ) => Promise<SwipeResult>
   refreshSelection: (mode: AppMode) => Promise<Selection>
 }
 
@@ -23,14 +25,18 @@ export function useDailyDeck({
   mode,
   initialCards,
   initialQuota,
+  initialSuperQuota,
   api = serverApi,
 }: {
   mode: AppMode
   initialCards: DiscoveryCard[]
   initialQuota: SwipeQuota
+  initialSuperQuota: SuperQuota
   api?: DeckApi
 }) {
-  const [state, dispatch] = useReducer(deckReducer, undefined, () => initDeck(initialCards, initialQuota))
+  const [state, dispatch] = useReducer(deckReducer, undefined, () =>
+    initDeck(initialCards, initialQuota, initialSuperQuota),
+  )
   const view = useMemo(() => selectDeckView(state), [state])
 
   // A rejection can come back while the card is still flying; hold it until it lands.
@@ -47,19 +53,30 @@ export function useDailyDeck({
   }, [])
 
   const commit = useCallback(
-    (card: DiscoveryCard, direction: SwipeDirection) => {
+    (card: DiscoveryCard, direction: SwipeDirection, extras: LikeExtras = {}) => {
       dispatch({ type: 'commit', card, direction })
       api
-        .swipe({ targetId: card.id, mode, action: direction })
+        .swipe({
+          targetId: card.id,
+          mode,
+          action: direction === 'pass' ? 'pass' : 'like',
+          super: direction === 'super',
+          ...(direction === 'pass' ? {} : extras),
+        })
         .then((res) => {
           if (res.ok) {
             exited.current.delete(card.id)
-            dispatch({ type: 'confirmed', quota: res.quota, match: res.matchId ? { card, matchId: res.matchId } : null })
+            dispatch({
+              type: 'confirmed',
+              quota: res.quota,
+              superQuota: res.superQuota,
+              match: res.matchId ? { card, matchId: res.matchId } : null,
+            })
           } else {
-            reject({ type: 'rejected', card, message: res.message, quota: res.quota })
+            reject({ type: 'rejected', card, direction, message: res.message, quota: res.quota, superQuota: res.superQuota })
           }
         })
-        .catch(() => reject({ type: 'rejected', card, message: 'Connection lost. Try again.' }))
+        .catch(() => reject({ type: 'rejected', card, direction, message: 'Connection lost. Try again.' }))
     },
     [api, mode, reject],
   )
@@ -79,7 +96,7 @@ export function useDailyDeck({
     dispatch({ type: 'refresh-start' })
     api
       .refreshSelection(mode)
-      .then(({ cards, quota }) => dispatch({ type: 'refresh-done', cards, quota }))
+      .then(({ cards, quota, superQuota }) => dispatch({ type: 'refresh-done', cards, quota, superQuota }))
       .catch(() => dispatch({ type: 'refresh-failed', message: 'Couldn’t load your selection.' }))
   }, [api, mode])
 

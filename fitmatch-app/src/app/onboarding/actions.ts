@@ -69,7 +69,17 @@ export async function completeOnboarding(input: unknown): Promise<ActionResult> 
   )
   if (photoError) return fail('photos', photoError)
 
-  // 4. Location (owner-only table)
+  // 4. Prompts (replace the set; optional)
+  const { error: delPromptsError } = await supabase.from('profile_prompts').delete().eq('user_id', user.id)
+  if (delPromptsError) return fail('prompts', delPromptsError)
+  if (v.prompts.length) {
+    const { error: promptError } = await supabase
+      .from('profile_prompts')
+      .insert(v.prompts.map((p, position) => ({ user_id: user.id, prompt_key: p.key, answer: p.answer, position })))
+    if (promptError) return fail('prompts', promptError)
+  }
+
+  // 5. Location (owner-only table)
   const { error: locError } = await supabase.from('user_locations').upsert({
     user_id: user.id,
     location: `SRID=4326;POINT(${fuzz(v.lng)} ${fuzz(v.lat)})`,
@@ -77,7 +87,7 @@ export async function completeOnboarding(input: unknown): Promise<ActionResult> 
   })
   if (locError) return fail('location', locError)
 
-  // 5. Modes, last
+  // 6. Modes, last
   const { error: modeError } = await supabase.from('profile_modes').upsert(
     (['buddy', 'dating'] as const).map((mode) => {
       const m = v.modes[mode]

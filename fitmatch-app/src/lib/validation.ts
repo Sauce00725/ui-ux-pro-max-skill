@@ -51,6 +51,23 @@ export const GOAL_LABELS: Record<(typeof GOALS)[number], string> = {
 }
 export const MAX_GOALS = 3
 
+/** Hinge-style prompts (keys mirror the CHECK in migration 0004). */
+export const PROMPTS = {
+  sunday_workout: 'My ideal Sunday workout',
+  gym_hot_take: 'My gym hot take',
+  post_workout: 'Best post-workout meal',
+  training_for: 'Right now I’m training for',
+  gets_me_moving: 'What gets me moving',
+  first_workout: 'Our first workout together would be',
+  starting_out: 'I’m just getting started and',
+  green_flag: 'A green flag at the gym',
+} as const
+export type PromptKey = keyof typeof PROMPTS
+export const PROMPT_KEYS = Object.keys(PROMPTS) as [PromptKey, ...PromptKey[]]
+export const MAX_PROMPTS = 3
+export const PROMPT_ANSWER_MAX = 200
+export const LIKE_COMMENT_MAX = 280
+
 export const US_STATES = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA',
   'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM',
@@ -145,18 +162,41 @@ export const photosSchema = z.object({
   photoPaths: z.array(z.string().min(1)).min(1, 'Add at least one photo').max(6, 'Up to 6 photos'),
 })
 
-export const onboardingSchema = basicsSchema.merge(fitnessSchema).merge(modesSchema).merge(photosSchema)
+export const promptsSchema = z.object({
+  prompts: z
+    .array(
+      z.object({
+        key: z.enum(PROMPT_KEYS),
+        answer: z.string().trim().min(1, 'Write an answer or remove this prompt').max(PROMPT_ANSWER_MAX, `Keep it under ${PROMPT_ANSWER_MAX} characters`),
+      }),
+    )
+    .max(MAX_PROMPTS, `Up to ${MAX_PROMPTS} prompts`)
+    .refine((list) => new Set(list.map((p) => p.key)).size === list.length, 'Use each prompt once'),
+})
+
+export const onboardingSchema = basicsSchema
+  .merge(fitnessSchema)
+  .merge(modesSchema)
+  .merge(promptsSchema)
+  .merge(photosSchema)
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>
 export type ModePrefs = z.infer<typeof modePrefsSchema>
 
 // ─── Matching / chat ─────────────────────────────────────────────────────────
 
-export const swipeSchema = z.object({
-  targetId: z.string().uuid(),
-  mode: z.enum(['dating', 'buddy']),
-  action: z.enum(['like', 'pass']),
-})
+export const swipeSchema = z
+  .object({
+    targetId: z.string().uuid(),
+    mode: z.enum(['dating', 'buddy']),
+    action: z.enum(['like', 'pass']),
+    super: z.boolean().default(false),
+    comment: z.string().trim().max(LIKE_COMMENT_MAX).optional(),
+    photoId: z.string().uuid().optional(),
+    promptId: z.string().uuid().optional(),
+  })
+  .refine((s) => !(s.photoId && s.promptId), 'Like one photo or one prompt')
+  .refine((s) => s.action === 'like' || (!s.super && !s.comment && !s.photoId && !s.promptId), 'Only likes carry extras')
 
 export const REPORT_REASONS = {
   harassment: 'Harassment or threats',

@@ -125,6 +125,8 @@ export function useChat({
         body: text,
         created_at: new Date().toISOString(),
         read_at: null,
+        kind: 'text',
+        context: null,
         status: 'sending',
       }
       setMessages((prev) => merge(prev, optimistic))
@@ -157,7 +159,7 @@ export function useChat({
     if (!oldest) return
     const { data } = await supabase
       .from('messages')
-      .select('id, client_id, match_id, sender_id, body, created_at, read_at')
+      .select('id, client_id, match_id, sender_id, body, created_at, read_at, kind, context')
       .eq('match_id', matchId)
       .lt('created_at', oldest.created_at)
       .order('created_at', { ascending: false })

@@ -22,6 +22,40 @@ export interface DiscoveryCard {
   goals: string[]
   sharedGoals: string[]
   helpsBeginners: boolean
+  /** Aligned with `photos` (same order, same length). */
+  photoIds: string[]
+  prompts: ProfilePrompt[]
+  superLikedMe: boolean
+}
+
+export interface ProfilePrompt {
+  id: string
+  key: string
+  answer: string
+}
+
+/** What a like points at: a specific photo or prompt (Hinge-style). */
+export type LikeTarget =
+  | { kind: 'photo'; id: string; url: string }
+  | { kind: 'prompt'; id: string; key: string; answer: string }
+
+export interface LikeExtras {
+  comment?: string
+  photoId?: string
+  promptId?: string
+}
+
+export interface SuperQuota {
+  remaining: number // 0 or 1
+  resetsAt: string | null
+}
+
+export interface LikeReceived extends DiscoveryCard {
+  likedAt: string
+  isSuper: boolean
+  comment: string | null
+  likedPhotoUrl: string | null
+  likedPrompt: { key: string; answer: string } | null
 }
 
 export interface ChatMessage {
@@ -32,6 +66,9 @@ export interface ChatMessage {
   body: string
   created_at: string
   read_at: string | null
+  kind: 'text' | 'like_comment'
+  /** For like_comment: what was liked (set by the match trigger). */
+  context: { super?: boolean; photo_id?: string; prompt_key?: string; prompt_answer?: string } | null
   status: 'sending' | 'sent' | 'failed'
 }
 
@@ -44,10 +81,17 @@ export interface SwipeQuota {
 }
 
 export type SwipeResult =
-  | { ok: true; matchId: string | null; quota: SwipeQuota }
-  | { ok: false; reason: 'limit' | 'error'; message: string; quota?: SwipeQuota }
+  | { ok: true; matchId: string | null; quota: SwipeQuota; superQuota: SuperQuota }
+  | {
+      ok: false
+      reason: 'limit' | 'super-limit' | 'error'
+      message: string
+      quota?: SwipeQuota
+      superQuota?: SuperQuota
+    }
 
 export interface Selection {
   cards: DiscoveryCard[]
   quota: SwipeQuota
+  superQuota: SuperQuota
 }

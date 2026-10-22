@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { BadgeCheck, ChevronUp, Clock, Dumbbell, HeartHandshake, MapPin, Sparkles, Sprout, Target } from 'lucide-react'
-import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, TRAINING_TIME_LABELS } from '@/lib/validation'
-import type { AppMode, DiscoveryCard } from '@/lib/types'
+import { BadgeCheck, ChevronUp, Clock, Dumbbell, HeartHandshake, MapPin, MessageCircleHeart, Sparkles, Sprout, Star, Target } from 'lucide-react'
+import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, PROMPTS, TRAINING_TIME_LABELS } from '@/lib/validation'
+import type { AppMode, DiscoveryCard, LikeTarget, ProfilePrompt } from '@/lib/types'
 
 const MAX_CHIPS = 4
 
@@ -16,6 +16,9 @@ type Handlers = Pick<
  * Pure display. Position in the stack is a single number (`depth`); every
  * visual consequence of depth (offset, scale, fade, z-order) and of the live
  * drag (translate, rotate, stamps, edge glow) is resolved in CSS.
+ *
+ * `onLikeItem` (optional) adds Hinge-style "like this photo/prompt" buttons;
+ * the parent decides what happens (open the comment composer).
  */
 export function ProfileCard({
   card,
@@ -23,12 +26,14 @@ export function ProfileCard({
   mode,
   ref,
   handlers,
+  onLikeItem,
 }: {
   card: DiscoveryCard
   depth: number
   mode: AppMode
   ref?: React.Ref<HTMLElement>
   handlers?: Handlers
+  onLikeItem?: (target: LikeTarget) => void
 }) {
   const isTop = depth === 0
   const [photo, setPhoto] = useState(0)
@@ -41,6 +46,7 @@ export function ProfileCard({
   const level = card.fitnessLevel ? FITNESS_LEVELS[card.fitnessLevel - 1] : null
   const startingOut = card.fitnessLevel !== null && card.fitnessLevel <= BEGINNER_MAX_LEVEL
   const goalLabel = (g: string) => GOAL_LABELS[g as keyof typeof GOAL_LABELS] ?? g
+  const [firstPrompt, ...morePrompts] = card.prompts
   const times = card.trainingTimes
     .map((t) => TRAINING_TIME_LABELS[t as keyof typeof TRAINING_TIME_LABELS] ?? t)
     .join(' · ')
@@ -105,6 +111,22 @@ export function ProfileCard({
       <span className="deck-stamp deck-stamp--pass" aria-hidden>
         Pass
       </span>
+      <span className="deck-stamp deck-stamp--super" aria-hidden>
+        Super
+      </span>
+
+      {/* Like this photo (Hinge-style) */}
+      {onLikeItem && card.photos[photo] && card.photoIds[photo] && (
+        <button
+          type="button"
+          data-no-drag
+          className="like-item deck-readout absolute right-(--space-card) top-[calc(var(--space-card)+14px)]"
+          aria-label={`Like this photo of ${card.name}`}
+          onClick={() => onLikeItem({ kind: 'photo', id: card.photoIds[photo], url: card.photos[photo] })}
+        >
+          <MessageCircleHeart className="size-5" aria-hidden />
+        </button>
+      )}
 
       {/* Info panel */}
       <div className="absolute inset-x-0 bottom-0 p-(--space-panel-gap)">
@@ -137,8 +159,13 @@ export function ProfileCard({
             </button>
           </div>
 
-          {(card.helpsBeginners || startingOut) && (
+          {(card.superLikedMe || card.helpsBeginners || startingOut) && (
             <div className="flex flex-wrap gap-(--space-chip-gap)">
+              {card.superLikedMe && (
+                <span className="chip border-[color:var(--color-super)] text-[color:var(--color-super)] shadow-[0_0_14px_-4px_var(--color-super)]">
+                  <Star className="size-3.5" fill="currentColor" aria-hidden /> Super liked you
+                </span>
+              )}
               {card.helpsBeginners && (
                 <span className="chip border-accent/60 text-accent">
                   <HeartHandshake className="size-3.5" aria-hidden /> Beginner-friendly
@@ -173,34 +200,35 @@ export function ProfileCard({
             </p>
           )}
 
-          {chips.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="hud-label">Shared</span>
-              <span className="hud-meter" aria-hidden>
-                {chips.map(({ name, shared }) => <span key={name} data-on={shared || undefined} />)}
-              </span>
-              <span className="hud-label text-fg">
-                {card.sharedActivities.length}/{chips.length}
-                <span className="sr-only"> activities in common</span>
-              </span>
-            </div>
-          )}
-
-          {chips.length > 0 && (
-            <ul className="flex flex-wrap gap-(--space-chip-gap)" aria-label="Activities">
-              {chips.slice(0, MAX_CHIPS).map(({ name, shared }) => (
-                <li key={name} className={shared ? 'chip chip--shared' : 'chip'}>
-                  {shared && <Sparkles className="size-3.5 text-primary" aria-hidden />}
-                  {name}
-                  {shared && <span className="sr-only">(you both do this)</span>}
-                </li>
-              ))}
-              {chips.length > MAX_CHIPS && <li className="chip text-muted-fg">+{chips.length - MAX_CHIPS}</li>}
-            </ul>
-          )}
+          {firstPrompt && <PromptBlock prompt={firstPrompt} name={card.name} onLike={onLikeItem} />}
 
           <div className="deck-details" data-open={open || undefined}>
-            <div data-no-drag className="max-h-44 space-y-(--space-panel-gap) overflow-y-auto overscroll-contain">
+            <div data-no-drag className="max-h-52 space-y-(--space-panel-gap) overflow-y-auto overscroll-contain pt-1">
+              {chips.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="hud-label">Shared</span>
+                  <span className="hud-meter" aria-hidden>
+                    {chips.map(({ name, shared }) => <span key={name} data-on={shared || undefined} />)}
+                  </span>
+                  <span className="hud-label text-fg">
+                    {card.sharedActivities.length}/{chips.length}
+                    <span className="sr-only"> activities in common</span>
+                  </span>
+                </div>
+              )}
+
+              {chips.length > 0 && (
+                <ul className="flex flex-wrap gap-(--space-chip-gap)" aria-label="Activities">
+                  {chips.slice(0, MAX_CHIPS).map(({ name, shared }) => (
+                    <li key={name} className={shared ? 'chip chip--shared' : 'chip'}>
+                      {shared && <Sparkles className="size-3.5 text-primary" aria-hidden />}
+                      {name}
+                      {shared && <span className="sr-only">(you both do this)</span>}
+                    </li>
+                  ))}
+                  {chips.length > MAX_CHIPS && <li className="chip text-muted-fg">+{chips.length - MAX_CHIPS}</li>}
+                </ul>
+              )}
               <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-sm text-muted-fg">
                 {level && (
                   <span className="flex items-center gap-1.5"><Dumbbell className="size-4" aria-hidden />{level}</span>
@@ -210,10 +238,44 @@ export function ProfileCard({
                 )}
               </div>
               {card.bio && <p className="whitespace-pre-line leading-relaxed text-fg/90">{card.bio}</p>}
+              {morePrompts.map((p) => (
+                <PromptBlock key={p.id} prompt={p} name={card.name} onLike={onLikeItem} />
+              ))}
             </div>
           </div>
         </div>
       </div>
     </article>
+  )
+}
+
+function PromptBlock({
+  prompt,
+  name,
+  onLike,
+}: {
+  prompt: ProfilePrompt
+  name: string
+  onLike?: (target: LikeTarget) => void
+}) {
+  const question = PROMPTS[prompt.key as keyof typeof PROMPTS] ?? prompt.key
+  return (
+    <div className="flex items-start gap-3 rounded-chip border border-[color:var(--glass-stroke)] bg-[color:var(--glass-fill)] p-3">
+      <div className="min-w-0 flex-1">
+        <p className="hud-label">{question}</p>
+        <p className="mt-1 font-display text-base font-medium leading-snug text-fg">{prompt.answer}</p>
+      </div>
+      {onLike && (
+        <button
+          type="button"
+          data-no-drag
+          className="like-item"
+          aria-label={`Like ${name}’s answer: ${question}`}
+          onClick={() => onLike({ kind: 'prompt', id: prompt.id, key: prompt.key, answer: prompt.answer })}
+        >
+          <MessageCircleHeart className="size-5" aria-hidden />
+        </button>
+      )}
+    </div>
   )
 }

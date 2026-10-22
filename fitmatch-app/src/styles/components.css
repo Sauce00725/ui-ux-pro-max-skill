@@ -74,8 +74,12 @@
   .deck-orb--tide {
     inset: auto 10% -6% 10%;
     height: 40%;
-    background: radial-gradient(ellipse at 50% 60%, var(--color-glow-tide), transparent 70%);
-    opacity: 0.22;
+    background: radial-gradient(
+      ellipse at 50% 60%,
+      color-mix(in oklab, var(--color-glow-tide), var(--color-super) calc(var(--super-strength) * 100%)),
+      transparent 70%
+    );
+    opacity: calc(0.22 + var(--super-strength) * 0.5);
   }
   [data-dragging] .deck-orb {
     transition-duration: 0ms;
@@ -112,7 +116,7 @@
     --drag-x: 0;
     --drag-y: 0;
     --drag-rot: 0;
-    touch-action: pan-y; /* let the page scroll vertically; we own horizontal */
+    touch-action: none; /* we own both axes: sideways = like/pass, up = Super Like */
     cursor: grab;
     transform-origin: var(--drag-origin, 50% 120%);
     transform: translate3d(calc(var(--drag-x) * 1px), calc(var(--drag-y) * 1px), 0)
@@ -124,7 +128,9 @@
       0 0 calc(var(--like-strength) * 48px) calc(var(--like-strength) * 2px)
         color-mix(in oklab, var(--color-like) calc(var(--like-strength) * 55%), transparent),
       0 0 calc(var(--pass-strength) * 48px) calc(var(--pass-strength) * 2px)
-        color-mix(in oklab, var(--color-pass) calc(var(--pass-strength) * 55%), transparent);
+        color-mix(in oklab, var(--color-pass) calc(var(--pass-strength) * 55%), transparent),
+      0 calc(var(--super-strength) * -18px) calc(var(--super-strength) * 60px) calc(var(--super-strength) * 4px)
+        color-mix(in oklab, var(--color-super) calc(var(--super-strength) * 60%), transparent);
     /* Release without a commit: organic overshoot back to rest. */
     transition:
       transform var(--dur-snap) var(--ease-out-back),
@@ -171,6 +177,7 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     pointer-events: none;
+    z-index: 5; /* above the info panel */
   }
   .deck-stamp--like {
     left: var(--space-card);
@@ -178,6 +185,15 @@
     background: color-mix(in oklab, var(--color-like) 14%, transparent);
     opacity: var(--like-strength);
     transform: rotate(-14deg) scale(calc(0.82 + var(--like-strength) * 0.18));
+  }
+  .deck-stamp--super {
+    left: 50%;
+    top: 16%;
+    color: var(--color-super);
+    background: color-mix(in oklab, var(--color-super) 14%, transparent);
+    opacity: var(--super-strength);
+    transform: translateX(-50%) scale(calc(0.82 + var(--super-strength) * 0.18));
+    white-space: nowrap;
   }
   .deck-stamp--pass {
     right: var(--space-card);
@@ -355,6 +371,63 @@
     transition: border-color var(--dur-hover);
     pointer-events: none;
   }
+  /* Super Like: smaller, magenta, sits between pass and like. */
+  .ctl--super {
+    --ctl-size: calc(var(--step) * 13);
+    --ctl-glow: var(--color-super);
+    --ctl-drive: var(--super-strength);
+    color: var(--color-super);
+    border-color: color-mix(in oklab, var(--color-super) calc(35% + var(--ctl-energy) * 50%), transparent);
+  }
+  .ctl-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 5px;
+    border-radius: 9999px;
+    background: var(--color-super);
+    color: var(--color-on-accent);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    box-shadow: 0 0 10px var(--color-super);
+  }
+  .ctl:disabled .ctl-badge {
+    background: var(--color-muted);
+    color: var(--color-muted-fg);
+    box-shadow: none;
+  }
+
+  /* Small "like this photo/prompt" affordance on the card (Hinge-style). */
+  .like-item {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    border: 1px solid var(--glass-stroke-strong);
+    background: var(--glass-fill-strong);
+    color: var(--color-primary);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    transition: transform var(--dur-hover) var(--ease-out-back), box-shadow var(--dur-hover) var(--ease-soft);
+  }
+  @media (hover: hover) {
+    .like-item:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 18px -2px var(--color-primary);
+    }
+  }
+  .like-item:active {
+    transform: scale(0.9);
+    transition-duration: var(--dur-press);
+  }
+
   @media (hover: hover) {
     .ctl--like:hover:not(:disabled) {
       background:
@@ -423,7 +496,11 @@
     --hud-inset: calc(var(--step) * 2.5);
     --hud-color: color-mix(
       in oklab,
-      color-mix(in oklab, var(--color-primary) calc(100% - var(--pass-strength) * 100%), var(--color-pass)),
+      color-mix(
+        in oklab,
+        color-mix(in oklab, var(--color-primary) calc(100% - var(--pass-strength) * 100%), var(--color-pass)),
+        var(--color-super) calc(var(--super-strength) * 100%)
+      ),
       white calc(var(--like-strength) * 25%)
     );
   }

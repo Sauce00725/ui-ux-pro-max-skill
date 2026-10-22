@@ -24,7 +24,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
 
   if (!modeRow?.is_active) return <EnableModePrompt mode={mode} />
 
-  const { cards, quota } = await getSelection(supabase, mode)
+  const { cards, quota, superQuota } = await getSelection(supabase, mode)
   // key resets the deck's state when switching modes.
-  return <DailyDeck key={mode} mode={mode} initialCards={cards} initialQuota={quota} />
+  return <DailyDeck key={mode} mode={mode} initialCards={cards} initialQuota={quota} initialSuperQuota={superQuota} />
 }

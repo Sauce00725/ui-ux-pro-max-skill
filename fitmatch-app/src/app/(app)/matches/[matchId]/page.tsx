@@ -31,11 +31,25 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
     supabase.from('profiles').select('display_name').eq('id', otherId).single(),
     supabase.from('photos').select('storage_path').eq('user_id', otherId).eq('moderation', 'approved')
       .order('position').limit(1).maybeSingle(),
-    supabase.from('messages').select('id, client_id, match_id, sender_id, body, created_at, read_at')
+    supabase.from('messages').select('id, client_id, match_id, sender_id, body, created_at, read_at, kind, context')
       .eq('match_id', matchId).order('created_at', { ascending: false }).limit(PAGE_SIZE),
   ])
 
-  const urls = photo ? await signPhotoUrls(supabase, [photo.storage_path]) : new Map<string, string>()
+  // Photos referenced by "liked your photo" openers, shown as thumbnails.
+  const likedPhotoIds = [
+    ...new Set((recent ?? []).map((m) => (m.context as { photo_id?: string } | null)?.photo_id).filter((id): id is string => !!id)),
+  ]
+  const { data: likedPhotos } = likedPhotoIds.length
+    ? await supabase.from('photos').select('id, storage_path').in('id', likedPhotoIds)
+    : { data: [] as { id: string; storage_path: string }[] }
+
+  const urls = await signPhotoUrls(supabase, [
+    ...(photo ? [photo.storage_path] : []),
+    ...(likedPhotos ?? []).map((p) => p.storage_path),
+  ])
+  const contextPhotos = Object.fromEntries(
+    (likedPhotos ?? []).flatMap((p) => (urls.get(p.storage_path) ? [[p.id, urls.get(p.storage_path)!]] : [])),
+  )
 
   return (
     <ChatWindow
@@ -45,6 +59,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       other={{ name: other?.display_name ?? 'Member', avatarUrl: photo ? urls.get(photo.storage_path) : undefined }}
       initialMessages={(recent ?? []).reverse()}
       initialHasMore={(recent?.length ?? 0) === PAGE_SIZE}
+      contextPhotos={contextPhotos}
     />
   )
 }

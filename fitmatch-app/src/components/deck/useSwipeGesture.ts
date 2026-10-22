@@ -11,21 +11,26 @@ import type { SwipeDirection } from './deckState'
  * component:
  *
  *   on the card   --drag-x, --drag-y, --drag-rot, --drag-origin
- *   on the stage  --swipe-amount, --like-strength, --pass-strength
+ *   on the stage  --swipe-amount, --like-strength, --pass-strength, --super-strength
  *
  * The stage variables are inherited by everything inside it, so stacked cards,
  * stamps, ambient glows and control buttons all react to the same gesture with
  * zero extra wiring (see styles/components.css).
+ *
+ * Right = like, left = pass, up = Super Like. Whichever axis dominates wins.
  */
 
 export const MOTION = {
   flingMs: 380,
   snapMs: 560,
   maxRotationDeg: 16,
-  commitRatio: 0.32, // of card width
+  commitRatio: 0.32, // of card width (like/pass)
+  superRatio: 0.22, // of card height (Super Like)
   flickVelocity: 0.5, // px/ms
   slopPx: 6, // movement before a press becomes a drag (taps stay clicks)
-  verticalDamping: 0.35,
+  verticalDamping: 0.35, // during a sideways drag
+  upFollow: 0.75, // during an upward (Super Like) drag
+  blockedUpDamping: 0.12, // upward drag with no Super Like left: rubber-band
 } as const
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
@@ -35,16 +40,20 @@ interface Options {
   /** Identity of the current top card. Changing it resets all visual state. */
   cardKey: string | null
   enabled: boolean
+  /** Whether swiping up can commit a Super Like right now. */
+  canSuper: boolean
   /** Fired on release/fling: start the data work immediately. */
   onCommit: (direction: SwipeDirection) => void
   /** Fired when the card has fully left the screen. */
   onExited: () => void
 }
 
-export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited }: Options) {
+type Sample = { x: number; y: number; t: number }
+
+export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit, onExited }: Options) {
   const cardRef = useRef<HTMLElement | null>(null)
-  const callbacks = useRef({ onCommit, onExited, enabled })
-  callbacks.current = { onCommit, onExited, enabled }
+  const callbacks = useRef({ onCommit, onExited, enabled, canSuper })
+  callbacks.current = { onCommit, onExited, enabled, canSuper }
 
   const g = useRef({
     pointerId: -1,
@@ -56,7 +65,7 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
     dx: 0,
     dy: 0,
     grabSign: 1, // +1 grabbed top half, -1 bottom half (card pivots the other way)
-    samples: [] as { x: number; t: number }[],
+    samples: [] as Sample[],
     frame: 0,
   })
   const reducedMotion = useRef(false)
@@ -69,29 +78,51 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  /** horizontal: -1 (pass) … +1 (like); up: 0 … 1 (Super Like). */
   const writeStage = useCallback(
-    (progress: number) => {
+    (horizontal: number, up = 0) => {
       const stage = stageRef.current
       if (!stage) return
-      stage.style.setProperty('--swipe-amount', String(Math.abs(progress)))
-      stage.style.setProperty('--like-strength', String(Math.max(0, progress)))
-      stage.style.setProperty('--pass-strength', String(Math.max(0, -progress)))
+      stage.style.setProperty('--swipe-amount', String(Math.max(Math.abs(horizontal), up)))
+      stage.style.setProperty('--like-strength', String(Math.max(0, horizontal)))
+      stage.style.setProperty('--pass-strength', String(Math.max(0, -horizontal)))
+      stage.style.setProperty('--super-strength', String(up))
     },
     [stageRef],
   )
 
+  const setCard = (el: HTMLElement, x: number, y: number, rot: number) => {
+    el.style.setProperty('--drag-x', x.toFixed(2))
+    el.style.setProperty('--drag-y', y.toFixed(2))
+    el.style.setProperty('--drag-rot', rot.toFixed(3))
+  }
+
+  /** Map raw pointer offset → card transform + stage signals. */
   const write = useCallback(
     (dx: number, dy: number) => {
       const el = cardRef.current
       if (!el) return
       const width = el.offsetWidth || 1
+      const height = el.offsetHeight || 1
+      const goingUp = -dy > Math.abs(dx)
+
+      if (goingUp) {
+        if (!callbacks.current.canSuper) {
+          // No Super Like left: resist, so it reads as "not available".
+          setCard(el, dx * 0.3, dy * MOTION.blockedUpDamping, 0)
+          writeStage(0, 0)
+          return
+        }
+        setCard(el, dx * 0.4, dy * MOTION.upFollow, reducedMotion.current ? 0 : (dx / width) * 4)
+        writeStage(0, clamp(-dy / (height * MOTION.superRatio), 0, 1))
+        return
+      }
+
       const rot = reducedMotion.current
         ? 0
         : clamp((dx / width) * MOTION.maxRotationDeg * g.current.grabSign, -MOTION.maxRotationDeg, MOTION.maxRotationDeg)
-      el.style.setProperty('--drag-x', dx.toFixed(2))
-      el.style.setProperty('--drag-y', dy.toFixed(2))
-      el.style.setProperty('--drag-rot', rot.toFixed(3))
-      writeStage(clamp(dx / (width * MOTION.commitRatio), -1, 1))
+      setCard(el, dx, dy * MOTION.verticalDamping, rot)
+      writeStage(clamp(dx / (width * MOTION.commitRatio), -1, 1), 0)
     },
     [writeStage],
   )
@@ -100,7 +131,7 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
     if (g.current.frame) return
     g.current.frame = requestAnimationFrame(() => {
       g.current.frame = 0
-      write(g.current.dx, g.current.dy * MOTION.verticalDamping)
+      write(g.current.dx, g.current.dy)
     })
   }, [write])
 
@@ -116,36 +147,45 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
   const fling = useCallback(
     (direction: SwipeDirection, velocity = 0) => {
       const el = cardRef.current
-      if (!el || g.current.locked || !callbacks.current.enabled) return
-      g.current.locked = true
-      cancelAnimationFrame(g.current.frame)
-      g.current.frame = 0
+      const s = g.current
+      if (!el || s.locked || !callbacks.current.enabled) return
+      if (direction === 'super' && !callbacks.current.canSuper) return
+      s.locked = true
+      cancelAnimationFrame(s.frame)
+      s.frame = 0
       setDragging(false)
 
-      const sign = direction === 'like' ? 1 : -1
       callbacks.current.onCommit(direction)
-
       el.setAttribute('data-flinging', '')
-      writeStage(sign) // stamp fully visible, next card fully risen
 
-      if (reducedMotion.current) {
-        el.setAttribute('data-fade', '')
-        write(sign * 40, 0)
+      if (direction === 'super') {
+        writeStage(0, 1)
+        if (reducedMotion.current) {
+          el.setAttribute('data-fade', '')
+          setCard(el, 0, -40, 0)
+        } else {
+          const travel = window.innerHeight + el.offsetHeight + Math.abs(velocity) * 120
+          setCard(el, s.dx * 0.4, -travel, (s.dx / (el.offsetWidth || 1)) * 6)
+        }
       } else {
-        const width = el.offsetWidth
-        const travel = window.innerWidth / 2 + width * 1.1 + Math.abs(velocity) * 120
-        // Thrown by hand: keep the vertical direction of the throw. By button: a slight upward toss.
-        const lift = g.current.dx !== 0 ? g.current.dy * MOTION.verticalDamping * 2 : -30
-        el.style.setProperty('--drag-x', String(sign * travel))
-        el.style.setProperty('--drag-y', String(lift))
-        el.style.setProperty('--drag-rot', String(sign * g.current.grabSign * MOTION.maxRotationDeg * 1.6))
+        const sign = direction === 'like' ? 1 : -1
+        writeStage(sign, 0) // stamp fully visible, next card fully risen
+        if (reducedMotion.current) {
+          el.setAttribute('data-fade', '')
+          setCard(el, sign * 40, 0, 0)
+        } else {
+          const travel = window.innerWidth / 2 + el.offsetWidth * 1.1 + Math.abs(velocity) * 120
+          // Thrown by hand: keep the vertical direction of the throw. By button: a slight upward toss.
+          const lift = s.dx !== 0 ? s.dy * MOTION.verticalDamping * 2 : -30
+          setCard(el, sign * travel, lift, sign * s.grabSign * MOTION.maxRotationDeg * 1.6)
+        }
       }
 
       // A timer rather than transitionend: it fires once, and fires even when a
       // transition is skipped (background tab, reduced motion).
       window.setTimeout(() => callbacks.current.onExited(), MOTION.flingMs + 20)
     },
-    [write, writeStage, setDragging],
+    [writeStage, setDragging],
   )
 
   const snapBack = useCallback(() => {
@@ -162,7 +202,7 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
     s.tracking = s.dragging = false
     s.dx = s.dy = 0
     s.grabSign = 1
-    writeStage(0)
+    writeStage(0, 0)
     setDragging(false)
   }, [cardKey, writeStage, setDragging])
 
@@ -182,7 +222,7 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
     s.startX = e.clientX
     s.startY = e.clientY
     s.dx = s.dy = 0
-    s.samples = [{ x: e.clientX, t: e.timeStamp }]
+    s.samples = [{ x: e.clientX, y: e.clientY, t: e.timeStamp }]
   }, [])
 
   const onPointerMove = useCallback(
@@ -194,18 +234,13 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
 
       if (!s.dragging) {
         if (Math.hypot(s.dx, s.dy) < MOTION.slopPx) return
-        // Mostly-vertical movement on touch = page scroll, not a swipe.
-        if (e.pointerType === 'touch' && Math.abs(s.dy) > Math.abs(s.dx)) {
-          s.tracking = false
-          return
-        }
         // Capture only once it's a real drag, so taps still reach child buttons.
         s.dragging = true
         e.currentTarget.setPointerCapture(e.pointerId)
         setDragging(true)
       }
 
-      s.samples.push({ x: e.clientX, t: e.timeStamp })
+      s.samples.push({ x: e.clientX, y: e.clientY, t: e.timeStamp })
       if (s.samples.length > 6) s.samples.shift()
       schedule()
     },
@@ -220,16 +255,28 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, onCommit, onExited
       if (!s.dragging) return // it was a tap
       s.dragging = false
       setDragging(false)
+      if (e.type === 'pointercancel') return snapBack()
 
       const first = s.samples[0]
       const last = s.samples[s.samples.length - 1]
-      const velocity = last.t > first.t ? (last.x - first.x) / (last.t - first.t) : 0
-      const width = cardRef.current?.offsetWidth ?? 1
-      const distance = width * MOTION.commitRatio
+      const dt = last.t - first.t
+      const vx = dt > 0 ? (last.x - first.x) / dt : 0
+      const vy = dt > 0 ? (last.y - first.y) / dt : 0
+      const el = cardRef.current
+      const width = el?.offsetWidth ?? 1
+      const height = el?.offsetHeight ?? 1
 
-      const flicked = Math.abs(velocity) > MOTION.flickVelocity && Math.sign(velocity) === Math.sign(s.dx) && Math.abs(s.dx) > 24
-      if (e.type !== 'pointercancel' && (Math.abs(s.dx) > distance || flicked)) {
-        fling(s.dx > 0 ? 'like' : 'pass', velocity)
+      if (-s.dy > Math.abs(s.dx)) {
+        const flickedUp = vy < -MOTION.flickVelocity && -s.dy > 30
+        if (callbacks.current.canSuper && (-s.dy > height * MOTION.superRatio || flickedUp)) {
+          return fling('super', vy)
+        }
+        return snapBack()
+      }
+
+      const flicked = Math.abs(vx) > MOTION.flickVelocity && Math.sign(vx) === Math.sign(s.dx) && Math.abs(s.dx) > 24
+      if (Math.abs(s.dx) > width * MOTION.commitRatio || flicked) {
+        fling(s.dx > 0 ? 'like' : 'pass', vx)
       } else {
         snapBack()
       }

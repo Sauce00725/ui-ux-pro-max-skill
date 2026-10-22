@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
-import { AlertCircle, ArrowLeft, Ban, EllipsisVertical, Flag, Heart, SendHorizontal, UserMinus, Users } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Ban, EllipsisVertical, Flag, Heart, MessageCircleHeart, SendHorizontal, Star, UserMinus, Users } from 'lucide-react'
 import { Avatar } from '@/components/Avatar'
 import { Button } from '@/components/ui/Button'
 import { blockUser, reportUser, unmatch } from '@/app/(app)/matches/actions'
-import { REPORT_REASONS } from '@/lib/validation'
+import { PROMPTS, REPORT_REASONS } from '@/lib/validation'
 import type { AppMode, ChatMessage } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useChat } from './useChat'
@@ -21,9 +21,11 @@ interface Props {
   other: { name: string; avatarUrl?: string }
   initialMessages: Omit<ChatMessage, 'status'>[]
   initialHasMore: boolean
+  /** Signed URLs for photos referenced by "liked your photo" openers, by photo id. */
+  contextPhotos?: Record<string, string>
 }
 
-export function ChatWindow({ matchId, mode, currentUserId, other, initialMessages, initialHasMore }: Props) {
+export function ChatWindow({ matchId, mode, currentUserId, other, initialMessages, initialHasMore, contextPhotos = {} }: Props) {
   const { messages, send, retry, notifyTyping, otherTyping, connected, hasMore, loadOlder } = useChat({
     matchId,
     currentUserId,
@@ -126,7 +128,16 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
                     {new Date(m.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                   </p>
                 )}
-                <Bubble message={m} mine={mine} grouped={grouped} onRetry={() => retry(m.client_id)} />
+                {m.kind === 'like_comment' ? (
+                  <LikeOpener
+                    message={m}
+                    mine={mine}
+                    otherName={other.name}
+                    photoUrl={m.context?.photo_id ? contextPhotos[m.context.photo_id] : undefined}
+                  />
+                ) : (
+                  <Bubble message={m} mine={mine} grouped={grouped} onRetry={() => retry(m.client_id)} />
+                )}
                 {mine && m.client_id === lastOwnSent?.client_id && m.read_at && (
                   <p className="mt-0.5 text-right text-xs text-muted-fg">Seen</p>
                 )}
@@ -187,6 +198,57 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           <p className="mt-1 text-right text-xs text-muted-fg">{draft.length}/{MAX_LEN}</p>
         )}
       </form>
+    </div>
+  )
+}
+
+/** The like that started it: what was liked, whether it was a Super Like, and the comment. */
+function LikeOpener({
+  message,
+  mine,
+  otherName,
+  photoUrl,
+}: {
+  message: ChatMessage
+  mine: boolean
+  otherName: string
+  photoUrl?: string
+}) {
+  const ctx = message.context ?? {}
+  const what = ctx.photo_id ? 'photo' : ctx.prompt_key ? 'prompt' : 'profile'
+  const who = mine ? 'You' : otherName
+  const whose = mine ? `${otherName}’s` : 'your'
+  const question = ctx.prompt_key ? (PROMPTS[ctx.prompt_key as keyof typeof PROMPTS] ?? ctx.prompt_key) : null
+
+  return (
+    <div className={cn('mt-3 flex flex-col gap-1.5', mine ? 'items-end' : 'items-start')}>
+      <p className={cn('hud-label flex items-center gap-1.5', ctx.super && 'text-[color:var(--color-super)]')}>
+        {ctx.super ? <Star className="size-3.5" fill="currentColor" aria-hidden /> : <MessageCircleHeart className="size-3.5 text-primary" aria-hidden />}
+        {who} {ctx.super ? 'super liked' : 'liked'} {whose} {what}
+      </p>
+      {(photoUrl || question) && (
+        <div className={cn('max-w-[75%] overflow-hidden rounded-panel border bg-surface', ctx.super ? 'border-[color:var(--color-super)]/50' : 'border-[color:var(--glass-stroke)]')}>
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt={`${mine ? otherName : 'Your'} photo`} className="h-36 w-28 object-cover" />
+          ) : (
+            <div className="p-3">
+              <p className="hud-label">{question}</p>
+              <p className="mt-1 font-display text-sm font-medium leading-snug">{ctx.prompt_answer}</p>
+            </div>
+          )}
+        </div>
+      )}
+      {message.body && (
+        <div
+          className={cn(
+            'max-w-[80%] whitespace-pre-wrap break-words rounded-3xl px-4 py-2.5 leading-snug',
+            mine ? 'rounded-br-md bg-primary text-on-primary' : 'rounded-bl-md bg-card text-fg',
+          )}
+        >
+          {message.body}
+        </div>
+      )}
     </div>
   )
 }

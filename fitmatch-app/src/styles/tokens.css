@@ -37,12 +37,13 @@
   --color-accent: #ff3df2;        /* quantum magenta */
   --color-on-accent: #1a0018;
   --color-like: #22e6ff;
+  --color-super: #ff3df2;         /* Super Like: "really interested" */
   --color-pass: #ff4d6d;          /* HUD alert red */
   --color-danger: #ff4d6d;
 
   /* Ambient glow hues */
   --color-glow-ember: #22e6ff;    /* reacts to like */
-  --color-glow-rose: #ff3df2;     /* reacts to pass */
+  --color-glow-rose: #ff4d6d;     /* reacts to pass */
   --color-glow-tide: #7b61ff;
 
   /* Type: Orbitron display · Exo 2 reading · JetBrains Mono HUD readouts */
@@ -130,4 +131,5 @@
   --swipe-amount: 0;
   --like-strength: 0;
   --pass-strength: 0;
+  --super-strength: 0;
 }
