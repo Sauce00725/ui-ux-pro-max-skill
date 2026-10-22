@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { BadgeCheck, ChevronUp, Clock, Dumbbell, HeartHandshake, MapPin, MessageCircleHeart, Sparkles, Sprout, Star, Target } from 'lucide-react'
 import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, PROMPTS, TRAINING_TIME_LABELS } from '@/lib/validation'
+import { TranslateToggle } from '@/components/translate/TranslateToggle'
+import { useTranslation } from '@/components/translate/useTranslation'
 import type { AppMode, DiscoveryCard, LikeTarget, ProfilePrompt } from '@/lib/types'
 
 const MAX_CHIPS = 4
@@ -47,6 +49,16 @@ export function ProfileCard({
   const startingOut = card.fitnessLevel !== null && card.fitnessLevel <= BEGINNER_MAX_LEVEL
   const goalLabel = (g: string) => GOAL_LABELS[g as keyof typeof GOAL_LABELS] ?? g
   const [firstPrompt, ...morePrompts] = card.prompts
+
+  // Everything they wrote (headline, bio, prompt answers) translates in one tap.
+  // Slots: 0 = headline, 1 = bio, 2 + k = prompt k.
+  const written = [card.headline, card.bio, ...card.prompts.map((p) => p.answer)]
+  const slots = written.flatMap((text, slot) => (text?.trim() ? [{ slot, text: text.trim() }] : []))
+  const translation = useTranslation(slots.map((s) => s.text))
+  const show = (slot: number, original: string) => {
+    const i = slots.findIndex((s) => s.slot === slot)
+    return i < 0 ? original : translation.shown(i, original)
+  }
   const times = card.trainingTimes
     .map((t) => TRAINING_TIME_LABELS[t as keyof typeof TRAINING_TIME_LABELS] ?? t)
     .join(' · ')
@@ -179,8 +191,10 @@ export function ProfileCard({
             </div>
           )}
 
+          <TranslateToggle t={translation} what="profile" />
+
           {card.headline && (
-            <p className="border-l border-primary/60 pl-3 text-[1.0625rem] leading-snug text-fg/90">{card.headline}</p>
+            <p className="border-l border-primary/60 pl-3 text-[1.0625rem] leading-snug text-fg/90">{show(0, card.headline)}</p>
           )}
 
           {card.goals.length > 0 && (
@@ -200,7 +214,9 @@ export function ProfileCard({
             </p>
           )}
 
-          {firstPrompt && <PromptBlock prompt={firstPrompt} name={card.name} onLike={onLikeItem} />}
+          {firstPrompt && (
+            <PromptBlock prompt={firstPrompt} answer={show(2, firstPrompt.answer)} name={card.name} onLike={onLikeItem} />
+          )}
 
           <div className="deck-details" data-open={open || undefined}>
             <div data-no-drag className="max-h-52 space-y-(--space-panel-gap) overflow-y-auto overscroll-contain pt-1">
@@ -237,9 +253,9 @@ export function ProfileCard({
                   <span className="flex items-center gap-1.5"><Clock className="size-4" aria-hidden />{times}</span>
                 )}
               </div>
-              {card.bio && <p className="whitespace-pre-line leading-relaxed text-fg/90">{card.bio}</p>}
-              {morePrompts.map((p) => (
-                <PromptBlock key={p.id} prompt={p} name={card.name} onLike={onLikeItem} />
+              {card.bio && <p className="whitespace-pre-line leading-relaxed text-fg/90">{show(1, card.bio)}</p>}
+              {morePrompts.map((p, j) => (
+                <PromptBlock key={p.id} prompt={p} answer={show(3 + j, p.answer)} name={card.name} onLike={onLikeItem} />
               ))}
             </div>
           </div>
@@ -251,10 +267,13 @@ export function ProfileCard({
 
 function PromptBlock({
   prompt,
+  answer,
   name,
   onLike,
 }: {
   prompt: ProfilePrompt
+  /** What to display: the answer, or its translation. Likes always reference the original. */
+  answer: string
   name: string
   onLike?: (target: LikeTarget) => void
 }) {
@@ -263,7 +282,7 @@ function PromptBlock({
     <div className="flex items-start gap-3 rounded-chip border border-[color:var(--glass-stroke)] bg-[color:var(--glass-fill)] p-3">
       <div className="min-w-0 flex-1">
         <p className="hud-label">{question}</p>
-        <p className="mt-1 font-display text-base font-medium leading-snug text-fg">{prompt.answer}</p>
+        <p className="mt-1 font-display text-base font-medium leading-snug text-fg">{answer}</p>
       </div>
       {onLike && (
         <button

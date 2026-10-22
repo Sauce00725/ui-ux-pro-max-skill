@@ -128,3 +128,10 @@ export interface EventAttendee {
   photoUrl?: string
   isMatch: boolean
 }
+
+/** One translated piece of member-written text. */
+export interface TranslatedText {
+  /** Language the original was written in, as detected by the model. */
+  source: 'es' | 'en' | 'other'
+  text: string
+}

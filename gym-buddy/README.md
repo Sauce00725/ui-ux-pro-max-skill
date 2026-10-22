@@ -8,11 +8,12 @@ Visual direction: holographic HUD (see `design-system/gym-buddy/MASTER.md`).
 
 1. **Create a Supabase project** at supabase.com.
 2. **Apply the schema.** Either paste the files in `supabase/migrations/` into the SQL editor
-   in order (`0001_init.sql` → `0006_more_prompts.sql`), or with the Supabase CLI:
+   in order (`0001_init.sql` → `0007_translation_quota.sql`), or with the Supabase CLI:
    `supabase link --project-ref <ref> && supabase db push`.
 3. **Auth settings** (Authentication → URL Configuration): set Site URL to `http://localhost:3000`
    and add `http://localhost:3000/auth/callback` to Redirect URLs.
-4. **Env vars:** `cp .env.example .env.local` and fill in the URL and anon/publishable key.
+4. **Env vars:** `cp .env.example .env.local` and fill in the Supabase URL and anon/publishable key, plus
+   `ANTHROPIC_API_KEY` for translation (server-side only).
 5. `npm install && npm run dev` and open http://localhost:3000.
 
 **Sample events:** `supabase/seed.sql` adds fictional upcoming events in 8 US metros (Austin, NYC, LA,
@@ -40,6 +41,7 @@ other, turn on the same mode, and like each other.
 | Discovery feed + swipe | `src/lib/discovery.ts`, `src/app/(app)/discover/` |
 | Slow-dating quota (10 swipes / 6 h per mode) | `supabase/migrations/0002_swipe_quota.sql` |
 | Goals, beginner ↔ helper matching, starter activities | `supabase/migrations/0003_goals_beginners.sql` |
+| Spanish ↔ English translation (messages, like comments, profiles) | `src/lib/translate.ts`, `src/app/actions/translate.ts`, `src/components/translate/`, `supabase/migrations/0007_translation_quota.sql` |
 | Prompt catalog (40 prompts: get to know me, gym life, training) | `src/lib/validation.ts` (`PROMPT_GROUPS`), `supabase/migrations/0006_more_prompts.sql` |
 | Super Likes (1/day), prompts, like-a-photo/prompt with a comment | `supabase/migrations/0004_superlikes_prompts_comments.sql` |
 | Events (list + filters, detail, RSVP, post) | `supabase/migrations/0005_events.sql`, `src/app/(app)/events/`, `src/components/events/` |
@@ -71,6 +73,20 @@ They meet at two callbacks: `onCommit` (released, start the server call) and `on
 `useDailyDeck` takes an optional `api` prop, so the deck runs against mocks in tests or a
 Storybook.
 
+## Translation
+
+Incoming messages, like comments and profiles written in the other language get a one-tap
+**Translate** control (Settings → Translation picks English or Español; stored per device).
+
+- **Model:** Claude Opus 5.5 at low effort, with a strict JSON output schema, re-validated with Zod,
+  and server-side refusal fallbacks (`fallbacks: "default"`). Change `TRANSLATE_MODEL` in
+  `src/lib/translate.ts` to trade quality for cost (for example `claude-haiku-5-5`).
+- **Limits:** signed-in members only; ≤ 8 texts / 6,000 characters per request; 120 uncached
+  requests per member per hour (enforced in the database). Repeat translations come from an
+  in-memory cache (per server instance) and the browser session.
+- **Privacy:** text is sent to Anthropic only when a member taps Translate. Mention this in your
+  privacy policy.
+
 ## Not built yet
 
 - Events: map view, venue geocoding, automated imports (RunSignUp etc.), admin approval UI.
@@ -78,3 +94,4 @@ Storybook.
 - Automated photo/text moderation, admin review queue, selfie verification.
 - `/terms`, `/privacy`, `/guidelines` pages (linked from sign-up).
 - Push/email notifications for new matches and messages.
+- A Spanish version of the app's own interface (translation covers member-written text only).

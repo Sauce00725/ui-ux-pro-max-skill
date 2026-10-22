@@ -19,6 +19,7 @@ import {
   type PromptValue,
 } from '@/components/profile/ProfileFields'
 import { Button } from '@/components/ui/Button'
+import { TranslationPreference } from './TranslationPreference'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionResult } from '@/lib/types'
 import { fitnessSchema, modesSchema, photosSchema, promptsSchema, settingsBasicsSchema, toFieldErrors } from '@/lib/validation'
@@ -102,6 +103,8 @@ export function SettingsForm({
           onChange={(mode, patch) => modes.set('modes', { ...modes.values.modes, [mode]: { ...modes.values.modes[mode], ...patch } })}
         />
       </Section>
+
+      <TranslationPreference />
 
       <AccountSection userId={userId} email={email} paused={paused} />
 
@@ -210,7 +213,7 @@ function AccountSection({ userId, email, paused: initialPaused }: { userId: stri
     <section className="glass relative space-y-4 rounded-card p-(--space-card) shadow-none" aria-labelledby="s-account">
       <header className="flex items-baseline justify-between gap-3">
         <h2 id="s-account" className="font-display text-lg font-bold uppercase">Account</h2>
-        <span className="hud-label">06</span>
+        <span className="hud-label">07</span>
       </header>
       <p className="hud-label normal-case tracking-normal">{email}</p>
 

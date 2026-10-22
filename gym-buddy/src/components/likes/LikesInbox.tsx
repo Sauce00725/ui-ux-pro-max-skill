@@ -7,6 +7,8 @@ import { swipe } from '@/app/(app)/discover/actions'
 import { Avatar } from '@/components/Avatar'
 import { Button } from '@/components/ui/Button'
 import { ProfileCard } from '@/components/deck/ProfileCard'
+import { TranslateToggle } from '@/components/translate/TranslateToggle'
+import { useTranslation } from '@/components/translate/useTranslation'
 import { PROMPTS } from '@/lib/validation'
 import type { AppMode, LikeReceived } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -106,6 +108,7 @@ function ReviewDialog({
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string>()
   const LikeIcon = mode === 'dating' ? Heart : Handshake
+  const translation = useTranslation(like.comment ? [like.comment] : [])
 
   useEffect(() => {
     ref.current?.showModal()
@@ -139,7 +142,12 @@ function ReviewDialog({
               {PROMPTS[like.likedPrompt.key as keyof typeof PROMPTS] ?? like.likedPrompt.key}: <span className="text-fg">{like.likedPrompt.answer}</span>
             </p>
           )}
-          {like.comment && <p className="mt-2 text-fg">“{like.comment}”</p>}
+          {like.comment && (
+            <>
+              <p className="mt-2 text-fg">“{translation.shown(0, like.comment)}”</p>
+              <TranslateToggle t={translation} className="mt-1" />
+            </>
+          )}
         </div>
 
         <div className="deck-stage relative min-h-0 flex-1">

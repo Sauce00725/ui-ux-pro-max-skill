@@ -9,6 +9,8 @@ import { blockUser, reportUser, unmatch } from '@/app/(app)/matches/actions'
 import { PROMPTS, REPORT_REASONS } from '@/lib/validation'
 import type { AppMode, ChatMessage } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { TranslateToggle } from '@/components/translate/TranslateToggle'
+import { useTranslation } from '@/components/translate/useTranslation'
 import { useChat } from './useChat'
 
 const MAX_LEN = 2000
@@ -219,6 +221,8 @@ function LikeOpener({
   const who = mine ? 'You' : otherName
   const whose = mine ? `${otherName}’s` : 'your'
   const question = ctx.prompt_key ? (PROMPTS[ctx.prompt_key as keyof typeof PROMPTS] ?? ctx.prompt_key) : null
+  // Only their words get a Translate option, never your own.
+  const translation = useTranslation(!mine && message.body ? [message.body] : [])
 
   return (
     <div className={cn('mt-3 flex flex-col gap-1.5', mine ? 'items-end' : 'items-start')}>
@@ -246,15 +250,17 @@ function LikeOpener({
             mine ? 'rounded-br-md bg-primary text-on-primary' : 'rounded-bl-md bg-card text-fg',
           )}
         >
-          {message.body}
+          {translation.shown(0, message.body)}
         </div>
       )}
+      {!mine && <TranslateToggle t={translation} className="mt-1" />}
     </div>
   )
 }
 
 function Bubble({ message, mine, grouped, onRetry }: { message: ChatMessage; mine: boolean; grouped: boolean; onRetry: () => void }) {
   const time = new Date(message.created_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  const translation = useTranslation(mine ? [] : [message.body])
   return (
     <div className={cn('flex flex-col', mine ? 'items-end' : 'items-start', !grouped && 'mt-3')}>
       <div
@@ -266,8 +272,9 @@ function Bubble({ message, mine, grouped, onRetry }: { message: ChatMessage; min
           message.status === 'failed' && 'bg-danger/20 text-fg ring-1 ring-danger',
         )}
       >
-        {message.body}
+        {translation.shown(0, message.body)}
       </div>
+      {!mine && <TranslateToggle t={translation} className="mt-1" />}
       {message.status === 'failed' ? (
         <button type="button" onClick={onRetry} className="mt-1 flex items-center gap-1 text-xs text-danger hover:underline">
           <AlertCircle className="size-3.5" aria-hidden /> Not sent. Tap to retry
