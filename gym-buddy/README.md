@@ -8,7 +8,7 @@ Visual direction: holographic HUD (see `design-system/gym-buddy/MASTER.md`).
 
 1. **Create a Supabase project** at supabase.com.
 2. **Apply the schema.** Either paste the files in `supabase/migrations/` into the SQL editor
-   in order (`0001_init.sql` → `0005_events.sql`), or with the Supabase CLI:
+   in order (`0001_init.sql` → `0006_more_prompts.sql`), or with the Supabase CLI:
    `supabase link --project-ref <ref> && supabase db push`.
 3. **Auth settings** (Authentication → URL Configuration): set Site URL to `http://localhost:3000`
    and add `http://localhost:3000/auth/callback` to Redirect URLs.
@@ -40,6 +40,7 @@ other, turn on the same mode, and like each other.
 | Discovery feed + swipe | `src/lib/discovery.ts`, `src/app/(app)/discover/` |
 | Slow-dating quota (10 swipes / 6 h per mode) | `supabase/migrations/0002_swipe_quota.sql` |
 | Goals, beginner ↔ helper matching, starter activities | `supabase/migrations/0003_goals_beginners.sql` |
+| Prompt catalog (40 prompts: get to know me, gym life, training) | `src/lib/validation.ts` (`PROMPT_GROUPS`), `supabase/migrations/0006_more_prompts.sql` |
 | Super Likes (1/day), prompts, like-a-photo/prompt with a comment | `supabase/migrations/0004_superlikes_prompts_comments.sql` |
 | Events (list + filters, detail, RSVP, post) | `supabase/migrations/0005_events.sql`, `src/app/(app)/events/`, `src/components/events/` |
 | Profile settings (edit everything after onboarding) | `src/app/(app)/settings/`, `src/components/settings/`, `src/components/profile/ProfileFields.tsx` |

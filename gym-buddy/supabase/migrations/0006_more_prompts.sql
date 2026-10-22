@@ -1,0 +1,48 @@
+-- Prompts catalog grows from 8 to 40: everyday "get to know me" prompts plus
+-- a lot more gym life and training ones (incl. "My gym is").
+-- Keys mirror PROMPT_GROUPS in src/lib/validation.ts. All 0004 keys are kept,
+-- so existing answers stay valid.
+
+alter table profile_prompts drop constraint profile_prompts_prompt_key_check;
+alter table profile_prompts add constraint profile_prompts_prompt_key_check check (prompt_key in (
+    'simple_pleasures',
+    'perfect_day',
+    'weekend_find_me',
+    'ask_me_about',
+    'win_me_over',
+    'looking_for',
+    'unpopular_opinion',
+    'two_truths',
+    'dont_hate_me',
+    'currently_obsessed',
+    'dream_trip',
+    'comfort_food',
+    'love_language',
+    'together_we_could',
+    'my_gym',
+    'gym_time',
+    'favorite_lift',
+    'training_split',
+    'gym_hot_take',
+    'gym_pet_peeve',
+    'green_flag',
+    'gym_playlist',
+    'pre_workout_ritual',
+    'leg_day',
+    'cardio_or_weights',
+    'gym_fail',
+    'spot_me',
+    'ideal_partner',
+    'training_for',
+    'fitness_goal',
+    'proudest_pr',
+    'bucket_list_race',
+    'gets_me_moving',
+    'sunday_workout',
+    'first_workout',
+    'rest_day',
+    'post_workout',
+    'cheat_meal',
+    'supplement',
+    'starting_out'
+));

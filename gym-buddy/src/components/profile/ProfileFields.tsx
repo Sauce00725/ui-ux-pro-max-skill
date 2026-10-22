@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, LocateFixed, MapPin, Users, X } from 'lucide-react'
+import { Heart, LocateFixed, MapPin, ShieldCheck, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Chip, Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { cn } from '@/lib/utils'
@@ -13,10 +13,10 @@ import {
   GOALS,
   GOAL_LABELS,
   MAX_GOALS,
+  LOCATION_PROMPTS,
   MAX_PROMPTS,
-  PROMPTS,
   PROMPT_ANSWER_MAX,
-  PROMPT_KEYS,
+  PROMPT_GROUPS,
   TRAINING_TIMES,
   TRAINING_TIME_LABELS,
   US_STATES,
@@ -434,6 +434,8 @@ export function ModeCard({
   )
 }
 
+const GROUP_KEYS = Object.keys(PROMPT_GROUPS) as (keyof typeof PROMPT_GROUPS)[]
+
 export function PromptsEditor({
   prompts,
   errors,
@@ -444,12 +446,19 @@ export function PromptsEditor({
   onChange: (prompts: PromptValue[]) => void
 }) {
   const used = new Set(prompts.map((p) => p.key))
-  const nextFree = PROMPT_KEYS.find((k) => !used.has(k))
-  const update = (i: number, patch: Partial<{ key: PromptKey; answer: string }>) =>
+  const update = (i: number, patch: Partial<PromptValue>) =>
     onChange(prompts.map((p, j) => (j === i ? { ...p, ...patch } : p)))
+  const add = (group: keyof typeof PROMPT_GROUPS) => {
+    const key = (Object.keys(PROMPT_GROUPS[group].prompts) as PromptKey[]).find((k) => !used.has(k))
+    if (key) onChange([...prompts, { key, answer: '' }])
+  }
 
   return (
     <div className="space-y-4">
+      {prompts.length === 0 && (
+        <p className="text-sm text-muted-fg">Tip: mix one personal prompt with a gym or training one.</p>
+      )}
+
       {prompts.map((p, i) => {
         const err = errors[`prompts.${i}.answer`]
         return (
@@ -457,8 +466,12 @@ export function PromptsEditor({
             <div className="flex items-center gap-2">
               <label htmlFor={`prompt-${i}`} className="sr-only">Prompt {i + 1}</label>
               <Select id={`prompt-${i}`} value={p.key} onChange={(e) => update(i, { key: e.target.value as PromptKey })}>
-                {PROMPT_KEYS.map((k) => (
-                  <option key={k} value={k} disabled={k !== p.key && used.has(k)}>{PROMPTS[k]}</option>
+                {GROUP_KEYS.map((g) => (
+                  <optgroup key={g} label={PROMPT_GROUPS[g].label}>
+                    {(Object.entries(PROMPT_GROUPS[g].prompts) as [PromptKey, string][]).map(([k, label]) => (
+                      <option key={k} value={k} disabled={k !== p.key && used.has(k)}>{label}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </Select>
               <button
@@ -470,6 +483,13 @@ export function PromptsEditor({
                 <X className="size-5" aria-hidden />
               </button>
             </div>
+            {LOCATION_PROMPTS.includes(p.key) && (
+              <p className="flex gap-2 rounded-panel border border-[color:var(--glass-stroke)] bg-[color:var(--glass-fill)] p-2.5 text-xs text-muted-fg">
+                <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden />
+                This tells people where you’ll be. Naming the gym chain or neighborhood, not the exact location or
+                your usual hours, is safer until you’ve met.
+              </p>
+            )}
             <Field id={`prompt-answer-${i}`} label="Your answer" error={err} hint={`${p.answer.length}/${PROMPT_ANSWER_MAX}`}>
               <Textarea
                 id={`prompt-answer-${i}`}
@@ -484,10 +504,20 @@ export function PromptsEditor({
         )
       })}
 
-      {prompts.length < MAX_PROMPTS && nextFree && (
-        <Button type="button" variant="secondary" className="w-full" onClick={() => onChange([...prompts, { key: nextFree, answer: '' }])}>
-          + Add a prompt ({prompts.length}/{MAX_PROMPTS})
-        </Button>
+      {prompts.length < MAX_PROMPTS && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-muted-fg">
+            Add a prompt ({prompts.length}/{MAX_PROMPTS})
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {GROUP_KEYS.map((g) => (
+              <Button key={g} type="button" variant="secondary" className="h-auto min-h-12 px-2 py-2 text-sm leading-tight"
+                onClick={() => add(g)}>
+                + {PROMPT_GROUPS[g].label}
+              </Button>
+            ))}
+          </div>
+        </div>
       )}
       {errors.prompts && <p role="alert" className="text-sm text-danger">{errors.prompts}</p>}
     </div>

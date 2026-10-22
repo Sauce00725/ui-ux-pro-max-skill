@@ -51,18 +51,80 @@ export const GOAL_LABELS: Record<(typeof GOALS)[number], string> = {
 }
 export const MAX_GOALS = 3
 
-/** Hinge-style prompts (keys mirror the CHECK in migration 0004). */
-export const PROMPTS = {
-  sunday_workout: 'My ideal Sunday workout',
-  gym_hot_take: 'My gym hot take',
-  post_workout: 'Best post-workout meal',
-  training_for: 'Right now I’m training for',
-  gets_me_moving: 'What gets me moving',
-  first_workout: 'Our first workout together would be',
-  starting_out: 'I’m just getting started and',
-  green_flag: 'A green flag at the gym',
+/**
+ * Hinge-style prompts, grouped for the picker. Keys mirror the CHECK in
+ * migration 0006; add a key there whenever you add one here.
+ */
+export const PROMPT_GROUPS = {
+  about: {
+    label: 'Get to know me',
+    prompts: {
+      simple_pleasures: 'My simplest pleasures',
+      perfect_day: 'My perfect day',
+      weekend_find_me: 'This weekend you’ll find me',
+      ask_me_about: 'Ask me about',
+      win_me_over: 'The way to win me over is',
+      looking_for: 'I’m looking for someone who',
+      unpopular_opinion: 'My most unpopular opinion',
+      two_truths: 'Two truths and a lie',
+      dont_hate_me: 'Don’t hate me if I',
+      currently_obsessed: 'Currently obsessed with',
+      dream_trip: 'My dream trip',
+      comfort_food: 'My go-to comfort food',
+      love_language: 'My love language is',
+      together_we_could: 'Together, we could',
+    },
+  },
+  gym: {
+    label: 'Gym life',
+    prompts: {
+      my_gym: 'My gym is',
+      gym_time: 'You’ll find me at the gym around',
+      favorite_lift: 'My favorite lift',
+      training_split: 'My current training split',
+      gym_hot_take: 'My gym hot take',
+      gym_pet_peeve: 'My biggest gym pet peeve',
+      green_flag: 'A green flag at the gym',
+      gym_playlist: 'On my workout playlist',
+      pre_workout_ritual: 'My pre-workout ritual',
+      leg_day: 'Leg day is',
+      cardio_or_weights: 'Cardio or weights? Defend your answer',
+      gym_fail: 'My most embarrassing gym moment',
+      spot_me: 'I’ll spot you if',
+      ideal_partner: 'My ideal workout partner',
+    },
+  },
+  training: {
+    label: 'Training & goals',
+    prompts: {
+      training_for: 'Right now I’m training for',
+      fitness_goal: 'This year’s fitness goal',
+      proudest_pr: 'The PR I’m proudest of',
+      bucket_list_race: 'A race or event on my bucket list',
+      gets_me_moving: 'What gets me moving',
+      sunday_workout: 'My ideal Sunday workout',
+      first_workout: 'Our first workout together would be',
+      rest_day: 'On rest days I',
+      post_workout: 'Best post-workout meal',
+      cheat_meal: 'Cheat meal of choice',
+      supplement: 'The supplement I swear by',
+      starting_out: 'I’m just getting started and',
+    },
+  },
 } as const
-export type PromptKey = keyof typeof PROMPTS
+
+type GroupPrompts = (typeof PROMPT_GROUPS)[keyof typeof PROMPT_GROUPS]['prompts']
+type KeysOf<U> = U extends unknown ? keyof U : never
+export type PromptKey = KeysOf<GroupPrompts>
+
+/** Flat key → question lookup (cards, chat openers, likes). */
+export const PROMPTS = Object.fromEntries(
+  Object.values(PROMPT_GROUPS).flatMap((g) => Object.entries(g.prompts)),
+) as Record<PromptKey, string>
+
+/** Prompts that reveal where you'll be. The editor shows a privacy tip for these. */
+export const LOCATION_PROMPTS: readonly string[] = ['my_gym', 'gym_time']
+
 export const PROMPT_KEYS = Object.keys(PROMPTS) as [PromptKey, ...PromptKey[]]
 export const MAX_PROMPTS = 3
 export const PROMPT_ANSWER_MAX = 200
