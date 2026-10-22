@@ -8,7 +8,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
         <Logo size="md" />
       </Link>
       <p className="hud-label text-primary">// access terminal</p>
-      <h1 className="mt-2 font-display text-3xl font-black uppercase leading-none [text-shadow:0_0_24px_rgb(34_230_255/0.35)]">{title}</h1>
+      <h1 className="mt-2 font-display text-3xl font-black uppercase leading-none title-glow">{title}</h1>
       <p className="mt-2 text-muted-fg">{subtitle}</p>
       <div className="mt-8">{children}</div>
     </main>

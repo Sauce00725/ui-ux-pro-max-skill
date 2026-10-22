@@ -47,7 +47,7 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
       icon={
         <div className="relative grid size-32 place-items-center">
           <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
-            <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(170 200 255 / 0.14)" strokeWidth="2" strokeDasharray="2 4" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke="var(--meter-track)" strokeWidth="2" strokeDasharray="2 4" />
             <circle
               cx="60" cy="60" r={R} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round"
               strokeDasharray={C} strokeDashoffset={C * (1 - elapsed)}
@@ -56,7 +56,7 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
           </svg>
           <div className="text-center">
             <Hourglass className="mx-auto size-5 text-primary" aria-hidden />
-            <p className="mt-1 font-mono text-sm tabular-nums text-fg [text-shadow:0_0_12px_rgb(34_230_255/0.6)]">{ms === null ? '—' : formatClock(ms)}</p>
+            <p className="mt-1 font-mono text-sm tabular-nums text-fg title-glow">{ms === null ? '—' : formatClock(ms)}</p>
           </div>
         </div>
       }

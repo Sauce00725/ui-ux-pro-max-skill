@@ -51,7 +51,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="hud-label text-primary">// Local events</p>
-          <h1 className="font-display text-title font-extrabold uppercase font-stretch-125% [text-shadow:0_0_18px_rgb(34_230_255/0.35)]">Events</h1>
+          <h1 className="font-display text-title font-extrabold uppercase font-stretch-125% title-glow">Events</h1>
           <p className="mt-1 text-sm text-muted-fg">Run clubs, CrossFit, pickleball, open gyms and more near you.</p>
         </div>
         <Link

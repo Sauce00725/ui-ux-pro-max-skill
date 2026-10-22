@@ -91,6 +91,11 @@ export function ProfileCard({
         <div className="deck-scrim" />
         <div className="deck-sweep" />
         <div className="deck-glare" />
+        <div className="deck-glyphs" aria-hidden>
+          <span />
+          <span />
+          <span />
+        </div>
 
         {/* Range readout */}
         <p className="deck-readout hud-label glass glass-flat absolute left-(--space-card) top-[calc(var(--space-card)+14px)] flex items-center gap-1.5 rounded-full px-2.5 py-1 text-fg">
@@ -163,7 +168,7 @@ export function ProfileCard({
             <div className="flex items-end justify-between gap-3">
               <h2
                 ref={nameRef}
-                className="min-w-0 flex-1 truncate font-display text-display font-extrabold uppercase text-fg"
+                className="deck-name min-w-0 flex-1 truncate font-display text-display font-extrabold uppercase text-fg"
                 style={{ fontStretch: fitStretch(card.name, NAME_CHARS) }}
               >
                 {card.name}

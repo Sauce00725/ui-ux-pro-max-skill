@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
  * on to each other: training together, which is the whole product.
  *
  * Geometry is shared with public/icon assets (app/icon.svg); keep in sync.
+ * Colors come from the --logo-* tokens, so the mark follows the theme.
  */
 
 /** `linking`: the two figures slide together and the bar locks between them (the match moment). */
@@ -22,9 +23,9 @@ export function LogoMark({ className, title, linking = false }: { className?: st
     >
       <defs>
         <linearGradient id={`${id}-g`} x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#7cf1ff" />
-          <stop offset="0.45" stopColor="#22e6ff" />
-          <stop offset="1" stopColor="#7b61ff" />
+          <stop offset="0" style={{ stopColor: 'var(--logo-1)' }} />
+          <stop offset="0.45" style={{ stopColor: 'var(--logo-2)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--logo-3)' }} />
         </linearGradient>
         <filter id={`${id}-glow`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="2.2" result="b" />
@@ -74,7 +75,7 @@ export function Logo({
       <LogoMark className={cn(s.mark, 'shrink-0')} title={showWordmark ? undefined : 'Gym Buddy'} />
       {showWordmark && (
         <span className={cn('font-display font-black uppercase leading-none tracking-wide font-stretch-125%', s.text)}>
-          Gym <span className="text-primary [text-shadow:0_0_14px_rgb(34_230_255/0.55)]">Buddy</span>
+          Gym <span className="text-primary title-glow">Buddy</span>
         </span>
       )}
     </span>

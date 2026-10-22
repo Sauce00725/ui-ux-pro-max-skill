@@ -27,6 +27,11 @@ export function DeckStage({
         <div className="deck-horizon" />
         <div className="deck-grid" />
       </div>
+      {/* Screen-edge light rails, for themes that signal intent at the edges (off by default). */}
+      <div aria-hidden className="deck-rails">
+        <span />
+        <span />
+      </div>
       {children}
     </div>
   )

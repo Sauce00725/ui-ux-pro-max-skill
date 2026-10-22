@@ -42,7 +42,7 @@ export function BottomNav() {
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex h-full flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] font-medium transition-colors duration-200',
-                    active ? 'text-primary [text-shadow:0_0_12px_rgb(34_230_255/0.55)]' : 'text-muted-fg hover:text-fg',
+                    active ? 'text-primary title-glow' : 'text-muted-fg hover:text-fg',
                   )}
                 >
                   <Icon className="size-[1.375rem]" aria-hidden strokeWidth={active ? 2.4 : 2} />

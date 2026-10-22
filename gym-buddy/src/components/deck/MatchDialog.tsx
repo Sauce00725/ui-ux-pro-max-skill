@@ -45,7 +45,7 @@ export function MatchDialog({
 
       <div className="relative mx-auto w-fit">
         {card.photos[0] && (
-          <div className="rounded-full bg-[conic-gradient(from_210deg,var(--holo-spectrum))] p-[3px] shadow-[0_0_40px_-6px_rgb(34_230_255/0.6)]">
+          <div className="rounded-full bg-[conic-gradient(from_210deg,var(--holo-spectrum))] p-[3px] shadow-[0_0_40px_-6px_var(--glow-color)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={card.photos[0]} alt="" className="size-28 rounded-full border-4 border-bg object-cover" />
           </div>

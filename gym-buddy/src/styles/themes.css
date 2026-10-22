@@ -1,0 +1,616 @@
+/*
+ * Design options B and C, for comparison with A "Spatial Holo" (the default,
+ * defined in tokens.css + components.css). Each is a scoped CSS-variable theme
+ * on <html data-theme="…"> (the ui-styling skill's theming pattern): tokens
+ * first, component rules only where a token can't express the difference.
+ *
+ *   B · Signal  An instrument, not an interface. Black, white dot-matrix type
+ *               and one signal red. Nothing glows until something happens:
+ *               swiping lights the LED strips along the card's edge.
+ *   C · Volt    Race telemetry. Graphite, electric volt and type that leans
+ *               forward. Numbers read like a scoreboard; feedback arrives as
+ *               speed lines and slammed-on tags.
+ */
+
+/* ─── B · Signal ───────────────────────────────────────────────────────── */
+
+:root[data-theme='signal'] {
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-card: #0e0e0e;
+  --color-muted: #1a1a1a;
+  --color-border: #2a2a2a;
+  --color-fg: #ffffff;
+  --color-muted-fg: #9e9e9e;      /* 7.8:1 on bg */
+  --color-primary: #ffffff;
+  --color-primary-hover: #e6e6e6;
+  --color-on-primary: #000000;
+  --color-secondary: #bdbdbd;
+  --color-secondary-fg: #d4d4d4;
+  --color-accent: #ff453a;
+  --color-on-accent: #000000;
+  --color-like: #ffffff;
+  --color-super: #ff453a;         /* the signal: "really interested" (6.2:1 on bg) */
+  --color-pass: #8f8f8f;
+  --color-pass-fg: #d6d6d6;
+  --color-danger: #ff453a;
+
+  --font-display: var(--font-doto), var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-hero: clamp(2.5rem, 15cqi, 4rem); /* Doto runs wide: sized so "Meet people" spans the column */
+
+  --radius-card: 1.5rem;
+  --radius-panel: 1rem;
+  --radius-chip: 0.625rem;
+
+  /* Solid hairline surfaces: no frosting, gloss or shadow. */
+  --glass-fill: #0d0d0d;
+  --glass-fill-hover: #171717;
+  --glass-fill-strong: #050505;
+  --glass-stroke: #262626;
+  --glass-stroke-strong: #363636;
+  --glass-blur: 0px;
+  --glass-blur-deep: 0px;
+  --glass-saturate: 100%;
+  --glass-sheen: 0 0 #0000;
+  --glass-gloss: none;
+  --shadow-float: 0 0 #0000;
+
+  --holo-spectrum: #ffffff, #5c5c5c, #ffffff, #5c5c5c, #ffffff;
+  --holo-fill: #ffffff;
+  --holo-rim-opacity: 0;
+  --title-glow: none;
+  --glow-color: transparent;
+  --meter-track: #2a2a2a;
+  --bubble-mine-shadow: none;
+  --btn-primary-bg: #ffffff;
+  --btn-primary-fg: #000000;
+  --btn-primary-shadow: none;
+  --btn-primary-hover-shadow: none;
+  --btn-primary-hover-filter: brightness(0.88);
+  --logo-1: #ffffff;
+  --logo-2: #ffffff;
+  --logo-3: #cfcfcf;
+  --tilt-max: 0deg;
+
+  /* Doto's dots, rounded. Other faces have no ROND axis and ignore it. */
+  font-variation-settings: 'ROND' 100;
+}
+
+@layer components {
+  /* A still field of dots. No aurora, no colored light. */
+  [data-theme='signal'] .ambient {
+    background:
+      radial-gradient(circle, rgb(255 255 255 / 0.07) 0 1px, transparent 1.5px) 0 0 / 14px 14px,
+      #000;
+  }
+  [data-theme='signal'] .ambient-aurora,
+  [data-theme='signal'] .ambient::after,
+  [data-theme='signal'] .deck-orb,
+  [data-theme='signal'] .deck-grid,
+  [data-theme='signal'] .deck-horizon,
+  [data-theme='signal'] .deck-glare,
+  [data-theme='signal'] .deck-foil,
+  [data-theme='signal'] .deck-rim,
+  [data-theme='signal'] .deck-sweep {
+    display: none;
+  }
+
+  /* Flat, crisp card: no tilt or parallax, a hairline edge. */
+  [data-theme='signal'] .deck-card,
+  [data-theme='signal'] .deck-card[data-top] {
+    box-shadow: none;
+  }
+  [data-theme='signal'] .deck-face {
+    border: 1px solid var(--glass-stroke);
+    background: #000;
+  }
+  [data-theme='signal'] .deck-photo,
+  [data-theme='signal'] .deck-panel {
+    transform: none;
+  }
+  [data-theme='signal'] .deck-scrim {
+    background: linear-gradient(to top, #000 8%, rgb(0 0 0 / 0.65) 45%, transparent);
+  }
+
+  /*
+   * Light rails: LED dots down both edges of the screen (they stay put while the
+   * card moves). Dragging right lights the right rail from the middle out,
+   * left lights the left rail, and pushing up fills both with red from below.
+   * Each rail is lit bands over dim dots; the mask cuts all of it into dots.
+   */
+  [data-theme='signal'] .deck-rails {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20; /* above the cards, below the top bar and dock */
+    pointer-events: none;
+    filter: drop-shadow(0 0 2.5px rgb(255 255 255 / 0.5));
+  }
+  [data-theme='signal'] .deck-rails > span {
+    --rail-color: var(--color-like);
+    --rail-s: var(--like-strength);
+    position: absolute;
+    top: 22%;
+    bottom: 22%;
+    right: 3px;
+    width: 8px;
+    background:
+      linear-gradient(var(--color-super), var(--color-super)) bottom / 100% calc(var(--super-strength) * 100%) no-repeat,
+      linear-gradient(var(--rail-color), var(--rail-color)) center / 100% calc(var(--rail-s) * 100%) no-repeat,
+      rgb(255 255 255 / 0.14);
+    mask: radial-gradient(circle, #000 0 1.6px, transparent 2.1px) center / 8px 8px;
+  }
+  [data-theme='signal'] .deck-rails > :nth-child(2) {
+    --rail-color: var(--color-pass);
+    --rail-s: var(--pass-strength);
+    right: auto;
+    left: 3px;
+  }
+
+  /* Stamps in dot-matrix with a dotted outline, held straight. */
+  [data-theme='signal'] .deck-stamp {
+    border-width: 3px;
+    border-style: dotted;
+    background: rgb(0 0 0 / 0.6);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    box-shadow: none;
+  }
+  [data-theme='signal'] .deck-stamp--like {
+    transform: scale(calc(0.82 + var(--like-strength) * 0.18));
+  }
+  [data-theme='signal'] .deck-stamp--pass {
+    transform: scale(calc(0.82 + var(--pass-strength) * 0.18));
+  }
+
+  [data-theme='signal'] .chip {
+    background: transparent;
+    box-shadow: none;
+  }
+  [data-theme='signal'] .chip--shared {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+    box-shadow: none;
+  }
+
+  /* Controls: crisp LED rings instead of glows; Like is the one white disc. */
+  [data-theme='signal'] .ctl {
+    box-shadow: 0 0 0 calc(var(--ctl-energy) * 3px)
+      color-mix(in oklab, var(--ctl-glow) calc(var(--ctl-energy) * 35%), transparent);
+  }
+  [data-theme='signal'] .ctl--like,
+  [data-theme='signal'] .ctl--like:hover:not(:disabled) {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+  }
+  [data-theme='signal'] .ctl--like::after {
+    padding: 0;
+    background: none;
+    mask: none;
+    border: 2px dotted rgb(255 255 255 / calc(0.3 + var(--ctl-energy) * 0.7));
+  }
+  [data-theme='signal'] .ctl-badge {
+    box-shadow: none;
+  }
+
+  /* Picks left: a ring of LED dots. */
+  [data-theme='signal'] .quota-cell {
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-dasharray: 0.01 1000;
+  }
+  [data-theme='signal'] .quota-cell--fill {
+    stroke: #fff;
+  }
+  [data-theme='signal'] .quota-glow {
+    filter: drop-shadow(0 0 2px rgb(255 255 255 / 0.7));
+  }
+
+  /* Dock: a red status dot glides to the active tab. */
+  [data-theme='signal'] .dock-bead {
+    background: none;
+    box-shadow: none;
+  }
+  [data-theme='signal'] .dock-bead::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    margin-left: -2.5px;
+    border-radius: 9999px;
+    background: var(--color-super);
+    box-shadow: 0 0 6px var(--color-super);
+  }
+
+  [data-theme='signal'] .hero-title {
+    font-stretch: normal;
+  }
+  [data-theme='signal'] .holo-text {
+    background: none;
+    color: var(--color-super);
+    -webkit-text-fill-color: currentColor;
+  }
+  [data-theme='signal'] .hero-pane:nth-child(n) {
+    background: #0a0a0a;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+/* ─── C · Volt ─────────────────────────────────────────────────────────── */
+
+:root[data-theme='volt'] {
+  --color-bg: #0a0a0b;
+  --color-surface: #111113;
+  --color-card: #151518;
+  --color-muted: #1f1f24;
+  --color-border: #2b2b31;
+  --color-fg: #f6f6ef;
+  --color-muted-fg: #a6a6ad;      /* 8.2:1 on bg */
+  --color-primary: #d4ff3a;       /* volt: 17:1 on bg, and black text on it */
+  --color-primary-hover: #e2ff74;
+  --color-on-primary: #0a0a0b;
+  --color-secondary: #9b8cff;
+  --color-secondary-fg: #b9adff;
+  --color-accent: #ff5b3a;
+  --color-on-accent: #0a0a0b;
+  --color-like: #d4ff3a;
+  --color-super: #9b8cff;         /* ultraviolet */
+  --color-pass: #ff5b3a;          /* heat */
+  --color-pass-fg: #ff8a6e;
+  --color-danger: #ff5b3a;
+  --color-glow-ember: #d4ff3a;
+  --color-glow-rose: #ff5b3a;
+  --color-glow-tide: #9b8cff;
+
+  --font-display: var(--font-saira), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-saira), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --fit-stretch-max: 75;          /* names run condensed, like a scoreboard */
+
+  --text-hero: clamp(3.25rem, 24cqi, 6rem);
+  --text-hero--line-height: 0.86;
+  --text-display: clamp(2.25rem, 1.9rem + 1.8vw, 2.875rem);
+
+  --radius-card: 1rem;
+  --radius-panel: 0.75rem;
+  --radius-chip: 0.375rem;
+
+  --glass-fill: rgb(255 255 255 / 0.04);
+  --glass-fill-hover: rgb(255 255 255 / 0.08);
+  --glass-fill-strong: rgb(16 16 18 / 0.9);
+  --glass-stroke: rgb(255 255 255 / 0.09);
+  --glass-stroke-strong: rgb(255 255 255 / 0.15);
+  --glass-blur: 14px;
+  --glass-blur-deep: 24px;
+  --glass-saturate: 120%;
+  --glass-sheen: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  --glass-gloss: none;
+  --shadow-float: 0 24px 48px -24px rgb(0 0 0 / 0.9);
+
+  --holo-spectrum: #d4ff3a, #f6f6ef 18%, #d4ff3a 36%, #2b2b31 62%, #d4ff3a;
+  --holo-fill: #d4ff3a;
+  --holo-rim-opacity: 0.9;
+  --title-glow: none;
+  --glow-color: rgb(212 255 58 / 0.45);
+  --meter-track: rgb(255 255 255 / 0.12);
+  --bubble-mine-shadow: 0 10px 24px -16px rgb(212 255 58 / 0.8);
+  --btn-primary-bg: #d4ff3a;
+  --btn-primary-fg: #0a0a0b;
+  --btn-primary-shadow: 0 12px 28px -14px rgb(212 255 58 / 0.75);
+  --btn-primary-hover-shadow: 0 14px 34px -12px rgb(212 255 58 / 0.95);
+  --btn-primary-hover-filter: brightness(1.06);
+  --logo-1: #ecff9c;
+  --logo-2: #d4ff3a;
+  --logo-3: #a5d000;
+  --tilt-max: 0deg;
+}
+
+@layer base {
+  /* Display type leans forward and runs condensed. */
+  [data-theme='volt'] .font-display {
+    font-style: italic;
+    font-stretch: 70%;
+  }
+}
+
+@layer components {
+  /* Speed lines, a volt light leak, and one light streak (the ambient loop). */
+  [data-theme='volt'] .ambient {
+    background:
+      radial-gradient(70vmax 45vmax at 100% 0%, rgb(212 255 58 / 0.09), transparent 70%),
+      radial-gradient(60vmax 40vmax at 0% 100%, rgb(155 140 255 / 0.07), transparent 70%),
+      repeating-linear-gradient(115deg, rgb(255 255 255 / 0.022) 0 1px, transparent 1px 26px),
+      #0a0a0b;
+  }
+  [data-theme='volt'] .ambient::after {
+    display: none;
+  }
+  [data-theme='volt'] .ambient-aurora {
+    top: 34%;
+    left: 0;
+    width: 70vmax;
+    height: 2px;
+    margin: 0;
+    background: linear-gradient(90deg, transparent, rgb(212 255 58 / 0.6) 70%, #fff 96%, transparent);
+    transform-origin: 0 50%;
+    animation: volt-streak 7s cubic-bezier(0.55, 0, 0.35, 1) infinite;
+  }
+
+  /* The deck stands on a track. */
+  [data-theme='volt'] .deck-grid {
+    background:
+      linear-gradient(to bottom, rgb(212 255 58 / 0.16) 1px, transparent 1px) 0 0 / 100% var(--grid-size),
+      linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px) 0 0 / var(--grid-size) 100%;
+  }
+  [data-theme='volt'] .deck-horizon {
+    background: linear-gradient(to right, transparent, rgb(212 255 58 / 0.5), transparent);
+    box-shadow: 0 0 24px 2px rgb(212 255 58 / 0.18);
+  }
+
+  [data-theme='volt'] .deck-glare,
+  [data-theme='volt'] .deck-foil {
+    display: none;
+  }
+  [data-theme='volt'] .deck-photo,
+  [data-theme='volt'] .deck-panel {
+    transform: none;
+  }
+  /* Arrival: a fast flash instead of a slow sweep. */
+  [data-theme='volt'] .deck-sweep {
+    width: 30%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(212 255 58 / 0.18) 45%,
+      rgb(255 255 255 / 0.35) 50%,
+      rgb(212 255 58 / 0.18) 55%,
+      transparent
+    );
+  }
+  [data-theme='volt'] .deck-card[data-top] .deck-sweep {
+    animation-duration: 0.8s;
+  }
+
+  /* Speed lines stream off the trailing edge while you drag. */
+  [data-theme='volt'] .deck-glyphs {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* Only the card in hand shows them (the cards behind inherit the same signals). */
+  [data-theme='volt'] .deck-card:not([data-top]) .deck-glyphs {
+    display: none;
+  }
+  [data-theme='volt'] .deck-glyphs > span {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 7px,
+      currentColor 7px 8px,
+      transparent 8px 19px,
+      currentColor 19px 21px,
+      transparent 21px 31px
+    );
+  }
+  [data-theme='volt'] .deck-glyphs > :nth-child(1) {
+    color: var(--color-like);
+    opacity: calc(var(--like-strength) * 0.9);
+    mask: linear-gradient(to right, #000, transparent 60%);
+  }
+  [data-theme='volt'] .deck-glyphs > :nth-child(2) {
+    color: var(--color-pass);
+    opacity: calc(var(--pass-strength) * 0.9);
+    mask: linear-gradient(to left, #000, transparent 60%);
+  }
+  [data-theme='volt'] .deck-glyphs > :nth-child(3) {
+    color: var(--color-super);
+    opacity: calc(var(--super-strength) * 0.9);
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0 7px,
+      currentColor 7px 8px,
+      transparent 8px 19px,
+      currentColor 19px 21px,
+      transparent 21px 31px
+    );
+    mask: linear-gradient(to top, #000, transparent 60%);
+  }
+
+  /* Tags slammed onto the card, broadcast-graphics style. */
+  [data-theme='volt'] .deck-stamp {
+    top: calc(var(--step) * 12);
+    padding: calc(var(--step) * 1) calc(var(--step) * 4);
+    border: 0;
+    border-radius: 0.375rem;
+    color: var(--color-on-primary);
+    font-size: 2.25rem;
+    font-style: italic;
+    font-stretch: 70%;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    text-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  [data-theme='volt'] .deck-stamp--like {
+    background: var(--color-like);
+    box-shadow: 0 14px 34px -14px var(--color-like);
+    transform: rotate(-8deg) skewX(-10deg) scale(calc(0.8 + var(--like-strength) * 0.2));
+  }
+  [data-theme='volt'] .deck-stamp--pass {
+    background: var(--color-pass);
+    box-shadow: 0 14px 34px -14px var(--color-pass);
+    transform: rotate(8deg) skewX(-10deg) scale(calc(0.8 + var(--pass-strength) * 0.2));
+  }
+  [data-theme='volt'] .deck-stamp--super {
+    background: var(--color-super);
+    box-shadow: 0 14px 34px -14px var(--color-super);
+    transform: translateX(-50%) skewX(-10deg) scale(calc(0.8 + var(--super-strength) * 0.2));
+  }
+
+  /* A volt lane marker down the panel's edge. */
+  [data-theme='volt'] .deck-panel::before {
+    content: '';
+    position: absolute;
+    inset: var(--space-card) auto var(--space-card) 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-primary);
+    box-shadow: 0 0 12px var(--color-primary);
+  }
+  [data-theme='volt'] .deck-name {
+    line-height: 0.9;
+  }
+
+  [data-theme='volt'] .chip {
+    border-radius: 0.375rem;
+    box-shadow: none;
+    font-weight: 600;
+    transform: skewX(-10deg);
+  }
+  [data-theme='volt'] .chip--shared {
+    border-color: transparent;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: 0 8px 20px -12px var(--color-primary);
+  }
+
+  [data-theme='volt'] .ctl--like {
+    border-color: transparent;
+    background: var(--color-primary);
+  }
+  @media (hover: hover) {
+    [data-theme='volt'] .ctl--like:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
+  }
+  [data-theme='volt'] .ctl--like::after {
+    padding: 0;
+    background: none;
+    mask: none;
+    border: 2px solid rgb(212 255 58 / calc(0.25 + var(--ctl-energy) * 0.6));
+  }
+
+  /* Picks left: a tachometer of hard-edged cells. */
+  [data-theme='volt'] .quota-cell {
+    stroke-width: 5;
+    stroke-linecap: butt;
+  }
+  [data-theme='volt'] .quota-glow {
+    filter: drop-shadow(0 0 3px rgb(212 255 58 / 0.7));
+  }
+
+  [data-theme='volt'] .dock-bar {
+    border-radius: 1.25rem;
+  }
+  [data-theme='volt'] .dock-bead {
+    border-radius: 0.875rem;
+    background: var(--color-primary);
+    box-shadow: 0 10px 24px -12px rgb(212 255 58 / 0.8);
+    transform: translateX(calc(var(--dock-index, 0) * 100%)) skewX(-10deg);
+  }
+
+  [data-theme='volt'] .bubble {
+    border-radius: 0.875rem;
+  }
+  [data-theme='volt'] .bubble--mine {
+    border-bottom-right-radius: 0.25rem;
+  }
+  [data-theme='volt'] .bubble--theirs {
+    border-bottom-left-radius: 0.25rem;
+  }
+
+  [data-theme='volt'] .hero-title {
+    font-stretch: 68%;
+  }
+  [data-theme='volt'] .holo-text {
+    background: none;
+    color: var(--color-primary);
+    -webkit-text-fill-color: currentColor;
+  }
+  [data-theme='volt'] .hero-pane:nth-child(n) {
+    width: calc(100% - var(--step) * 4);
+    background: #141417;
+    box-shadow: none;
+    transform: skewX(-8deg) translateX(calc(var(--pane-step, 0) * var(--step) * 2));
+  }
+  [data-theme='volt'] .hero-stage {
+    gap: calc(var(--step) * 2);
+  }
+  [data-theme='volt'] .hero-pane:nth-child(2) {
+    --pane-step: 1;
+  }
+  [data-theme='volt'] .hero-pane:nth-child(3) {
+    --pane-step: 2;
+  }
+}
+
+/*
+ * Overrides of utility classes used in markup (text-primary, font-mono,
+ * rounded-full…). Utilities outrank the components layer, so these sit
+ * outside the layers.
+ */
+[data-theme='signal'] .chip--shared svg,
+[data-theme='volt'] .chip--shared svg {
+  color: var(--color-on-primary);
+}
+[data-theme='signal'] .quota-ring > span {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+[data-theme='volt'] .quota-ring > span {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-style: italic;
+  font-weight: 800;
+}
+[data-theme='volt'] .dock a[aria-current='page'] {
+  color: var(--color-on-primary);
+}
+[data-theme='volt'] .btn-holo {
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme='volt'] .hero-pane {
+  padding-block: calc(var(--step) * 3);
+}
+[data-theme='volt'] .match-title {
+  font-size: min(3rem, 15cqi);
+  font-stretch: 72%;
+}
+
+@keyframes volt-streak {
+  0% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-80vmax);
+  }
+  10% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(160vmax);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='volt'] .ambient-aurora {
+    display: none;
+  }
+}

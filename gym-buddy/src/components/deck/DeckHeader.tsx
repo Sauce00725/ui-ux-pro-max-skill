@@ -29,7 +29,7 @@ export function DeckHeader({
         <p className="hud-label text-primary">// Daily selection</p>
         <h1
           ref={titleRef}
-          className="overflow-hidden whitespace-nowrap font-display text-title font-extrabold uppercase [text-shadow:0_0_18px_rgb(34_230_255/0.35)]"
+          className="overflow-hidden whitespace-nowrap font-display text-title font-extrabold uppercase title-glow"
           style={{ fontStretch: fitStretch(title, TITLE_CHARS) }}
         >
           {title}

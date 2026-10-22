@@ -25,6 +25,19 @@ Built with the ui-ux-pro-max skill from these database matches:
 `--design-system` also proposed its own palette and Inter for everything; both were declined to
 keep the brand, so it was not persisted. This file records what was actually used.
 
+## Options under review
+
+Two alternative directions live in `src/styles/themes.css` as scoped themes (`<html data-theme="signal">`
+or `"volt"`), built on the same tokens; nothing changes unless the attribute is set. Whichever is
+picked becomes this master and the others are removed.
+
+- **B · Signal:** black, white dot-matrix type (Doto) and one signal red; solid hairline surfaces,
+  no glow; LED light rails on the screen edges light up as you swipe. Style DB: Dark Mode (OLED) +
+  Minimalism & Swiss.
+- **C · Volt:** graphite, electric volt, condensed italic type (Saira); speed lines, slammed-on tags,
+  a tachometer quota ring. Style DB: Kinetic Typography + Vibrant & Block-based; typography DB
+  "Sports/Fitness" pairing informed the condensed athletic voice.
+
 ## Color tokens
 
 | Token | Value | Role |

@@ -42,30 +42,29 @@
     padding: 1px;
     background: conic-gradient(from 210deg, var(--holo-spectrum));
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-    opacity: 0.75;
+    opacity: var(--holo-rim-opacity);
     pointer-events: none;
   }
 }
 
+/* Heading glow; each theme decides whether titles emit light. */
+@utility title-glow {
+  text-shadow: var(--title-glow);
+}
+
 /* Primary action: a lit holographic pill. Text stays ≥5.8:1 across the whole gradient. */
 @utility btn-holo {
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 0.38), transparent 55%),
-    var(--holo-fill);
-  color: var(--color-on-primary);
-  box-shadow:
-    inset 0 1px 0 0 rgb(255 255 255 / 0.5),
-    0 12px 28px -14px rgb(34 230 255 / 0.9);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  box-shadow: var(--btn-primary-shadow);
   transition:
     transform var(--dur-spring) var(--ease-spring),
     filter var(--dur-hover) var(--ease-soft),
     box-shadow var(--dur-hover) var(--ease-soft);
   @media (hover: hover) {
     &:hover:not(:disabled) {
-      filter: brightness(1.08) saturate(1.1);
-      box-shadow:
-        inset 0 1px 0 0 rgb(255 255 255 / 0.55),
-        0 14px 34px -12px rgb(34 230 255 / 1);
+      filter: var(--btn-primary-hover-filter);
+      box-shadow: var(--btn-primary-hover-shadow);
     }
   }
   &:active:not(:disabled) {
@@ -371,6 +370,13 @@
   }
   .deck-card:not([data-top]) .deck-rim {
     opacity: 0.18;
+  }
+
+  /* Theme-specific swipe signals (speed lines on the card, light rails at the
+     screen edges); off in this theme. */
+  .deck-glyphs,
+  .deck-rails {
+    display: none;
   }
 
   /* One-time band of light across the foil when a card arrives on top (the view's key motion). */
@@ -784,7 +790,7 @@
     stroke-linecap: round;
   }
   .quota-cell--track {
-    stroke: rgb(170 200 255 / 0.14);
+    stroke: var(--meter-track);
   }
   .quota-cell--fill {
     stroke: var(--color-primary);
@@ -897,9 +903,7 @@
     border-bottom-right-radius: 0.5rem;
     background: var(--holo-fill);
     color: var(--color-on-primary);
-    box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.4),
-      0 10px 24px -14px rgb(34 230 255 / 0.8);
+    box-shadow: var(--bubble-mine-shadow);
   }
   .bubble--theirs {
     border: 1px solid var(--glass-stroke);
@@ -969,7 +973,7 @@
     width: 10px;
     height: 4px;
     border-radius: 9999px;
-    background: rgb(170 200 255 / 0.16);
+    background: var(--meter-track);
   }
   .hud-meter > span[data-on] {
     background: var(--color-primary);
