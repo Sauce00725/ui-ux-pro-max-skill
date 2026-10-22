@@ -31,7 +31,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         </p>
       )}
 
-      <article className="glass-strong hud-frame relative mt-3 rounded-card p-(--space-card)">
+      <article className="glass-strong relative mt-3 rounded-card p-(--space-card)">
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {event.activityName && <span className="hud-label text-primary">// {event.activityName}</span>}
           {event.beginnerFriendly && (

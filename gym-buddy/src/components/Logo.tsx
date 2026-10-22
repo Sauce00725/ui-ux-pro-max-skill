@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils'
  * Geometry is shared with public/icon assets (app/icon.svg); keep in sync.
  */
 
-export function LogoMark({ className, title }: { className?: string; title?: string }) {
+/** `linking`: the two figures slide together and the bar locks between them (the match moment). */
+export function LogoMark({ className, title, linking = false }: { className?: string; title?: string; linking?: boolean }) {
   const id = useId().replace(/:/g, '')
   return (
     <svg
@@ -35,13 +36,17 @@ export function LogoMark({ className, title }: { className?: string; title?: str
       </defs>
       <g fill={`url(#${id}-g)`} filter={`url(#${id}-glow)`}>
         {/* left buddy */}
-        <circle cx="15" cy="14.5" r="5.5" />
-        <rect x="9" y="23" width="12" height="27" rx="6" />
+        <g className={linking ? 'match-mark-left' : undefined}>
+          <circle cx="15" cy="14.5" r="5.5" />
+          <rect x="9" y="23" width="12" height="27" rx="6" />
+        </g>
         {/* right buddy */}
-        <circle cx="49" cy="14.5" r="5.5" />
-        <rect x="43" y="23" width="12" height="27" rx="6" />
+        <g className={linking ? 'match-mark-right' : undefined}>
+          <circle cx="49" cy="14.5" r="5.5" />
+          <rect x="43" y="23" width="12" height="27" rx="6" />
+        </g>
         {/* the link / bar */}
-        <rect x="19" y="33.5" width="26" height="5" rx="2.5" />
+        <rect x="19" y="33.5" width="26" height="5" rx="2.5" className={linking ? 'match-mark-bar' : undefined} />
       </g>
     </svg>
   )
@@ -68,7 +73,7 @@ export function Logo({
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <LogoMark className={cn(s.mark, 'shrink-0')} title={showWordmark ? undefined : 'Gym Buddy'} />
       {showWordmark && (
-        <span className={cn('font-display font-black uppercase leading-none tracking-wide', s.text)}>
+        <span className={cn('font-display font-black uppercase leading-none tracking-wide font-stretch-125%', s.text)}>
           Gym <span className="text-primary [text-shadow:0_0_14px_rgb(34_230_255/0.55)]">Buddy</span>
         </span>
       )}

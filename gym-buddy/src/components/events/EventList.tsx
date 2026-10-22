@@ -19,7 +19,7 @@ export function EventList({ events }: { events: EventItem[] }) {
   if (!mounted) {
     return (
       <div className="mt-4 space-y-3" aria-busy>
-        {[0, 1, 2].map((i) => <div key={i} className="glass h-28 animate-pulse rounded-panel shadow-none" />)}
+        {[0, 1, 2].map((i) => <div key={i} className="glass glass-flat h-28 animate-pulse rounded-panel" />)}
       </div>
     )
   }
@@ -50,7 +50,7 @@ function EventCard({ event: e }: { event: EventItem }) {
   const d = dateBlock(e.startsAt)
   const full = e.capacity !== null && e.goingCount >= e.capacity
   return (
-    <li className="glass relative flex gap-3 rounded-panel p-3 shadow-none transition-colors hover:bg-white/5">
+    <li className="glass glass-flat relative flex gap-3 rounded-panel p-3 transition-colors duration-200 hover:bg-(--glass-fill-hover)">
       {/* date block */}
       <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-chip border border-[color:var(--glass-stroke)] bg-[color:var(--glass-fill)] py-2">
         <span className="hud-label text-primary">{d.weekday}</span>

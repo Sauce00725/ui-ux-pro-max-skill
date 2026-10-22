@@ -4,9 +4,9 @@ import { LoaderCircle } from 'lucide-react'
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary text-on-primary shadow-[0_0_0_rgb(34_230_255/0)] hover:bg-primary-hover hover:shadow-[0_0_28px_rgb(34_230_255/0.45)]',
-  secondary: 'bg-card text-fg border hover:bg-muted',
-  ghost: 'text-muted-fg hover:text-fg hover:bg-card',
+  primary: 'btn-holo',
+  secondary: 'glass glass-flat text-fg hover:bg-(--glass-fill-hover)',
+  ghost: 'text-muted-fg hover:text-fg hover:bg-(--glass-fill)',
   danger: 'bg-danger text-black hover:bg-red-400',
 }
 
@@ -24,7 +24,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex h-12 items-center justify-center gap-2 rounded-panel px-5 font-semibold tracking-wide transition-[color,background-color,box-shadow] duration-200',
+        'inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 font-semibold transition-[color,background-color,box-shadow,transform,filter] duration-200',
         'disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         className,

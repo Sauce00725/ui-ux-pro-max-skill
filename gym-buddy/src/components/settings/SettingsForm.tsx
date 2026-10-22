@@ -172,7 +172,7 @@ type SectionState = Pick<ReturnType<typeof useSection>, 'save' | 'reset' | 'dirt
 
 function Section({ title, eyebrow, state, children }: { title: string; eyebrow: string; state: SectionState; children: React.ReactNode }) {
   return (
-    <section className="glass relative space-y-5 rounded-card p-(--space-card) shadow-none" aria-labelledby={`s-${eyebrow}`}>
+    <section className="glass glass-flat relative space-y-5 rounded-card p-(--space-card)" aria-labelledby={`s-${eyebrow}`}>
       <header className="flex items-baseline justify-between gap-3">
         <h2 id={`s-${eyebrow}`} className="font-display text-lg font-bold uppercase">{title}</h2>
         <span className="hud-label">{eyebrow}</span>
@@ -210,7 +210,7 @@ function AccountSection({ userId, email, paused: initialPaused }: { userId: stri
     })
 
   return (
-    <section className="glass relative space-y-4 rounded-card p-(--space-card) shadow-none" aria-labelledby="s-account">
+    <section className="glass glass-flat relative space-y-4 rounded-card p-(--space-card)" aria-labelledby="s-account">
       <header className="flex items-baseline justify-between gap-3">
         <h2 id="s-account" className="font-display text-lg font-bold uppercase">Account</h2>
         <span className="hud-label">07</span>

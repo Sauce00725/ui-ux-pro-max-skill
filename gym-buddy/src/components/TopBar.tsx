@@ -13,9 +13,9 @@ export function TopBar() {
   const onSettings = pathname.startsWith('/settings')
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--glass-stroke)] bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-md items-center justify-between px-(--space-gutter)">
-        <Link href="/discover" aria-label="Gym Buddy home">
+    <header className="topbar">
+      <div className="mx-auto flex h-(--topbar-height) max-w-md items-center justify-between px-(--space-gutter)">
+        <Link href="/discover" aria-label="Gym Buddy home" className="rounded-full">
           <Logo size="sm" />
         </Link>
         <Link
@@ -23,10 +23,8 @@ export function TopBar() {
           aria-label="Profile and settings"
           aria-current={onSettings ? 'page' : undefined}
           className={cn(
-            'grid size-11 place-items-center rounded-full border transition-colors',
-            onSettings
-              ? 'border-primary bg-primary/10 text-primary'
-              : 'border-[color:var(--glass-stroke-strong)] bg-[color:var(--glass-fill)] text-fg hover:border-primary hover:text-primary',
+            'glass glass-flat grid size-11 place-items-center rounded-full transition-colors duration-200',
+            onSettings ? 'border-primary/70 text-primary' : 'text-fg hover:text-primary',
           )}
         >
           <UserRound className="size-5" aria-hidden />

@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-dvh pb-20">
+    <div className="min-h-dvh pb-(--dock-clearance)">
       <TopBar />
       {children}
       <Suspense>

@@ -10,7 +10,7 @@ export function TranslationPreference() {
   const [lang, setLang] = useMyLanguage()
 
   return (
-    <section className="glass relative space-y-4 rounded-card p-(--space-card) shadow-none" aria-labelledby="s-translation">
+    <section className="glass glass-flat relative space-y-4 rounded-card p-(--space-card)" aria-labelledby="s-translation">
       <header className="flex items-baseline justify-between gap-3">
         <h2 id="s-translation" className="flex items-center gap-2 font-display text-lg font-bold uppercase">
           <Languages className="size-5 text-primary" aria-hidden /> Translation

@@ -3,11 +3,13 @@ import { redirect } from 'next/navigation'
 import { CalendarDays, Heart, Users } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { createClient } from '@/lib/supabase/server'
+import { cn } from '@/lib/utils'
 
+// Each pane is a real part of the product, nothing made up.
 const FEATURES = [
-  { icon: Heart, title: 'Dating', body: 'Match with people who share your training, schedule and goals.' },
-  { icon: Users, title: 'Training Partners', body: 'Find a spotter, a running partner, or someone patient to start with. Friends only.' },
-  { icon: CalendarDays, title: 'Events', body: 'Run clubs, CrossFit, open play: what’s happening near you.' },
+  { icon: Heart, title: 'Dating', body: '10 picks every 6 hours. Slow, on purpose.' },
+  { icon: Users, title: 'Training Partners', body: 'A spotter, a running partner, or someone patient to start with.' },
+  { icon: CalendarDays, title: 'Events', body: 'Run clubs, CrossFit and open play near you.' },
 ]
 
 export default async function Home() {
@@ -18,25 +20,27 @@ export default async function Home() {
   if (user) redirect('/discover')
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-10">
+    <main className="@container mx-auto flex min-h-dvh max-w-md flex-col overflow-hidden px-(--space-gutter) pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <Logo size="md" />
 
-      <p className="hud-label mt-16 text-primary">// v2.0 · active-lifestyle network</p>
-      <h1 className="mt-3 font-display text-5xl font-black uppercase leading-[0.95] [text-shadow:0_0_30px_rgb(34_230_255/0.35)]">
-        Meet people <span className="text-primary">who move.</span>
+      <p className="hud-label mt-14 text-primary">// Active-lifestyle network</p>
+      <h1 className="hero-title mt-3 font-display text-hero font-black uppercase">
+        <span className="block whitespace-nowrap">Meet people</span>
+        <span className="holo-text block whitespace-nowrap">who move.</span>
       </h1>
-      <p className="mt-4 text-lg text-muted-fg">
+      <p className="mt-5 text-lg text-muted-fg">
         Dates, training partners and local events, whether you’re already active or just getting started.
       </p>
 
-      <ul className="mt-10 space-y-3">
-        {FEATURES.map(({ icon: Icon, title, body }) => (
-          <li key={title} className="glass hud-frame relative flex gap-4 rounded-panel p-4 shadow-none [--hud-bracket:10px]">
-            <span className="grid size-11 shrink-0 place-items-center rounded-chip border border-primary/40 bg-primary/10 text-primary">
+      {/* What's inside, as panes floating at different angles */}
+      <ul className="hero-stage mt-10">
+        {FEATURES.map(({ icon: Icon, title, body }, i) => (
+          <li key={title} className={cn('hero-pane flex items-center gap-4 rounded-panel border border-[color:var(--glass-stroke-strong)] p-4', i === 0 && 'holo-rim')}>
+            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-primary/40 bg-primary/10 text-primary shadow-[0_0_18px_-6px_var(--color-primary)]">
               <Icon className="size-5" aria-hidden />
             </span>
-            <div>
-              <h2 className="font-display text-base font-bold uppercase tracking-wider">{title}</h2>
+            <div className="min-w-0">
+              <h2 className="font-display text-base font-extrabold uppercase">{title}</h2>
               <p className="text-sm text-muted-fg">{body}</p>
             </div>
           </li>
@@ -44,10 +48,13 @@ export default async function Home() {
       </ul>
 
       <div className="mt-auto space-y-3 pt-10">
-        <Link href="/signup" className="flex h-12 items-center justify-center rounded-xl bg-primary font-semibold text-on-primary hover:bg-primary-hover">
+        <Link href="/signup" className="btn-holo flex h-12 items-center justify-center rounded-full font-semibold">
           Create account
         </Link>
-        <Link href="/login" className="flex h-12 items-center justify-center rounded-xl border font-semibold hover:bg-surface">
+        <Link
+          href="/login"
+          className="glass glass-flat flex h-12 items-center justify-center rounded-full font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)"
+        >
           Log in
         </Link>
       </div>

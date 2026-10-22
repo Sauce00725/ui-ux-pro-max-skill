@@ -2,10 +2,10 @@ import { cn } from '@/lib/utils'
 
 /**
  * The stage is the element useSwipeGesture writes its live signals to
- * (--like-strength etc.). The glowing shapes beneath the glass read them, so
- * the ambient light shifts toward cyan on a like and magenta on a pass.
- * Underneath, a perspective grid floor flows toward the viewer: the page's
- * single ambient loop (stopped under prefers-reduced-motion).
+ * (--like-strength etc.). The light beneath the glass reads them, so it
+ * blooms cyan on a like, red on a pass and magenta on a Super Like. A static
+ * floor grid gives the deck a room to stand in; the slow-moving light behind
+ * everything is the app-wide aurora (AmbientBackground).
  */
 export function DeckStage({
   ref,

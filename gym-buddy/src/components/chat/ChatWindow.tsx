@@ -75,10 +75,10 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
   const lastOwnSent = [...messages].reverse().find((m) => m.sender_id === currentUserId && m.status === 'sent')
 
   return (
-    <div className="mx-auto flex h-dvh max-w-2xl flex-col bg-bg">
+    <div className="mx-auto flex h-dvh max-w-2xl flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b px-2 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <Link href="/matches" aria-label="Back to chats" className="grid size-11 place-items-center rounded-full hover:bg-card">
+      <header className="flex items-center gap-3 border-b border-[color:var(--glass-stroke)] bg-bg/60 px-2 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
+        <Link href="/matches" aria-label="Back to chats" className="grid size-11 place-items-center rounded-full transition-colors duration-200 hover:bg-(--glass-fill-hover)">
           <ArrowLeft className="size-5" aria-hidden />
         </Link>
         <Avatar url={other.avatarUrl} name={other.name} size="sm" />
@@ -149,7 +149,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
         </ol>
 
         {otherTyping && (
-          <div className="mt-2 flex w-16 items-center justify-center gap-1 rounded-2xl rounded-bl-md bg-card px-3 py-3" aria-label={`${other.name} is typing`}>
+          <div className="bubble bubble--theirs mt-2 flex w-16 items-center justify-center gap-1 px-3 py-3" aria-label={`${other.name} is typing`}>
             {[0, 150, 300].map((d) => (
               <span key={d} className="size-1.5 animate-bounce rounded-full bg-muted-fg" style={{ animationDelay: `${d}ms` }} />
             ))}
@@ -163,7 +163,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           e.preventDefault()
           submit()
         }}
-        className="border-t px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
+        className="border-t border-[color:var(--glass-stroke)] bg-bg/60 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl"
       >
         <div className="flex items-end gap-2">
           <label htmlFor="message" className="sr-only">Message {other.name}</label>
@@ -185,13 +185,13 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
                 submit()
               }
             }}
-            className="max-h-36 min-h-12 flex-1 resize-none rounded-3xl border bg-surface px-4 py-3 text-base focus:border-primary focus:outline-none"
+            className="max-h-36 min-h-12 flex-1 resize-none rounded-3xl border border-[color:var(--glass-stroke-strong)] bg-surface/80 px-4 py-3 text-base shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             disabled={!draft.trim()}
             aria-label="Send message"
-            className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-on-primary transition-colors hover:bg-primary-hover disabled:bg-muted disabled:text-muted-fg"
+            className="btn-holo grid size-12 shrink-0 place-items-center rounded-full disabled:bg-muted disabled:bg-none disabled:text-muted-fg disabled:shadow-none"
           >
             <SendHorizontal className="size-5" aria-hidden />
           </button>
@@ -231,25 +231,20 @@ function LikeOpener({
         {who} {ctx.super ? 'super liked' : 'liked'} {whose} {what}
       </p>
       {(photoUrl || question) && (
-        <div className={cn('max-w-[75%] overflow-hidden rounded-panel border bg-surface', ctx.super ? 'border-[color:var(--color-super)]/50' : 'border-[color:var(--glass-stroke)]')}>
+        <div className={cn('glass glass-flat max-w-[75%] overflow-hidden rounded-panel', ctx.super && 'border-[color:var(--color-super)]/50 shadow-[0_0_24px_-10px_var(--color-super)]')}>
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoUrl} alt={`${mine ? otherName : 'Your'} photo`} className="h-36 w-28 object-cover" />
           ) : (
             <div className="p-3">
               <p className="hud-label">{question}</p>
-              <p className="mt-1 font-display text-sm font-medium leading-snug">{ctx.prompt_answer}</p>
+              <p className="mt-1 text-sm font-semibold leading-snug">{ctx.prompt_answer}</p>
             </div>
           )}
         </div>
       )}
       {message.body && (
-        <div
-          className={cn(
-            'max-w-[80%] whitespace-pre-wrap break-words rounded-3xl px-4 py-2.5 leading-snug',
-            mine ? 'rounded-br-md bg-primary text-on-primary' : 'rounded-bl-md bg-card text-fg',
-          )}
-        >
+        <div className={cn('bubble', mine ? 'bubble--mine' : 'bubble--theirs')}>
           {translation.shown(0, message.body)}
         </div>
       )}
@@ -266,10 +261,10 @@ function Bubble({ message, mine, grouped, onRetry }: { message: ChatMessage; min
       <div
         title={time}
         className={cn(
-          'max-w-[80%] whitespace-pre-wrap break-words rounded-3xl px-4 py-2.5 leading-snug',
-          mine ? 'rounded-br-md bg-primary text-on-primary' : 'rounded-bl-md bg-card text-fg',
+          'bubble',
+          mine ? 'bubble--mine' : 'bubble--theirs',
           message.status === 'sending' && 'opacity-70',
-          message.status === 'failed' && 'bg-danger/20 text-fg ring-1 ring-danger',
+          message.status === 'failed' && 'bg-danger/20 bg-none text-fg ring-1 ring-danger',
         )}
       >
         {translation.shown(0, message.body)}
@@ -317,12 +312,12 @@ function SafetyMenu({ matchId, name }: { matchId: string; name: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="grid size-11 place-items-center rounded-full hover:bg-card"
+        className="grid size-11 place-items-center rounded-full transition-colors duration-200 hover:bg-(--glass-fill-hover)"
       >
         <EllipsisVertical className="size-5" aria-hidden />
       </button>
       {open && (
-        <ul role="menu" className="absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-2xl border bg-surface py-1 shadow-xl">
+        <ul role="menu" className="glass-strong absolute right-0 top-12 z-50 w-52 overflow-hidden rounded-panel py-1">
           {items.map(({ key, label, icon: Icon, danger }) => (
             <li key={key} role="none">
               <button
@@ -332,7 +327,7 @@ function SafetyMenu({ matchId, name }: { matchId: string; name: string }) {
                   setOpen(false)
                   setDialog(key)
                 }}
-                className={cn('flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-card', danger && 'text-danger')}
+                className={cn('flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-(--glass-fill-hover)', danger && 'text-danger')}
               >
                 <Icon className="size-4" aria-hidden /> {label}
               </button>
@@ -363,7 +358,7 @@ function useModal(onClose: () => void) {
   useEffect(() => {
     ref.current?.showModal()
   }, [])
-  return { ref, onClose, className: 'm-auto w-[calc(100%-2rem)] max-w-sm rounded-3xl bg-surface p-6 text-fg backdrop:bg-black/70' }
+  return { ref, onClose, className: 'glass-strong m-auto w-[calc(100%-2rem)] max-w-sm rounded-card p-6 text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm' }
 }
 
 function ConfirmDialog({

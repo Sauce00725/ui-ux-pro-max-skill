@@ -11,12 +11,18 @@
   }
   html {
     color-scheme: dark;
+    /* Focused or scrolled-to elements stop clear of the sticky top bar and the floating dock. */
+    scroll-padding-block: calc(var(--topbar-height) + env(safe-area-inset-top)) var(--dock-clearance);
   }
   body {
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
+  }
+  /* Display type runs expanded by default; components condense it to fit (e.g. long names). */
+  .font-display {
+    font-stretch: 115%;
   }
   :focus-visible {
     outline: 2px solid var(--color-primary);

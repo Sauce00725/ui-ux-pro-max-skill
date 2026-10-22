@@ -39,10 +39,11 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
   const chip = (active: boolean) =>
     cn(
-      'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-chip border px-3 font-mono text-[0.6875rem] uppercase tracking-[0.12em] transition-colors',
+      // 40px pill, with the hit area stretched to 48px (rows are 8px apart, so they never overlap).
+      'relative inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.8125rem] font-medium transition-colors duration-200 after:absolute after:inset-x-0 after:-inset-y-1',
       active
-        ? 'border-primary bg-primary/10 text-primary'
-        : 'border-[color:var(--glass-stroke)] text-muted-fg hover:border-[color:var(--glass-stroke-strong)] hover:text-fg',
+        ? 'border-primary/70 bg-primary/12 text-primary shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_0_18px_-6px_var(--color-primary)]'
+        : 'border-[color:var(--glass-stroke)] bg-(--glass-fill) text-muted-fg hover:border-[color:var(--glass-stroke-strong)] hover:text-fg',
     )
 
   return (
@@ -50,14 +51,14 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="hud-label text-primary">// Local events</p>
-          <h1 className="font-display text-title font-bold uppercase [text-shadow:0_0_16px_rgb(34_230_255/0.4)]">Events</h1>
+          <h1 className="font-display text-title font-extrabold uppercase font-stretch-125% [text-shadow:0_0_18px_rgb(34_230_255/0.35)]">Events</h1>
           <p className="mt-1 text-sm text-muted-fg">Run clubs, CrossFit, pickleball, open gyms and more near you.</p>
         </div>
         <Link
           href="/events/new"
-          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-panel bg-primary px-3 text-sm font-semibold text-on-primary transition-shadow hover:shadow-[0_0_24px_rgb(34_230_255/0.45)]"
+          className="glass glass-flat inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)"
         >
-          <CalendarPlus className="size-4" aria-hidden /> Post
+          <CalendarPlus className="size-4 text-primary" aria-hidden /> Post
         </Link>
       </div>
 
@@ -94,13 +95,13 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       {events.length ? (
         <EventList events={events} />
       ) : (
-        <section className="glass hud-frame relative mt-6 rounded-card p-(--space-card) text-center">
-          <h2 className="font-display text-lg font-bold uppercase">Nothing scheduled yet</h2>
+        <section className="glass relative mt-6 rounded-card p-(--space-card) text-center">
+          <h2 className="font-display text-lg font-extrabold uppercase">Nothing scheduled yet</h2>
           <p className="mt-1 text-sm text-muted-fg">
             No events match these filters within {filters.radius} miles. Try a wider radius, or start one: a weekly run,
             an open gym, a pickleball meetup.
           </p>
-          <Link href="/events/new" className="mt-4 inline-flex h-11 items-center gap-2 rounded-panel bg-primary px-4 font-semibold text-on-primary">
+          <Link href="/events/new" className="btn-holo mt-4 inline-flex h-11 items-center gap-2 rounded-full px-5 font-semibold">
             <CalendarPlus className="size-4" aria-hidden /> Post an event
           </Link>
         </section>

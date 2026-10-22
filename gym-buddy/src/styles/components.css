@@ -4,43 +4,154 @@
  * lives here, so visual behavior is defined in one place per component.
  */
 
-/* ─── Glass primitives (utilities, so variants like md:glass work) ───────── */
+/* ─── Liquid glass (utilities, so variants like md:glass work) ───────────── */
+/*
+ * A pane of lit glass: frosted, saturated backdrop, a gloss highlight across
+ * the top, and rim light on the edges (bright above, faint below).
+ */
 
 @utility glass {
-  background: var(--glass-fill);
+  background: var(--glass-gloss), var(--glass-fill);
   border: 1px solid var(--glass-stroke);
-  box-shadow: var(--glass-sheen), var(--shadow-float);
+  box-shadow: var(--glass-sheen), var(--glass-elevation, var(--shadow-float));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 @utility glass-strong {
-  background: var(--glass-fill-strong);
+  background: var(--glass-gloss), var(--glass-fill-strong);
   border: 1px solid var(--glass-stroke-strong);
-  box-shadow: var(--glass-sheen), var(--shadow-float);
+  box-shadow: var(--glass-sheen), var(--glass-elevation, var(--shadow-float));
   backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
+}
+
+/* Glass that sits in the page rather than floating above it (list rows, tiles): rim light, no drop shadow. */
+@utility glass-flat {
+  --glass-elevation: 0 0 #0000;
+}
+
+/* A static holographic edge, for the few surfaces that celebrate something. Needs a positioned element. */
+@utility holo-rim {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 210deg, var(--holo-spectrum));
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0.75;
+    pointer-events: none;
+  }
+}
+
+/* Primary action: a lit holographic pill. Text stays ≥5.8:1 across the whole gradient. */
+@utility btn-holo {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 0.38), transparent 55%),
+    var(--holo-fill);
+  color: var(--color-on-primary);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.5),
+    0 12px 28px -14px rgb(34 230 255 / 0.9);
+  transition:
+    transform var(--dur-spring) var(--ease-spring),
+    filter var(--dur-hover) var(--ease-soft),
+    box-shadow var(--dur-hover) var(--ease-soft);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      filter: brightness(1.08) saturate(1.1);
+      box-shadow:
+        inset 0 1px 0 0 rgb(255 255 255 / 0.55),
+        0 14px 34px -12px rgb(34 230 255 / 1);
+    }
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: var(--dur-press);
+  }
 }
 
 /* No backdrop-filter support → fall back to an opaque panel so text stays legible. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
   .glass-strong {
-    background: rgb(13 18 27 / 0.94);
+    background: rgb(12 14 32 / 0.95);
   }
 }
 
+/* Reduced transparency: solid panels, no frosting. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong {
+    background: var(--color-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Typed so the holographic rim's hue can ease back to rest with the card's tilt. */
+@property --rim-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 200deg;
+}
+
 @layer components {
-  /* ─── Deck stage: ambient glows that react to the swipe ──────────────── */
+  /* ─── Ambient environment ────────────────────────────────────────────── */
+  /*
+   * Fixed behind every screen: a slow aurora (the one ambient loop), plus a
+   * static vignette and grain. The grain dithers the dark gradients so they
+   * don't band on 8-bit displays.
+   */
+
+  .ambient {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--color-bg);
+  }
+  /* Just big enough to cover the viewport at any rotation (its diagonal); 142vmax where hypot() is unsupported. */
+  .ambient-aurora {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 142vmax;
+    height: 142vmax;
+    margin: -71vmax 0 0 -71vmax;
+    width: hypot(100vw, 100vh);
+    height: hypot(100vw, 100vh);
+    margin: calc(hypot(100vw, 100vh) / -2) 0 0 calc(hypot(100vw, 100vh) / -2);
+    background:
+      radial-gradient(30vmax 26vmax at 40% 36%, rgb(34 230 255 / 0.15), transparent 70%),
+      radial-gradient(34vmax 30vmax at 60% 42%, rgb(123 97 255 / 0.22), transparent 70%),
+      radial-gradient(26vmax 22vmax at 55% 64%, rgb(255 61 242 / 0.1), transparent 70%),
+      radial-gradient(22vmax 20vmax at 42% 60%, rgb(93 255 194 / 0.05), transparent 70%);
+    animation: var(--animate-aurora);
+  }
+  .ambient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 .05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 120% 90% at 50% 35%, transparent 45%, rgb(0 0 0 / 0.55));
+  }
+
+  /* ─── Deck stage: light that reacts to the swipe ─────────────────────── */
 
   .deck-stage {
     position: relative;
     isolation: isolate;
   }
-  /* Glows fill the viewport behind the stage, so there's no hard edge where the stage box ends. */
+  /* Fills the viewport behind the stage, so there's no hard edge where the stage box ends. */
   .deck-orbs {
-    --grid-floor-offset: 4rem; /* sits above the bottom nav */
-    --grid-floor-height: 34%;
+    --grid-floor-offset: var(--dock-clearance);
+    --grid-floor-height: 32%;
     position: fixed;
     inset: 0;
     z-index: -1;
@@ -53,23 +164,23 @@
     z-index: -1;
     border-radius: 9999px;
     pointer-events: none;
-    filter: blur(70px);
-    will-change: transform, opacity;
+    filter: blur(72px);
+    will-change: opacity;
     transition: opacity var(--dur-hover) var(--ease-soft);
   }
   .deck-orb--ember {
-    inset: 18% -22% auto auto;
+    inset: 16% -24% auto auto;
     width: 70%;
     aspect-ratio: 1;
     background: radial-gradient(circle at 40% 40%, var(--color-glow-ember), transparent 68%);
-    opacity: calc(0.38 + var(--like-strength) * 0.45);
+    opacity: calc(0.12 + var(--like-strength) * 0.55);
   }
   .deck-orb--rose {
     inset: 8% auto auto -26%;
     width: 64%;
     aspect-ratio: 1;
     background: radial-gradient(circle at 60% 50%, var(--color-glow-rose), transparent 68%);
-    opacity: calc(0.28 + var(--pass-strength) * 0.5);
+    opacity: calc(0.06 + var(--pass-strength) * 0.6);
   }
   .deck-orb--tide {
     inset: auto 10% -6% 10%;
@@ -79,27 +190,61 @@
       color-mix(in oklab, var(--color-glow-tide), var(--color-super) calc(var(--super-strength) * 100%)),
       transparent 70%
     );
-    opacity: calc(0.22 + var(--super-strength) * 0.5);
+    opacity: calc(0.16 + var(--super-strength) * 0.5);
   }
   [data-dragging] .deck-orb {
     transition-duration: 0ms;
   }
 
+  /* Static floor grid under the deck: gives the stage a room to stand in. */
+  .deck-grid {
+    position: absolute;
+    inset: auto -50% var(--grid-floor-offset) -50%;
+    height: var(--grid-floor-height);
+    background:
+      linear-gradient(to bottom, rgb(34 230 255 / 0.2) 1px, transparent 1px) 0 0 / 100% var(--grid-size),
+      linear-gradient(to right, rgb(123 97 255 / 0.18) 1px, transparent 1px) 0 0 / var(--grid-size) 100%;
+    transform: perspective(420px) rotateX(64deg);
+    transform-origin: 50% 100%;
+    mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, black 15%, transparent 72%);
+  }
+  /* Horizon line where the floor meets the void. */
+  .deck-horizon {
+    position: absolute;
+    inset: auto 0 calc(var(--grid-floor-offset) + var(--grid-floor-height) * 0.45) 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgb(34 230 255 / 0.4), transparent);
+    box-shadow: 0 0 24px 2px rgb(34 230 255 / 0.2);
+  }
+
   /* ─── Card stack ─────────────────────────────────────────────────────── */
+  /*
+   * Two layers per card. The card itself moves in the plane (stack offset,
+   * drag, throw). Its face tilts in 3D toward the pointer, with the photo
+   * and the info panel drifting apart (parallax), a glare under the finger
+   * and a holographic rim whose hue turns with the angle.
+   */
 
   .deck-card {
     --depth: 0;
     /* Cards behind the top "rise" toward depth 0 as the top card is dragged away. */
     --depth-live: max(0, calc(var(--depth) - var(--swipe-amount)));
+    /* Live tilt and light position, -1…1 per axis (written by useSwipeGesture).
+       Tilt turns the face; light moves the glare, foil and rim hue. Hover moves
+       only the light, so text stays crisp while you read. */
+    --tilt-x: 0;
+    --tilt-y: 0;
+    --light-x: 0;
+    --light-y: 0;
+    /* At rest, tilt springs back; [data-lit] makes it track the pointer closely. */
+    --tilt-dur: var(--dur-snap);
+    --tilt-ease: var(--ease-spring);
 
     position: absolute;
     inset: 0;
     z-index: calc(10 - var(--depth));
-    overflow: hidden;
     border-radius: var(--radius-card);
-    border: 1px solid var(--glass-stroke-strong);
-    background: var(--color-card);
-    box-shadow: var(--glass-sheen), var(--shadow-float);
+    box-shadow: var(--shadow-float);
     transform-origin: 50% 100%;
     transform: translate3d(0, calc(var(--depth-live) * var(--space-stack)), 0)
       scale(calc(1 - var(--depth-live) * var(--stack-scale-step)));
@@ -121,21 +266,24 @@
     transform-origin: var(--drag-origin, 50% 120%);
     transform: translate3d(calc(var(--drag-x) * 1px), calc(var(--drag-y) * 1px), 0)
       rotate(calc(var(--drag-rot) * 1deg));
-    /* Edge glow tints toward the intended action. */
+    /* Edge light tints toward the intended action. */
     box-shadow:
-      var(--glass-sheen),
       var(--shadow-float),
-      0 0 calc(var(--like-strength) * 48px) calc(var(--like-strength) * 2px)
+      0 0 calc(var(--like-strength) * 52px) calc(var(--like-strength) * 2px)
         color-mix(in oklab, var(--color-like) calc(var(--like-strength) * 55%), transparent),
-      0 0 calc(var(--pass-strength) * 48px) calc(var(--pass-strength) * 2px)
+      0 0 calc(var(--pass-strength) * 52px) calc(var(--pass-strength) * 2px)
         color-mix(in oklab, var(--color-pass) calc(var(--pass-strength) * 55%), transparent),
-      0 calc(var(--super-strength) * -18px) calc(var(--super-strength) * 60px) calc(var(--super-strength) * 4px)
+      0 calc(var(--super-strength) * -18px) calc(var(--super-strength) * 64px) calc(var(--super-strength) * 4px)
         color-mix(in oklab, var(--color-super) calc(var(--super-strength) * 60%), transparent);
-    /* Release without a commit: organic overshoot back to rest. */
+    /* Release without a commit: spring back to rest. */
     transition:
-      transform var(--dur-snap) var(--ease-out-back),
+      transform var(--dur-snap) var(--ease-spring),
       box-shadow var(--dur-snap) var(--ease-soft),
       opacity var(--dur-fling) var(--ease-soft);
+  }
+  .deck-card[data-lit] {
+    --tilt-dur: 140ms;
+    --tilt-ease: var(--ease-soft);
   }
 
   [data-dragging] .deck-card {
@@ -152,30 +300,153 @@
     opacity: 0;
   }
 
+  .deck-face {
+    container: deck-face / size; /* the panel adapts to the card's height (below) */
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background: var(--color-card);
+    transform: perspective(var(--perspective))
+      rotateX(calc(var(--tilt-y) * var(--tilt-max) * -1))
+      rotateY(calc(var(--tilt-x) * var(--tilt-max)));
+    transition: transform var(--tilt-dur) var(--tilt-ease);
+  }
+
+  /* Deepest layer: drifts against the tilt. Scaled up so its edges never show. */
+  .deck-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.06) translate3d(calc(var(--tilt-x) * -1.5%), calc(var(--tilt-y) * -1.5%), 0);
+    transition: transform var(--tilt-dur) var(--tilt-ease);
+  }
+
   /* Photo scrim keeps glass text at ≥4.5:1 over any photo. */
   .deck-scrim {
     position: absolute;
     inset: auto 0 0 0;
-    height: 62%;
-    background: linear-gradient(to top, rgb(4 6 10 / 0.92), rgb(4 6 10 / 0.5) 45%, transparent);
+    height: 64%;
+    background: linear-gradient(to top, rgb(3 3 10 / 0.92), rgb(3 3 10 / 0.5) 45%, transparent);
     pointer-events: none;
   }
 
-  /* LIKE / NOPE stamps fade + settle in with drag strength. */
+  /* Specular glare under the pointer: a large soft light moved by transform only. */
+  .deck-glare {
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.22), rgb(210 240 255 / 0.07) 14%, transparent 30%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: translate3d(calc(var(--light-x) * 25%), calc(var(--light-y) * 25%), 0);
+    transition:
+      opacity var(--dur-hover) var(--ease-soft),
+      transform var(--tilt-dur) var(--tilt-ease);
+    pointer-events: none;
+  }
+  .deck-card[data-lit] .deck-glare {
+    opacity: 1;
+  }
+
+  /* Holographic rim: hue turns with the tilt, brightens while handled. */
+  .deck-rim {
+    --rim-angle: calc(200deg + var(--light-x) * 140deg + var(--light-y) * 70deg);
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--rim-angle), var(--holo-spectrum));
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0.6;
+    transition:
+      --rim-angle var(--tilt-dur) var(--tilt-ease),
+      opacity var(--dur-hover) var(--ease-soft);
+    pointer-events: none;
+  }
+  .deck-card[data-lit] .deck-rim {
+    opacity: 1;
+  }
+  .deck-card:not([data-top]) .deck-rim {
+    opacity: 0.18;
+  }
+
+  /* One-time band of light across the foil when a card arrives on top (the view's key motion). */
+  .deck-sweep {
+    position: absolute;
+    inset: -10% auto -10% 0;
+    width: 45%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(150 235 255 / 0.12) 38%,
+      rgb(255 255 255 / 0.3) 50%,
+      rgb(255 170 245 / 0.12) 62%,
+      transparent
+    );
+    mix-blend-mode: screen;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .deck-card[data-top] .deck-sweep {
+    animation: var(--animate-sweep);
+  }
+
+  /*
+   * Closest layer: the info panel drifts with the tilt, so it reads as
+   * floating above the photo. Never taller than the card: when the details
+   * are open, they take the space that's left and scroll.
+   */
+  .deck-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100cqh - var(--space-panel-gap) * 2);
+    overflow: hidden;
+    border-radius: calc(var(--radius-card) - var(--space-panel-gap));
+    transform: translate3d(calc(var(--tilt-x) * 6px), calc(var(--tilt-y) * 5px), 0);
+    transition: transform var(--tilt-dur) var(--tilt-ease);
+  }
+  /* Holographic sheen inside the panel's glass, visible while the card is handled. */
+  .deck-foil {
+    position: absolute;
+    inset: 0 -60%;
+    z-index: -1;
+    background: linear-gradient(110deg, transparent 22%, var(--holo-spectrum), transparent 78%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: translate3d(calc(var(--light-x) * 24%), 0, 0);
+    transition:
+      opacity var(--dur-hover) var(--ease-soft),
+      transform var(--tilt-dur) var(--tilt-ease);
+    pointer-events: none;
+  }
+  .deck-card[data-lit] .deck-foil {
+    opacity: 0.16;
+  }
+
+  /* LIKE / PASS / SUPER stamps fade + settle in with drag strength. */
   .deck-stamp {
     position: absolute;
-    top: calc(var(--step) * 12);
-    padding: calc(var(--step) * 1.5) calc(var(--step) * 3.5);
+    top: calc(var(--step) * 14);
+    padding: calc(var(--step) * 1.5) calc(var(--step) * 4);
     border: 2px solid currentColor;
-    border-radius: var(--radius-chip);
+    border-radius: 9999px;
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-stretch: 125%;
+    font-size: 1.375rem;
     font-weight: 900;
-    letter-spacing: 0.14em;
-    text-shadow: var(--hud-glow) currentColor;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-shadow: 0 0 14px currentColor;
     text-transform: uppercase;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    box-shadow:
+      0 0 26px -6px currentColor,
+      inset 0 0 18px -8px currentColor;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     pointer-events: none;
     z-index: 5; /* above the info panel */
   }
@@ -184,7 +455,7 @@
     color: var(--color-like);
     background: color-mix(in oklab, var(--color-like) 14%, transparent);
     opacity: var(--like-strength);
-    transform: rotate(-14deg) scale(calc(0.82 + var(--like-strength) * 0.18));
+    transform: rotate(-12deg) scale(calc(0.82 + var(--like-strength) * 0.18));
   }
   .deck-stamp--super {
     left: 50%;
@@ -200,7 +471,7 @@
     color: var(--color-pass);
     background: color-mix(in oklab, var(--color-pass) 14%, transparent);
     opacity: var(--pass-strength);
-    transform: rotate(14deg) scale(calc(0.82 + var(--pass-strength) * 0.18));
+    transform: rotate(12deg) scale(calc(0.82 + var(--pass-strength) * 0.18));
   }
 
   /* Only the card being handled shows intent; cards behind inherit the same
@@ -219,19 +490,68 @@
   }
   .deck-segment[data-active] {
     background: rgb(255 255 255 / 0.95);
+    box-shadow: 0 0 8px rgb(255 255 255 / 0.5);
   }
 
   /* Expandable details: animates height with the grid-rows trick. */
   .deck-details {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows var(--dur-stack) var(--ease-soft);
+    /* Collapsed, it also gives back the row gap above it, so the panel's bottom padding matches its top. */
+    margin-top: calc(var(--space-panel-gap) * -1);
+    transition:
+      grid-template-rows var(--dur-stack) var(--ease-soft),
+      margin-top var(--dur-stack) var(--ease-soft);
   }
   .deck-details[data-open] {
     grid-template-rows: 1fr;
+    margin-top: 0;
   }
   .deck-details > * {
     overflow: hidden;
+  }
+  .deck-panel > * {
+    flex-shrink: 0;
+  }
+  .deck-panel > .deck-details {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+  /* The fade at the foot says "there's more, scroll". */
+  .deck-details-scroll {
+    max-height: min(13rem, 38cqh);
+    mask-image: linear-gradient(to bottom, black calc(100% - var(--step) * 6), transparent);
+  }
+  /* Room to scroll the last line clear of the fade. A spacer, not padding:
+     padding would keep a sliver of the details showing while collapsed. */
+  .deck-details-scroll::after {
+    content: '';
+    display: block;
+    height: calc(var(--step) * 4);
+  }
+
+  /* Short card (small phone, landscape, desktop window): the first prompt
+     leaves the panel for the details, so the photo isn't fully covered.
+     Only one copy is ever displayed, so screen readers hear it once. */
+  .deck-overflow-prompt {
+    display: none;
+  }
+  @container deck-face (height < 460px) {
+    .deck-lead-prompt {
+      display: none;
+    }
+    .deck-overflow-prompt {
+      display: block;
+    }
+  }
+
+  /* Readouts get out of the way of the intent stamps while handling. */
+  .deck-readout {
+    opacity: calc(1 - var(--swipe-amount) * 1.5);
+    transition: opacity var(--dur-hover) var(--ease-soft);
+  }
+  [data-dragging] .deck-readout {
+    transition: none;
   }
 
   /* ─── Chips ──────────────────────────────────────────────────────────── */
@@ -240,22 +560,26 @@
     display: inline-flex;
     align-items: center;
     gap: calc(var(--step) * 1.5);
-    min-height: calc(var(--step) * 7);
-    padding-inline: calc(var(--step) * 2.5);
-    border-radius: var(--radius-chip);
-    border: var(--hud-line) solid var(--glass-stroke);
+    min-height: calc(var(--step) * 7.5);
+    padding-inline: calc(var(--step) * 3);
+    border-radius: 9999px;
+    border: 1px solid var(--glass-stroke);
     background: var(--glass-fill);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+    font-size: 0.8125rem;
     font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
     color: var(--color-fg);
   }
   .chip--shared {
-    border-color: color-mix(in oklab, var(--color-primary) 70%, transparent);
-    background: color-mix(in oklab, var(--color-primary) 18%, transparent);
-    box-shadow: 0 0 18px -6px var(--color-primary);
+    border-color: color-mix(in oklab, var(--color-primary) 60%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary) 22%, transparent),
+      color-mix(in oklab, var(--color-secondary) 18%, transparent)
+    );
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.14),
+      0 0 18px -6px var(--color-primary);
   }
 
   /* ─── Control buttons ────────────────────────────────────────────────── */
@@ -263,7 +587,8 @@
    * One "energy" value (0–1) drives lift, scale and glow, fed by whichever is
    * stronger: hover, or the live drag strength toward this button's action.
    * So dragging a card right makes the Like button glow before release, the
-   * same cue as hovering it.
+   * same cue as hovering it. Pressing always settles at 0.95, whatever the
+   * energy, and releases on a spring.
    */
 
   .ctl {
@@ -281,40 +606,42 @@
     block-size: var(--ctl-size);
     border-radius: 9999px;
     border: 1px solid var(--glass-stroke-strong);
-    background: var(--glass-fill);
+    background: var(--glass-gloss), var(--glass-fill);
     color: var(--color-fg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    transform: translateY(calc(var(--ctl-energy) * -3px))
-      scale(calc(1 + var(--ctl-energy) * 0.06 - var(--ctl-press) * 0.14));
+    transform: translateY(calc(var(--ctl-energy) * -3px * (1 - var(--ctl-press))))
+      scale(calc((1 + var(--ctl-energy) * 0.05) * (1 - var(--ctl-press)) + 0.95 * var(--ctl-press)));
     box-shadow:
       var(--glass-sheen),
-      0 0 0 calc(var(--ctl-energy) * 6px) color-mix(in oklab, var(--ctl-glow) calc(var(--ctl-energy) * 16%), transparent),
+      0 0 0 calc(var(--ctl-energy) * 6px) color-mix(in oklab, var(--ctl-glow) calc(var(--ctl-energy) * 14%), transparent),
       0 calc(10px + var(--ctl-energy) * 8px) calc(24px + var(--ctl-energy) * 30px) -8px
         color-mix(in oklab, var(--ctl-glow) calc(20% + var(--ctl-energy) * 55%), transparent);
     transition:
-      transform var(--dur-hover) var(--ease-out-back),
+      transform var(--dur-spring) var(--ease-spring),
       box-shadow var(--dur-hover) var(--ease-soft),
       background-color var(--dur-hover) var(--ease-soft),
       border-color var(--dur-hover) var(--ease-soft);
     -webkit-tap-highlight-color: transparent;
   }
   .ctl svg {
-    transition: transform var(--dur-hover) var(--ease-out-back);
+    transition: transform var(--dur-spring) var(--ease-spring);
   }
 
   @media (hover: hover) {
     .ctl:hover:not(:disabled) {
       --ctl-hover: 1;
-      background: var(--glass-fill-hover);
+      background-color: var(--glass-fill-hover);
     }
   }
   .ctl:active:not(:disabled) {
     --ctl-press: 1;
     transition-duration: var(--dur-press);
+    transition-timing-function: var(--ease-soft);
   }
   .ctl:active:not(:disabled) svg {
-    transform: scale(0.88);
+    transform: scale(0.9);
+    transition-duration: var(--dur-press);
   }
   .ctl:focus-visible {
     outline: 2px solid var(--color-fg);
@@ -332,7 +659,7 @@
   .ctl--pass {
     --ctl-glow: var(--color-pass);
     --ctl-drive: var(--pass-strength);
-    color: #ff8fa3;
+    color: var(--color-pass-fg);
   }
   .ctl--pass:not(:disabled):hover,
   [data-dragging] .ctl--pass {
@@ -343,34 +670,35 @@
     --ctl-size: calc(var(--step) * 20);
     --ctl-glow: var(--color-like);
     --ctl-drive: var(--like-strength);
-    border-color: rgb(200 250 255 / 0.55);
+    border-color: rgb(210 250 255 / 0.6);
     background:
-      radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.45), transparent 55%),
-      linear-gradient(155deg, var(--color-primary) 0%, #3fb0ff 50%, var(--color-secondary) 100%);
+      radial-gradient(circle at 50% 18%, rgb(255 255 255 / 0.55), transparent 52%),
+      var(--holo-fill);
     color: var(--color-on-primary);
   }
-  /* Orbiting ring: a second hairline circle that tightens with energy. */
+  /* Holographic halo that widens and turns with energy. */
   .ctl--like::after {
     content: '';
     position: absolute;
     inset: calc(-6px - var(--ctl-energy) * 3px);
-    border-radius: 9999px;
-    border: var(--hud-line) solid color-mix(in oklab, var(--color-primary) calc(35% + var(--ctl-energy) * 50%), transparent);
-    border-top-color: transparent;
-    border-bottom-color: transparent;
-    transform: rotate(calc(var(--ctl-energy) * 90deg));
-    transition: inset var(--dur-hover) var(--ease-soft), transform var(--dur-snap) var(--ease-out-back), border-color var(--dur-hover);
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from calc(var(--ctl-energy) * 180deg), var(--holo-spectrum));
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: calc(0.45 + var(--ctl-energy) * 0.55);
+    transition:
+      inset var(--dur-spring) var(--ease-spring),
+      opacity var(--dur-hover) var(--ease-soft);
     pointer-events: none;
   }
-  .ctl--pass::after {
-    content: '';
-    position: absolute;
-    inset: -5px;
-    border-radius: 9999px;
-    border: var(--hud-line) dashed color-mix(in oklab, var(--color-pass) calc(20% + var(--ctl-energy) * 60%), transparent);
-    transition: border-color var(--dur-hover);
-    pointer-events: none;
+  @media (hover: hover) {
+    .ctl--like:hover:not(:disabled) {
+      background:
+        radial-gradient(circle at 50% 18%, rgb(255 255 255 / 0.7), transparent 52%),
+        var(--holo-fill);
+    }
   }
+
   /* Super Like: smaller, magenta, sits between pass and like. */
   .ctl--super {
     --ctl-size: calc(var(--step) * 13);
@@ -411,52 +739,218 @@
     flex-shrink: 0;
     border-radius: 9999px;
     border: 1px solid var(--glass-stroke-strong);
-    background: var(--glass-fill-strong);
+    background: var(--glass-gloss), var(--glass-fill-strong);
+    box-shadow: var(--glass-sheen);
     color: var(--color-primary);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
-    transition: transform var(--dur-hover) var(--ease-out-back), box-shadow var(--dur-hover) var(--ease-soft);
+    transition:
+      transform var(--dur-spring) var(--ease-spring),
+      box-shadow var(--dur-hover) var(--ease-soft);
   }
   @media (hover: hover) {
     .like-item:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 18px -2px var(--color-primary);
+      transform: scale(1.05);
+      box-shadow: var(--glass-sheen), 0 0 18px -2px var(--color-primary);
     }
   }
   .like-item:active {
-    transform: scale(0.9);
+    transform: scale(0.95);
     transition-duration: var(--dur-press);
   }
 
-  @media (hover: hover) {
-    .ctl--like:hover:not(:disabled) {
-      background:
-        radial-gradient(circle at 50% 30%, rgb(255 255 255 / 0.6), transparent 55%),
-        linear-gradient(155deg, var(--color-primary-hover) 0%, #5cc0ff 50%, #9580ff 100%);
-    }
+  /* ─── Quota: a 10-cell energy ring ───────────────────────────────────── */
+
+  .quota-ring {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: calc(var(--step) * 14);
+    block-size: calc(var(--step) * 14);
+    flex-shrink: 0;
+    border-radius: 9999px;
+  }
+  .quota-ring > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform: rotate(-90deg); /* first cell at 12 o'clock */
+  }
+  .quota-cell {
+    fill: none;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+  }
+  .quota-cell--track {
+    stroke: rgb(170 200 255 / 0.14);
+  }
+  .quota-cell--fill {
+    stroke: var(--color-primary);
+    opacity: 0;
+    transition: opacity var(--dur-stack) var(--ease-soft);
+  }
+  .quota-cell--fill[data-filled] {
+    opacity: 1;
+  }
+  .quota-glow {
+    filter: drop-shadow(0 0 3px rgb(34 230 255 / 0.75));
   }
 
-  /* ─── Quota meter ────────────────────────────────────────────────────── */
+  /* ─── Chrome: top bar and floating dock ──────────────────────────────── */
 
-  .quota-pip {
-    width: calc(var(--step) * 1.25);
-    height: calc(var(--step) * 4);
-    border-radius: 1px;
-    background: rgb(140 220 255 / 0.14);
+  /* Frosted strip that fades out at its lower edge instead of ending on a hard line. */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding-top: env(safe-area-inset-top);
+  }
+  .topbar::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 calc(var(--step) * -5) 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, rgb(3 3 10 / 0.82), rgb(3 3 10 / 0.35));
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    mask-image: linear-gradient(to bottom, black 55%, transparent);
+    pointer-events: none;
+  }
+
+  /* The dock floats above the screen edge; content scrolls underneath it. */
+  .dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    padding: 0 var(--space-gutter) calc(var(--dock-gap) + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  .dock-bar {
+    --dock-pad: calc(var(--step) * 1.5);
+    position: relative;
+    margin-inline: auto;
+    max-width: 26rem;
+    height: var(--dock-height);
+    padding: var(--dock-pad);
+    border-radius: 9999px;
+    pointer-events: auto;
+  }
+  /* A bead of light that glides to the active tab. */
+  .dock-bead {
+    position: absolute;
+    inset-block: var(--dock-pad);
+    left: var(--dock-pad);
+    width: calc((100% - var(--dock-pad) * 2) / var(--dock-count, 5));
+    border-radius: 9999px;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 0%, rgb(34 230 255 / 0.3), transparent 72%),
+      rgb(170 200 255 / 0.07);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      0 0 22px -8px var(--color-primary);
+    transform: translateX(calc(var(--dock-index, 0) * 100%));
     transition:
-      background-color var(--dur-stack) var(--ease-soft),
-      box-shadow var(--dur-stack) var(--ease-soft),
-      transform var(--dur-stack) var(--ease-out-back);
+      transform var(--dur-spring) var(--ease-spring),
+      opacity var(--dur-hover) var(--ease-soft);
+    pointer-events: none;
   }
-  .quota-pip[data-filled] {
-    background: var(--color-primary);
-    box-shadow: 0 0 10px -1px color-mix(in oklab, var(--color-primary) 80%, transparent);
+  .dock-bead[data-hidden] {
+    opacity: 0;
   }
 
+  /* ─── Match moment ───────────────────────────────────────────────────── */
 
-  /* ─── HUD layer ──────────────────────────────────────────────────────── */
+  .match-dialog[open] {
+    animation: dialog-in var(--dur-spring) var(--ease-spring) both;
+  }
+  /* The logo's two figures meet, then the bar locks them together. */
+  .match-mark-left {
+    animation: link-left 700ms var(--ease-spring) 160ms both;
+  }
+  .match-mark-right {
+    animation: link-right 700ms var(--ease-spring) 160ms both;
+  }
+  .match-mark-bar {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: link-bar 560ms var(--ease-spring) 520ms both;
+  }
+  .match-title {
+    animation: var(--animate-stretch-in);
+    animation-delay: 260ms;
+  }
 
-  /* Mono readout label: the HUD's "data" voice. Never used for body copy. */
+  /* ─── Chat bubbles ───────────────────────────────────────────────────── */
+
+  .bubble {
+    max-width: 80%;
+    padding: calc(var(--step) * 2.5) calc(var(--step) * 4);
+    border-radius: 1.375rem;
+    line-height: 1.375;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .bubble--mine {
+    border-bottom-right-radius: 0.5rem;
+    background: var(--holo-fill);
+    color: var(--color-on-primary);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.4),
+      0 10px 24px -14px rgb(34 230 255 / 0.8);
+  }
+  .bubble--theirs {
+    border: 1px solid var(--glass-stroke);
+    border-bottom-left-radius: 0.5rem;
+    background: var(--glass-gloss), var(--color-card);
+    box-shadow: var(--glass-sheen);
+    color: var(--color-fg);
+  }
+
+  /* ─── Landing hero: a spatial stack of glass panes ───────────────────── */
+
+  /* Holographic text fill for display type (large text only: ≥3:1 on bg across the gradient). */
+  .holo-text {
+    color: var(--color-primary);
+    background: linear-gradient(100deg, #22e6ff, #8f7bff 55%, #ff3df2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* With text-hero (container units), "Meet people" spans the column at 120% stretch. */
+  .hero-title {
+    font-stretch: 120%;
+    animation: var(--animate-stretch-in);
+  }
+  /* Floating panes, angled alternately in space like windows around you. */
+  .hero-stage {
+    display: grid;
+    gap: calc(var(--step) * 3);
+    perspective: 1000px;
+  }
+  .hero-pane {
+    position: relative;
+    /* Near-opaque: backdrop blur doesn't apply to 3D-transformed elements. */
+    background: var(--glass-gloss), rgb(12 13 32 / 0.9);
+    box-shadow: var(--glass-sheen), 0 24px 48px -24px rgb(0 0 0 / 0.9);
+  }
+  .hero-pane:nth-child(1) {
+    transform: rotateY(-8deg) rotateX(3deg);
+    box-shadow: var(--glass-sheen), 0 24px 48px -20px rgb(0 0 0 / 0.9), 0 0 60px -24px rgb(34 230 255 / 0.45);
+  }
+  .hero-pane:nth-child(2) {
+    transform: rotateY(7deg) translateZ(-24px);
+  }
+  .hero-pane:nth-child(3) {
+    transform: rotateY(-6deg) rotateX(-3deg) translateZ(-48px);
+  }
+
+  /* ─── HUD details ────────────────────────────────────────────────────── */
+
+  /* Mono readout label: the interface's "data" voice. Never used for body copy. */
   .hud-label {
     font-family: var(--font-mono);
     font-size: var(--text-eyebrow);
@@ -464,104 +958,6 @@
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-muted-fg);
-  }
-
-  /*
-   * Glowing corner brackets on any positioned element. One pseudo-element,
-   * eight gradients (two arms per corner). Tint with --hud-color.
-   */
-  .hud-frame::after {
-    --c: var(--hud-color, var(--color-primary));
-    --arm: var(--hud-bracket);
-    --w: 1.5px;
-    content: '';
-    position: absolute;
-    inset: var(--hud-inset, 0);
-    pointer-events: none;
-    background:
-      linear-gradient(var(--c), var(--c)) top left / var(--arm) var(--w) no-repeat,
-      linear-gradient(var(--c), var(--c)) top left / var(--w) var(--arm) no-repeat,
-      linear-gradient(var(--c), var(--c)) top right / var(--arm) var(--w) no-repeat,
-      linear-gradient(var(--c), var(--c)) top right / var(--w) var(--arm) no-repeat,
-      linear-gradient(var(--c), var(--c)) bottom left / var(--arm) var(--w) no-repeat,
-      linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--arm) no-repeat,
-      linear-gradient(var(--c), var(--c)) bottom right / var(--arm) var(--w) no-repeat,
-      linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--arm) no-repeat;
-    filter: drop-shadow(var(--hud-glow) var(--c));
-    opacity: 0.85;
-  }
-
-  /* The top card locks on: brackets tint toward the intended action. */
-  .deck-card[data-top] {
-    --hud-inset: calc(var(--step) * 2.5);
-    --hud-color: color-mix(
-      in oklab,
-      color-mix(
-        in oklab,
-        color-mix(in oklab, var(--color-primary) calc(100% - var(--pass-strength) * 100%), var(--color-pass)),
-        var(--color-super) calc(var(--super-strength) * 100%)
-      ),
-      white calc(var(--like-strength) * 25%)
-    );
-  }
-  .deck-card:not([data-top]).hud-frame::after {
-    opacity: 0;
-  }
-
-  /* One-time scan sweep when a card arrives on top (the per-view "key" motion). */
-  .deck-scan {
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 9%;
-    background: linear-gradient(to bottom, transparent, rgb(34 230 255 / 0.22) 70%, rgb(200 250 255 / 0.7) 98%, transparent);
-    mix-blend-mode: screen;
-    pointer-events: none;
-    opacity: 0;
-  }
-  .deck-card[data-top] .deck-scan {
-    animation: var(--animate-scan);
-  }
-
-  /* Photo scanlines: static, very faint, sells the "display" feel. */
-  .hud-scanlines {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 3px);
-    mix-blend-mode: overlay;
-  }
-
-  /* Perspective grid floor under the deck: the one ambient loop. */
-  .deck-grid {
-    position: absolute;
-    inset: auto -50% var(--grid-floor-offset) -50%;
-    height: var(--grid-floor-height);
-    background:
-      linear-gradient(to bottom, rgb(34 230 255 / 0.38) 1px, transparent 1px) 0 0 / 100% var(--grid-size),
-      linear-gradient(to right, rgb(123 97 255 / 0.34) 1px, transparent 1px) 0 0 / var(--grid-size) 100%;
-    transform: perspective(420px) rotateX(62deg);
-    transform-origin: 50% 100%;
-    mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, black 20%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, black 20%, transparent 75%);
-    animation: var(--animate-grid-flow);
-  }
-
-  /* Horizon line where the grid meets the void. */
-  .deck-horizon {
-    position: absolute;
-    inset: auto 0 calc(var(--grid-floor-offset) + var(--grid-floor-height) * 0.47) 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgb(34 230 255 / 0.5), transparent);
-    box-shadow: 0 0 24px 2px rgb(34 230 255 / 0.25);
-  }
-
-  /* Readouts get out of the way of the intent stamps while handling. */
-  .deck-readout {
-    opacity: calc(1 - var(--swipe-amount) * 1.5);
-    transition: opacity var(--dur-hover) var(--ease-soft);
-  }
-  [data-dragging] .deck-readout {
-    transition: none;
   }
 
   /* Segmented meter (e.g. shared-activity overlap). */
@@ -572,7 +968,8 @@
   .hud-meter > span {
     width: 10px;
     height: 4px;
-    background: rgb(140 220 255 / 0.16);
+    border-radius: 9999px;
+    background: rgb(170 200 255 / 0.16);
   }
   .hud-meter > span[data-on] {
     background: var(--color-primary);
@@ -587,18 +984,44 @@
     min-width: calc(var(--step) * 6);
     height: calc(var(--step) * 6);
     padding-inline: calc(var(--step) * 1.5);
-    border-radius: calc(var(--step) * 1.5);
+    border-radius: calc(var(--step) * 2);
     border: 1px solid var(--glass-stroke-strong);
-    background: var(--glass-fill);
+    background: var(--glass-gloss), var(--glass-fill);
+    box-shadow: var(--glass-sheen);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-muted-fg);
   }
 }
 
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+}
+@keyframes link-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes link-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes link-bar {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .deck-grid,
-  .deck-scan {
+  .ambient-aurora,
+  .deck-sweep {
     animation: none !important;
   }
   /* No rotation or travel: cards cross-fade instead (see useSwipeGesture). */

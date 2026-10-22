@@ -46,7 +46,7 @@ export function LikeComposer({
       ref={ref}
       onClose={onClose}
       aria-labelledby="composer-title"
-      className="glass-strong hud-frame mx-auto mb-0 mt-auto w-full max-w-md rounded-t-card rounded-b-none p-(--space-card) pb-[max(var(--space-card),env(safe-area-inset-bottom))] text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:m-auto sm:rounded-card [--hud-inset:6px]"
+      className="glass-strong mx-auto mb-0 mt-auto w-full max-w-md rounded-t-card rounded-b-none p-(--space-card) pb-[max(var(--space-card),env(safe-area-inset-bottom))] text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:m-auto sm:rounded-card"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

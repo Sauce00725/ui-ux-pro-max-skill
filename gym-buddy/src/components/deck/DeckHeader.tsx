@@ -1,8 +1,13 @@
 'use client'
 
 import type { AppMode, SwipeQuota } from '@/lib/types'
+import { useFitStretch } from '@/components/useFitStretch'
+import { fitStretch } from '@/lib/utils'
 import { QuotaMeter } from './QuotaMeter'
 import { formatClock, useCountdown } from './useCountdown'
+
+/** Title characters that fit beside the quota ring at normal width (first-paint guess; useFitStretch measures). */
+const TITLE_CHARS = 18
 
 export function DeckHeader({
   mode,
@@ -15,13 +20,19 @@ export function DeckHeader({
 }) {
   const ms = useCountdown(quota.resetsAt, onWindowElapsed)
   const hours = Math.round(quota.windowSeconds / 3600)
+  const title = mode === 'dating' ? 'Match' : 'Training Partners'
+  const titleRef = useFitStretch<HTMLHeadingElement>(title)
 
   return (
-    <header className="flex items-start justify-between gap-(--space-panel-gap)">
-      <div className="min-w-0">
+    <header className="flex items-center justify-between gap-(--space-panel-gap)">
+      <div className="min-w-0 flex-1">
         <p className="hud-label text-primary">// Daily selection</p>
-        <h1 className="font-display text-title font-bold uppercase [text-shadow:0_0_16px_rgb(34_230_255/0.4)]">
-          {mode === 'dating' ? 'Match' : 'Training Partners'}
+        <h1
+          ref={titleRef}
+          className="overflow-hidden whitespace-nowrap font-display text-title font-extrabold uppercase [text-shadow:0_0_18px_rgb(34_230_255/0.35)]"
+          style={{ fontStretch: fitStretch(title, TITLE_CHARS) }}
+        >
+          {title}
         </h1>
         <p className="hud-label mt-1 tabular-nums" aria-live="off">
           {quota.resetsAt ? (

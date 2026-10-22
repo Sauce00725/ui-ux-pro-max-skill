@@ -20,7 +20,7 @@ export function LikesInbox({ mode, initialLikes }: { mode: AppMode; initialLikes
 
   if (likes.length === 0) {
     return (
-      <section className="glass hud-frame relative mt-6 rounded-card p-(--space-card) text-center">
+      <section className="glass relative mt-6 rounded-card p-(--space-card) text-center">
         <MessageCircleHeart className="mx-auto size-8 text-primary" aria-hidden />
         <h2 className="mt-3 font-display text-lg font-bold uppercase">No likes yet</h2>
         <p className="mt-1 text-sm text-muted-fg">
@@ -39,7 +39,7 @@ export function LikesInbox({ mode, initialLikes }: { mode: AppMode; initialLikes
               type="button"
               onClick={() => setOpen(like)}
               className={cn(
-                'glass relative flex w-full items-start gap-3 rounded-panel p-3 text-left shadow-none transition-colors hover:bg-white/5',
+                'glass glass-flat relative flex w-full items-start gap-3 rounded-panel p-3 text-left transition-colors duration-200 hover:bg-(--glass-fill-hover)',
                 like.isSuper && 'border-[color:var(--color-super)]/60 shadow-[0_0_24px_-10px_var(--color-super)]',
               )}
             >
@@ -158,7 +158,7 @@ function ReviewDialog({
 
         <div className="grid grid-cols-[auto_1fr_1fr] gap-3">
           <button type="button" onClick={() => ref.current?.close()} aria-label="Close"
-            className="glass grid size-12 place-items-center rounded-panel shadow-none hover:bg-white/10">
+            className="glass glass-flat grid size-12 place-items-center rounded-full transition-colors duration-200 hover:bg-(--glass-fill-hover)">
             <X className="size-5" aria-hidden />
           </button>
           <Button variant="secondary" loading={pending} onClick={() => respond('pass')}>Pass</Button>

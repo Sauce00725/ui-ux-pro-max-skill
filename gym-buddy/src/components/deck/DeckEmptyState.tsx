@@ -47,9 +47,9 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
       icon={
         <div className="relative grid size-32 place-items-center">
           <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
-            <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(140 220 255 / 0.12)" strokeWidth="2" strokeDasharray="2 4" />
+            <circle cx="60" cy="60" r={R} fill="none" stroke="rgb(170 200 255 / 0.14)" strokeWidth="2" strokeDasharray="2 4" />
             <circle
-              cx="60" cy="60" r={R} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="butt"
+              cx="60" cy="60" r={R} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round"
               strokeDasharray={C} strokeDashoffset={C * (1 - elapsed)}
               style={{ transition: 'stroke-dashoffset 1s linear', filter: 'drop-shadow(0 0 6px var(--color-primary))' }}
             />
@@ -76,9 +76,9 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
 
 function Panel({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section className="glass hud-frame absolute inset-0 bottom-[calc(var(--space-stack)*2)] flex flex-col items-center justify-center rounded-card p-(--space-card) text-center">
+    <section className="glass absolute inset-0 bottom-[calc(var(--space-stack)*2)] flex flex-col items-center justify-center rounded-card p-(--space-card) text-center">
       <div className="text-primary">{icon}</div>
-      <h2 className="mt-5 font-display text-title font-bold uppercase">{title}</h2>
+      <h2 className="mt-5 font-display text-title font-extrabold uppercase">{title}</h2>
       <p className="hud-label mt-1 text-primary" aria-hidden>// standby</p>
       <div className="mt-2 max-w-xs text-muted-fg">{children}</div>
     </section>
@@ -91,8 +91,8 @@ function LinkButton({ href, icon, primary, children }: { href: string; icon: Rea
       href={href}
       className={
         primary
-          ? 'inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-on-primary transition-colors duration-200 hover:bg-primary-hover'
-          : 'glass inline-flex h-12 items-center gap-2 rounded-xl px-5 font-semibold shadow-none transition-colors duration-200 hover:bg-white/10'
+          ? 'btn-holo inline-flex h-12 items-center gap-2 rounded-full px-6 font-semibold'
+          : 'glass glass-flat inline-flex h-12 items-center gap-2 rounded-full px-6 font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)'
       }
     >
       {icon}

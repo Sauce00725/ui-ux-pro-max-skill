@@ -74,11 +74,13 @@ export function DailyDeck({
     return () => window.removeEventListener('keydown', onKey)
   }, [canSwipe, canSuper, fling])
 
+  // Fills the screen between the top bar and the dock; on very short screens (landscape)
+  // it keeps a usable minimum and the page scrolls instead of crushing the card.
   return (
     <DeckStage
       ref={stageRef}
       style={gesture.stageStyle}
-      className="mx-auto flex h-[calc(100dvh-5rem-3.5rem-env(safe-area-inset-top))] max-w-md flex-col px-(--space-gutter) pb-(--space-gutter) pt-3"
+      className="mx-auto flex h-[max(30rem,calc(100dvh-var(--dock-clearance)-var(--topbar-height)-env(safe-area-inset-top)))] max-w-md flex-col px-(--space-gutter) pb-(--space-gutter) pt-3"
     >
       <DeckHeader mode={mode} quota={state.quota} onWindowElapsed={deck.refresh} />
 

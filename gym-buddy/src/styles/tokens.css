@@ -2,7 +2,7 @@
  * Design tokens, in two layers:
  *
  * 1. @theme: primitives Tailwind turns into utilities (bg-primary, rounded-card,
- *    ease-out-expo, text-display, …). Anything a component might use as a
+ *    ease-spring, text-display, …). Anything a component might use as a
  *    class lives here.
  * 2. :root: semantic + runtime tokens that are only consumed by component CSS
  *    (glass recipes, motion durations, live swipe signals). No utilities generated.
@@ -14,73 +14,102 @@
 
 @theme {
   /*
-   * "Quantum Interface" palette (ui-ux-pro-max color DB) applied in the
-   * HUD / Sci-Fi FUI style: near-void background, holographic cyan as the
-   * brand + positive signal, violet secondary, magenta accent, alert red.
+   * "Spatial Holo". The Quantum Interface palette (ui-ux-pro-max color DB)
+   * from v1, rendered as spatial UI (style DB: Spatial UI + Liquid Glass):
+   * content floats on lit glass over a slow aurora, and holographic foil
+   * marks the one thing you're handling.
    */
-  --color-bg: #050510;
-  --color-surface: #0a0b1c;
-  --color-card: #10122a;
-  --color-muted: #1b1e3d;
-  --color-border: #262a52;
+  --color-bg: #03030a;
+  --color-surface: #090a18;
+  --color-card: #0e1024;
+  --color-muted: #191c38;
+  --color-border: #252a4f;
 
   /* Text */
-  --color-fg: #eef3ff;
-  --color-muted-fg: #9ba6c9;
+  --color-fg: #f1f4ff;
+  --color-muted-fg: #a0aacd;      /* 8.9:1 on bg, 7.2:1 on muted */
 
   /* Brand + intent */
-  --color-primary: #22e6ff;       /* holographic cyan (softened from #00FFFF for long viewing) */
+  --color-primary: #22e6ff;       /* holographic cyan */
   --color-primary-hover: #7cf1ff;
-  --color-on-primary: #001218;
+  --color-on-primary: #001218;    /* ≥5.8:1 across the whole cyan → violet holo gradient */
   --color-secondary: #7b61ff;     /* interference violet */
   --color-secondary-fg: #b3a5ff;  /* violet text on dark (≥4.5:1; raw secondary is ~4.2:1) */
   --color-accent: #ff3df2;        /* quantum magenta */
   --color-on-accent: #1a0018;
   --color-like: #22e6ff;
   --color-super: #ff3df2;         /* Super Like: "really interested" */
-  --color-pass: #ff4d6d;          /* HUD alert red */
+  --color-pass: #ff4d6d;          /* alert red */
+  --color-pass-fg: #ff8fa3;       /* pass icon/text on glass */
   --color-danger: #ff4d6d;
 
-  /* Ambient glow hues */
+  /* Ambient glow hues (the deck's reactive light) */
   --color-glow-ember: #22e6ff;    /* reacts to like */
   --color-glow-rose: #ff4d6d;     /* reacts to pass */
   --color-glow-tide: #7b61ff;
 
-  /* Type: Orbitron display · Exo 2 reading · JetBrains Mono HUD readouts */
-  --font-sans: var(--font-exo), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-orbitron), var(--font-exo), ui-sans-serif, sans-serif;
+  /* Type: Anybody (variable width) display · Inter reading · JetBrains Mono readouts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-anybody), var(--font-inter), ui-sans-serif, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  /* Hierarchy: display → title → body → eyebrow (Orbitron runs wide, so sizes sit lower) */
-  --text-display: clamp(1.75rem, 1.45rem + 1.6vw, 2.375rem);
+  /* Hierarchy: hero → display → title → body → eyebrow */
+  --text-hero: clamp(2.25rem, 11.4cqi, 3.5rem); /* cqi: sized to its column (hero titles sit in a size container) */
+  --text-hero--line-height: 0.9;
+  --text-hero--letter-spacing: -0.02em;
+  --text-display: clamp(1.875rem, 1.55rem + 1.6vw, 2.5rem);
   --text-display--line-height: 1;
-  --text-display--letter-spacing: 0.02em;
-  --text-title: 1.375rem;
+  --text-display--letter-spacing: -0.01em;
+  --text-title: 1.5rem;
   --text-title--line-height: 1.1;
-  --text-title--letter-spacing: 0.04em;
+  --text-title--letter-spacing: 0;
   --text-eyebrow: 0.6875rem;
   --text-eyebrow--line-height: 1rem;
   --text-eyebrow--letter-spacing: 0.2em;
 
-  /* Shape: tighter radii read as machined rather than soft */
-  --radius-card: 1rem;
-  --radius-panel: 0.75rem;
-  --radius-chip: 0.25rem;
+  /* Shape: generous, concentric radii, like objects you could pick up */
+  --radius-card: 1.75rem;
+  --radius-panel: 1.25rem;
+  --radius-chip: 0.75rem;         /* small tiles; chips and controls are full pills */
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Springs. These are the fallbacks; real spring curves replace them below. */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-spring-soft: cubic-bezier(0.3, 1.25, 0.6, 1);
 
-  --animate-grid-flow: grid-flow 9s linear infinite;
-  --animate-scan: scan 1.5s var(--ease-soft) 1 both;
+  /* The ambient loop (one per screen) and one-shot reveals */
+  --animate-aurora: aurora 36s ease-in-out infinite alternate;
+  --animate-sweep: sweep 1.3s var(--ease-soft) 0.15s 1 both;
+  --animate-stretch-in: stretch-in 1.2s var(--ease-out-expo) both;
 
-  @keyframes grid-flow {
-    to { background-position: 0 var(--grid-size), 0 0; }
+  @keyframes aurora {
+    from { transform: rotate(0deg) scale(1); }
+    to { transform: rotate(38deg) scale(1.18); }
   }
-  @keyframes scan {
-    0% { transform: translateY(-10%); opacity: 0; }
-    15% { opacity: 1; }
-    100% { transform: translateY(1100%); opacity: 0; }
+  /* A band of light crossing holographic foil */
+  @keyframes sweep {
+    from { transform: translateX(-130%) skewX(-16deg); opacity: 0; }
+    25% { opacity: 1; }
+    to { transform: translateX(230%) skewX(-16deg); opacity: 0; }
+  }
+  /* Kinetic type: letterforms grow from condensed to their resting width */
+  @keyframes stretch-in {
+    from { font-stretch: 50%; letter-spacing: 0.12em; opacity: 0; }
+    35% { opacity: 1; }
+  }
+}
+
+/*
+ * Spring curves, sampled from a damped harmonic oscillator into CSS linear()
+ * (zeta 0.62 ≈ 8% overshoot; zeta 0.7 ≈ 5%). Guarded so a browser without
+ * linear() keeps the cubic-bezier fallback instead of an invalid value.
+ */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: linear(0, 0.004 0.8%, 0.031 2.5%, 0.053 3.3%, 0.11 5%, 0.218 7.5%, 0.513 13.3%, 0.633 15.8%, 0.742 18.3%, 0.835 20.8%, 0.912 23.3%, 0.973 25.8%, 1.019 28.3%, 1.05 30.8%, 1.078 35%, 1.083 39.2%, 1.071 44.2%, 1.018 57.5%, 0.999 65.8%, 0.993 76.7%, 1);
+    --ease-spring-soft: linear(0, 0.003 0.8%, 0.024 2.5%, 0.062 4.2%, 0.113 5.8%, 0.239 9.2%, 0.485 15%, 0.584 17.5%, 0.703 20.8%, 0.78 23.3%, 0.846 25.8%, 0.916 29.2%, 0.957 31.7%, 0.996 35%, 1.017 37.5%, 1.035 40.8%, 1.046 47.5%, 1.004 75.8%, 1);
   }
 }
 
@@ -94,28 +123,48 @@
   --space-stack: calc(var(--step) * 3);         /* 12px per card behind the top */
   --space-controls: calc(var(--step) * 6);      /* 24px between control buttons */
 
-  /* ── Glass recipes ────────────────────────────────────────────────────── */
-  --glass-fill: rgb(120 200 255 / 0.05);
-  --glass-fill-hover: rgb(120 200 255 / 0.1);
-  --glass-fill-strong: rgb(6 8 24 / 0.62);
-  --glass-stroke: rgb(140 220 255 / 0.16);
-  --glass-stroke-strong: rgb(140 220 255 / 0.3);
-  --glass-blur: 18px;
-  --glass-blur-deep: 36px;
-  --glass-saturate: 165%;
-  --glass-sheen: inset 0 1px 0 0 rgb(180 240 255 / 0.14);
-  --shadow-float: 0 30px 60px -24px rgb(0 0 0 / 0.75);
+  /* ── Chrome: top bar + floating dock ──────────────────────────────────── */
+  --topbar-height: calc(var(--step) * 14);      /* 56px */
+  --dock-height: calc(var(--step) * 16);        /* 64px */
+  --dock-gap: calc(var(--step) * 3);            /* 12px the dock floats above the edge */
+  /* What scrolling content leaves free at the bottom so nothing hides under the dock. */
+  --dock-clearance: calc(var(--dock-height) + var(--dock-gap) * 2 + env(safe-area-inset-bottom));
+
+  /* ── Liquid glass ─────────────────────────────────────────────────────── */
+  --glass-fill: rgb(170 200 255 / 0.06);
+  --glass-fill-hover: rgb(170 200 255 / 0.11);
+  --glass-fill-strong: rgb(8 9 26 / 0.6);
+  --glass-stroke: rgb(190 215 255 / 0.13);
+  --glass-stroke-strong: rgb(190 215 255 / 0.22);
+  --glass-blur: 22px;
+  --glass-blur-deep: 40px;
+  --glass-saturate: 180%;
+  /* Light comes from above: a bright top rim and a faint bottom one. */
+  --glass-sheen: inset 0 1px 0 0 rgb(255 255 255 / 0.2), inset 0 -1px 0 0 rgb(255 255 255 / 0.05);
+  /* The curved-surface highlight across the top of a pane. */
+  --glass-gloss: linear-gradient(to bottom, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0) 45%);
+  --shadow-float: 0 28px 56px -24px rgb(0 0 0 / 0.85), 0 2px 8px -2px rgb(0 0 0 / 0.5);
+
+  /* ── Holographic foil ────────────────────────────────────────────────── */
+  /* The brand hues plus a warm stop, so it reads as foil rather than a gradient. */
+  --holo-spectrum: #22e6ff, #8f7bff, #ff3df2, #ffc46b, #5dffc2, #22e6ff;
+  /* Text-safe holo fill (on-primary text stays ≥5.8:1 across it). */
+  --holo-fill: linear-gradient(135deg, #22e6ff, #5aa8ff 55%, #8f7bff);
+
+  /* ── Depth ───────────────────────────────────────────────────────────── */
+  --perspective: 1000px;
+  --tilt-max: 9deg;
 
   /* ── Motion (fling/snap are overridden from TS so JS + CSS share one value) */
   --dur-press: 110ms;
   --dur-hover: 240ms;
   --dur-stack: 420ms;
-  --dur-snap: 560ms;
+  --dur-snap: 720ms;
   --dur-fling: 380ms;
+  --dur-spring: 640ms;
 
-  /* ── HUD details ─────────────────────────────────────────────────────── */
+  /* ── HUD details (readouts and the deck floor) ───────────────────────── */
   --hud-line: 1px;
-  --hud-bracket: calc(var(--step) * 4);           /* 16px corner bracket arm */
   --hud-glow: 0 0 6px;
   --grid-size: 44px;
 
@@ -132,4 +181,10 @@
   --like-strength: 0;
   --pass-strength: 0;
   --super-strength: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tilt-max: 0deg;
+  }
 }
