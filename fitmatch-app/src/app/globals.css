@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+/* Energy orange + success green on deep slate, from the ui-ux-pro-max
+   "Vibrant & Block-based" recommendation for fitness/social products. */
+@theme {
+  --color-bg: #111827;
+  --color-surface: #1f2937;
+  --color-card: #2a313c;
+  --color-muted: #37414f;
+  --color-border: #3b4554;
+  --color-fg: #f8fafc;
+  --color-muted-fg: #cbd5e1;
+  --color-primary: #f97316;
+  --color-primary-hover: #fb923c;
+  --color-on-primary: #0f172a;
+  --color-accent: #22c55e;
+  --color-on-accent: #0f172a;
+  --color-danger: #ef4444;
+
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), ui-sans-serif, sans-serif;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role='button'],
+  label[for] {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
