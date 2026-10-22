@@ -2,7 +2,6 @@
 
 @import '../styles/tokens.css';
 @import '../styles/components.css';
-@import '../styles/themes.css';
 
 @layer base {
   *,
@@ -21,9 +20,10 @@
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
   }
-  /* Display type runs expanded by default; components condense it to fit (e.g. long names). */
+  /* Display type leans forward and runs condensed; components narrow it further to fit (e.g. long names). */
   .font-display {
-    font-stretch: 115%;
+    font-style: italic;
+    font-stretch: 70%;
   }
   :focus-visible {
     outline: 2px solid var(--color-primary);

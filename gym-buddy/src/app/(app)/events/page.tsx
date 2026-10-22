@@ -51,7 +51,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="hud-label text-primary">// Local events</p>
-          <h1 className="font-display text-title font-extrabold uppercase font-stretch-125% title-glow">Events</h1>
+          <h1 className="font-display text-title font-extrabold uppercase">Events</h1>
           <p className="mt-1 text-sm text-muted-fg">Run clubs, CrossFit, pickleball, open gyms and more near you.</p>
         </div>
         <Link
@@ -101,7 +101,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
             No events match these filters within {filters.radius} miles. Try a wider radius, or start one: a weekly run,
             an open gym, a pickleball meetup.
           </p>
-          <Link href="/events/new" className="btn-holo mt-4 inline-flex h-11 items-center gap-2 rounded-full px-5 font-semibold">
+          <Link href="/events/new" className="btn-primary mt-4 inline-flex h-11 items-center gap-2 rounded-full px-5 font-semibold">
             <CalendarPlus className="size-4" aria-hidden /> Post an event
           </Link>
         </section>

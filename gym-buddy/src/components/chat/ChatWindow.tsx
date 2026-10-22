@@ -191,7 +191,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
             type="submit"
             disabled={!draft.trim()}
             aria-label="Send message"
-            className="btn-holo grid size-12 shrink-0 place-items-center rounded-full disabled:bg-muted disabled:bg-none disabled:text-muted-fg disabled:shadow-none"
+            className="btn-primary grid size-12 shrink-0 place-items-center rounded-full disabled:bg-muted disabled:bg-none disabled:text-muted-fg disabled:shadow-none"
           >
             <SendHorizontal className="size-5" aria-hidden />
           </button>

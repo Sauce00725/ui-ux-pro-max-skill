@@ -9,8 +9,8 @@ import { GOAL_LABELS } from '@/lib/validation'
 
 /**
  * The match moment, played once: the dialog springs in, the logo's two
- * figures slide together and the bar locks between them, and the title
- * stretches out to full width. All of it is skipped under reduced motion.
+ * figures slide together and the bar locks between them, and the title's
+ * letters slide together. All of it is skipped under reduced motion.
  */
 export function MatchDialog({
   mode,
@@ -36,7 +36,7 @@ export function MatchDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby="match-title"
-      className="match-dialog glass-strong holo-rim isolate @container m-auto w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-card p-8 text-center text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm"
+      className="match-dialog glass-strong rim-light isolate @container m-auto w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-card p-8 text-center text-fg backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       style={{ '--like-strength': 1 } as React.CSSProperties}
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
@@ -45,7 +45,7 @@ export function MatchDialog({
 
       <div className="relative mx-auto w-fit">
         {card.photos[0] && (
-          <div className="rounded-full bg-[conic-gradient(from_210deg,var(--holo-spectrum))] p-[3px] shadow-[0_0_40px_-6px_var(--glow-color)]">
+          <div className="rounded-full bg-[conic-gradient(from_210deg,var(--rim-stops))] p-[3px] shadow-[0_0_40px_-6px_var(--glow-color)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={card.photos[0]} alt="" className="size-28 rounded-full border-4 border-bg object-cover" />
           </div>
@@ -56,7 +56,7 @@ export function MatchDialog({
       </div>
 
       <p className="hud-label mt-8 text-primary">{mode === 'dating' ? '// Signal returned' : '// Link established'}</p>
-      <h2 id="match-title" className="match-title mt-1 font-display text-[min(2rem,11cqi)] font-black uppercase leading-none font-stretch-110%">
+      <h2 id="match-title" className="match-title mt-1 font-display text-[min(3rem,15cqi)] font-black uppercase leading-[0.9] font-stretch-72%">
         {title.map((line) => (
           <span key={line} className="block whitespace-nowrap">{line}</span>
         ))}
@@ -68,7 +68,7 @@ export function MatchDialog({
           : card.sharedActivities[0] && ` You both do ${card.sharedActivities[0].toLowerCase()}.`}
       </p>
       <div className="mt-7 flex flex-col gap-3">
-        <Link href={`/matches/${matchId}`} className="btn-holo inline-flex h-12 items-center justify-center rounded-full font-semibold">
+        <Link href={`/matches/${matchId}`} className="btn-primary inline-flex h-12 items-center justify-center rounded-full font-semibold">
           Send a message
         </Link>
         <Button variant="ghost" onClick={() => ref.current?.close()}>Keep looking</Button>

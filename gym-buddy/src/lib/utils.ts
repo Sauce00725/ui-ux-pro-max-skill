@@ -8,11 +8,11 @@ export function safeNext(next: string | null | undefined, fallback = '/discover'
 }
 
 /**
- * font-stretch that fits `text` on one line in Anybody (the display face):
- * `charsAtNormal` is how many characters fit at 100% width. Short text
- * stretches wide (up to 125%), long text condenses (down to 50%).
+ * font-stretch that fits `text` on one line in Saira (the display face):
+ * `charsAtNormal` is how many characters fit at 100% width. Text runs at the
+ * display's condensed 75% when it fits, narrower (down to 50%) when it's long.
  */
-export function fitStretch(text: string, charsAtNormal: number): string {
+export function fitStretch(text: string, charsAtNormal: number, max = 75): string {
   const pct = Math.round((100 * charsAtNormal) / Math.max(text.length, 1))
-  return `${Math.max(50, Math.min(125, pct))}%`
+  return `${Math.max(50, Math.min(max, pct))}%`
 }

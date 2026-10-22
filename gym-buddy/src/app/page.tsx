@@ -26,16 +26,16 @@ export default async function Home() {
       <p className="hud-label mt-14 text-primary">// Active-lifestyle network</p>
       <h1 className="hero-title mt-3 font-display text-hero font-black uppercase">
         <span className="block whitespace-nowrap">Meet people</span>
-        <span className="holo-text block whitespace-nowrap">who move.</span>
+        <span className="block whitespace-nowrap text-primary">who move.</span>
       </h1>
       <p className="mt-5 text-lg text-muted-fg">
         Dates, training partners and local events, whether you’re already active or just getting started.
       </p>
 
-      {/* What's inside, as panes floating at different angles */}
+      {/* What's inside, as slanted panes, each a lane further over */}
       <ul className="hero-stage mt-10">
         {FEATURES.map(({ icon: Icon, title, body }, i) => (
-          <li key={title} className={cn('hero-pane flex items-center gap-4 rounded-panel border border-[color:var(--glass-stroke-strong)] p-4', i === 0 && 'holo-rim')}>
+          <li key={title} className={cn('hero-pane flex items-center gap-4 rounded-panel border border-[color:var(--glass-stroke-strong)] px-4 py-3', i === 0 && 'rim-light')}>
             <span className="grid size-11 shrink-0 place-items-center rounded-full border border-primary/40 bg-primary/10 text-primary shadow-[0_0_18px_-6px_var(--color-primary)]">
               <Icon className="size-5" aria-hidden />
             </span>
@@ -48,7 +48,7 @@ export default async function Home() {
       </ul>
 
       <div className="mt-auto space-y-3 pt-10">
-        <Link href="/signup" className="btn-holo flex h-12 items-center justify-center rounded-full font-semibold">
+        <Link href="/signup" className="btn-primary flex h-12 items-center justify-center rounded-full font-semibold">
           Create account
         </Link>
         <Link

@@ -59,7 +59,7 @@ const SIZES = {
   lg: { mark: 'size-14', text: 'text-3xl' },
 } as const
 
-/** Mark + wordmark. "GYM" in white, "BUDDY" in holographic cyan. */
+/** Mark + wordmark. "GYM" in white, "BUDDY" in volt. */
 export function Logo({
   size = 'md',
   showWordmark = true,
@@ -75,7 +75,7 @@ export function Logo({
       <LogoMark className={cn(s.mark, 'shrink-0')} title={showWordmark ? undefined : 'Gym Buddy'} />
       {showWordmark && (
         <span className={cn('font-display font-black uppercase leading-none tracking-wide font-stretch-125%', s.text)}>
-          Gym <span className="text-primary title-glow">Buddy</span>
+          Gym <span className="text-primary">Buddy</span>
         </span>
       )}
     </span>

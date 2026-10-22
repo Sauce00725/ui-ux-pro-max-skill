@@ -14,8 +14,8 @@ const TABS = [
 ]
 
 /**
- * Floating glass dock. A bead of light glides (spring) to the active tab, so
- * switching tabs shows where you went from, not just where you are.
+ * Floating glass dock. A slanted volt block slides (spring) to the active tab,
+ * so switching tabs shows where you went from, not just where you are.
  */
 export function BottomNav() {
   const pathname = usePathname()
@@ -42,7 +42,7 @@ export function BottomNav() {
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex h-full flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] font-medium transition-colors duration-200',
-                    active ? 'text-primary title-glow' : 'text-muted-fg hover:text-fg',
+                    active ? 'text-on-primary' : 'text-muted-fg hover:text-fg',
                   )}
                 >
                   <Icon className="size-[1.375rem]" aria-hidden strokeWidth={active ? 2.4 : 2} />

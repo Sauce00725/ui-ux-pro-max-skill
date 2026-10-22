@@ -11,7 +11,7 @@ import { fitStretch } from '@/lib/utils'
 
 const MAX_CHIPS = 4
 /** Name characters that fit beside the age at normal width (first-paint guess; useFitStretch measures). */
-const NAME_CHARS = 9.5
+const NAME_CHARS = 9
 
 type Handlers = Pick<
   React.HTMLAttributes<HTMLElement>,
@@ -21,10 +21,10 @@ type Handlers = Pick<
 /**
  * Pure display. Position in the stack is a single number (`depth`); every
  * visual consequence of depth (offset, scale, fade, z-order) and of the live
- * drag (translate, rotate, tilt, glare, stamps, edge glow) is resolved in CSS.
+ * drag (translate, rotate, stamps, speed lines, edge glow) is resolved in CSS.
  *
- * The article moves in the plane; `.deck-face` inside it tilts in 3D, with
- * its layers (photo → glare → panel → rim) at different parallax depths.
+ * The article moves; `.deck-face` inside it clips the photo and panel to the
+ * card and is the size container the panel adapts to.
  *
  * `onLikeItem` (optional) adds Hinge-style "like this photo/prompt" buttons;
  * the parent decides what happens (open the comment composer).
@@ -47,7 +47,7 @@ export function ProfileCard({
   const isTop = depth === 0
   const [photo, setPhoto] = useState(0)
   const [open, setOpen] = useState(false)
-  // Long names condense along Anybody's width axis instead of truncating.
+  // Long names condense along Saira's width axis instead of truncating.
   const nameRef = useFitStretch<HTMLHeadingElement>(card.name)
 
   const chips = [
@@ -89,8 +89,7 @@ export function ProfileCard({
           <img src={card.photos[photo]} alt="" draggable={false} decoding="async" className="deck-photo" />
         )}
         <div className="deck-scrim" />
-        <div className="deck-sweep" />
-        <div className="deck-glare" />
+        <div className="deck-flash" />
         <div className="deck-glyphs" aria-hidden>
           <span />
           <span />
@@ -150,10 +149,9 @@ export function ProfileCard({
           </button>
         )}
 
-        {/* Info panel: the closest parallax layer */}
+        {/* Info panel */}
         <div className="absolute inset-x-0 bottom-0 p-(--space-panel-gap)">
           <div className="deck-panel glass-strong space-y-(--space-panel-gap) p-(--space-card)">
-            <div className="deck-foil" aria-hidden />
             <p className="hud-label flex items-center gap-1.5">
               <MapPin className="size-3.5 text-primary" aria-hidden />
               {card.city ?? 'Nearby'}
@@ -255,7 +253,7 @@ export function ProfileCard({
                   <ul className="flex flex-wrap gap-(--space-chip-gap)" aria-label="Activities">
                     {chips.slice(0, MAX_CHIPS).map(({ name, shared }) => (
                       <li key={name} className={shared ? 'chip chip--shared' : 'chip'}>
-                        {shared && <Sparkles className="size-3.5 text-primary" aria-hidden />}
+                        {shared && <Sparkles className="size-3.5" aria-hidden />}
                         {name}
                         {shared && <span className="sr-only">(you both do this)</span>}
                       </li>

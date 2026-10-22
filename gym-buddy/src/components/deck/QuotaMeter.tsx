@@ -10,7 +10,7 @@ const GAP = 4.5 // visible gap between cells
 const C = 2 * Math.PI * R
 
 /**
- * Energy ring: one cell per pick in this selection, clockwise from 12
+ * Tachometer: one cell per pick in this selection, clockwise from 12
  * o'clock, draining from the end as you swipe. The count sits in the middle.
  */
 export function QuotaMeter({ quota }: { quota: SwipeQuota }) {
@@ -46,7 +46,7 @@ export function QuotaMeter({ quota }: { quota: SwipeQuota }) {
           ))}
         </g>
       </svg>
-      <span className="font-mono text-base font-medium leading-none tabular-nums" aria-hidden>
+      <span className="font-display text-[1.375rem] font-extrabold leading-none tabular-nums" aria-hidden>
         {quota.remaining}
       </span>
     </div>

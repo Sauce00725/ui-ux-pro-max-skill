@@ -56,7 +56,7 @@ function QuotaExhausted({ resetsAt, windowSeconds }: { resetsAt: string | null; 
           </svg>
           <div className="text-center">
             <Hourglass className="mx-auto size-5 text-primary" aria-hidden />
-            <p className="mt-1 font-mono text-sm tabular-nums text-fg title-glow">{ms === null ? '—' : formatClock(ms)}</p>
+            <p className="mt-1 font-mono text-sm tabular-nums text-fg">{ms === null ? '—' : formatClock(ms)}</p>
           </div>
         </div>
       }
@@ -91,7 +91,7 @@ function LinkButton({ href, icon, primary, children }: { href: string; icon: Rea
       href={href}
       className={
         primary
-          ? 'btn-holo inline-flex h-12 items-center gap-2 rounded-full px-6 font-semibold'
+          ? 'btn-primary inline-flex h-12 items-center gap-2 rounded-full px-6 font-semibold'
           : 'glass glass-flat inline-flex h-12 items-center gap-2 rounded-full px-6 font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)'
       }
     >

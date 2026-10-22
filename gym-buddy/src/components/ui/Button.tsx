@@ -4,7 +4,7 @@ import { LoaderCircle } from 'lucide-react'
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
 const variants: Record<Variant, string> = {
-  primary: 'btn-holo',
+  primary: 'btn-primary',
   secondary: 'glass glass-flat text-fg hover:bg-(--glass-fill-hover)',
   ghost: 'text-muted-fg hover:text-fg hover:bg-(--glass-fill)',
   danger: 'bg-danger text-black hover:bg-red-400',

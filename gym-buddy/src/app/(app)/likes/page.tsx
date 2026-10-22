@@ -17,7 +17,7 @@ export default async function LikesPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto max-w-md px-(--space-gutter) pt-3">
       <p className="hud-label text-primary">// Incoming signals</p>
-      <h1 className="font-display text-title font-bold uppercase title-glow">Likes</h1>
+      <h1 className="font-display text-title font-bold uppercase">Likes</h1>
       <p className="mt-1 text-sm text-muted-fg">
         People who liked you first. Like them back to match, and it doesn’t use a pick.
       </p>

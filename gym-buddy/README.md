@@ -2,7 +2,7 @@
 
 Dating, Training Partners and local fitness events for active people.
 Next.js 15 (App Router) + Supabase (Postgres/PostGIS, Auth, Storage, Realtime) + Tailwind v4.
-Visual direction: "Spatial Holo": liquid glass, 3D-tilting holographic cards, a slow aurora (see `design-system/gym-buddy/MASTER.md`).
+Visual direction: "Volt": graphite and electric lime, condensed italic type, speed lines (see `design-system/gym-buddy/MASTER.md`).
 
 ## Setup
 

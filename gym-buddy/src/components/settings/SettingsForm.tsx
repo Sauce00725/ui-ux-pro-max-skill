@@ -62,7 +62,7 @@ export function SettingsForm({
     <main className="mx-auto max-w-md space-y-5 px-(--space-gutter) pb-10 pt-3">
       <div>
         <p className="hud-label text-primary">// Profile</p>
-        <h1 className="font-display text-title font-bold uppercase title-glow">Settings</h1>
+        <h1 className="font-display text-title font-bold uppercase">Settings</h1>
         <p className="mt-1 text-sm text-muted-fg">Changes save per section. Photos you add are reviewed before others see them.</p>
       </div>
 

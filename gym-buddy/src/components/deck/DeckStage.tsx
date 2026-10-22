@@ -2,10 +2,10 @@ import { cn } from '@/lib/utils'
 
 /**
  * The stage is the element useSwipeGesture writes its live signals to
- * (--like-strength etc.). The light beneath the glass reads them, so it
- * blooms cyan on a like, red on a pass and magenta on a Super Like. A static
- * floor grid gives the deck a room to stand in; the slow-moving light behind
- * everything is the app-wide aurora (AmbientBackground).
+ * (--like-strength etc.). The light beneath the cards reads them, so it
+ * blooms volt on a like, heat on a pass and ultraviolet on a Super Like. A
+ * static track floor gives the deck somewhere to stand; the light streak
+ * behind everything is the app-wide ambient (AmbientBackground).
  */
 export function DeckStage({
   ref,
@@ -26,11 +26,6 @@ export function DeckStage({
         <div className="deck-orb deck-orb--tide" />
         <div className="deck-horizon" />
         <div className="deck-grid" />
-      </div>
-      {/* Screen-edge light rails, for themes that signal intent at the edges (off by default). */}
-      <div aria-hidden className="deck-rails">
-        <span />
-        <span />
       </div>
       {children}
     </div>

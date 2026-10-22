@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
     <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7cf1ff"/>
-      <stop offset="0.45" stop-color="#22e6ff"/>
-      <stop offset="1" stop-color="#7b61ff"/>
+      <stop offset="0" stop-color="#ecff9c"/>
+      <stop offset="0.45" stop-color="#d4ff3a"/>
+      <stop offset="1" stop-color="#a5d000"/>
     </linearGradient>
     <radialGradient id="bg" cx="50%" cy="35%" r="75%">
-      <stop offset="0" stop-color="#10122a"/>
-      <stop offset="1" stop-color="#050510"/>
+      <stop offset="0" stop-color="#1c1c21"/>
+      <stop offset="1" stop-color="#0a0a0b"/>
     </radialGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#22e6ff" stroke-opacity="0.35" stroke-width="1"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#d4ff3a" stroke-opacity="0.35" stroke-width="1"/>
   <g fill="url(#g)" transform="translate(6.4 6.4) scale(0.8)">
     <circle cx="15" cy="14.5" r="5.5"/>
     <rect x="9" y="23" width="12" height="27" rx="6"/>
