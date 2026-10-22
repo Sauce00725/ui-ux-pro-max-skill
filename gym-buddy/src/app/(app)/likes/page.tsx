@@ -33,7 +33,7 @@ export default async function LikesPage({ searchParams }: { searchParams: Promis
               m === mode ? 'border-primary bg-primary/10 text-primary' : 'text-muted-fg hover:text-fg',
             )}
           >
-            {m === 'dating' ? 'Dating' : 'Gym Buddies'}
+            {m === 'dating' ? 'Dating' : 'Training Partners'}
           </Link>
         ))}
       </nav>

@@ -95,7 +95,7 @@ export function SettingsForm({
         <PromptsEditor prompts={prompts.values.prompts} errors={prompts.errors} onChange={(p) => prompts.set('prompts', p)} />
       </Section>
 
-      <Section title="Dating & Gym Buddies" eyebrow="05" state={modes}>
+      <Section title="Dating & Training Partners" eyebrow="05" state={modes}>
         <ModesFields
           modes={modes.values.modes}
           errors={modes.errors}
@@ -218,7 +218,7 @@ function AccountSection({ userId, email, paused: initialPaused }: { userId: stri
         <div className="flex-1 text-sm">
           <p className="font-semibold">{paused ? 'Profile paused' : 'Pause my profile'}</p>
           <p className="text-muted-fg">
-            {paused ? 'You’re hidden from Dating and Gym Buddies. Chats and events still work.' : 'Hide from everyone’s deck without deleting anything.'}
+            {paused ? 'You’re hidden from Dating and Training Partners. Chats and events still work.' : 'Hide from everyone’s deck without deleting anything.'}
           </p>
         </div>
         <Button type="button" variant="secondary" className="h-10 shrink-0" loading={pending} onClick={togglePause}>

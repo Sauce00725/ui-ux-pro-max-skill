@@ -38,7 +38,7 @@ interface Values extends BasicsValues, FitnessValues {
 const STEPS = [
   { title: 'The basics', subtitle: 'Only your first name, age and city are public.', schema: basicsSchema, keys: ['displayName', 'birthdate', 'gender', 'bio', 'city', 'state', 'lat', 'lng'] },
   { title: 'How you move', subtitle: 'Already training or just getting started, we match you on activities, goals and schedules.', schema: fitnessSchema, keys: ['activityIds', 'fitnessLevel', 'trainingTimes', 'goals', 'helpsBeginners'] },
-  { title: 'What you’re here for', subtitle: 'Dating and Gym Buddies are separate. Nobody sees a mode you haven’t turned on.', schema: modesSchema, keys: ['modes'] },
+  { title: 'What you’re here for', subtitle: 'Dating and Training Partners are separate. Nobody sees a mode you haven’t turned on.', schema: modesSchema, keys: ['modes'] },
   { title: 'Add prompts', subtitle: 'Optional, but prompts give people something to like and an easy first message.', schema: promptsSchema, keys: ['prompts'] },
   { title: 'Add photos', subtitle: 'Clear, recent photos get far more matches. Training shots welcome.', schema: photosSchema, keys: ['photoPaths'] },
 ] as const

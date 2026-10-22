@@ -21,7 +21,7 @@ export function DeckHeader({
       <div className="min-w-0">
         <p className="hud-label text-primary">// Daily selection</p>
         <h1 className="font-display text-title font-bold uppercase [text-shadow:0_0_16px_rgb(34_230_255/0.4)]">
-          {mode === 'dating' ? 'Match' : 'Gym Buddies'}
+          {mode === 'dating' ? 'Match' : 'Training Partners'}
         </h1>
         <p className="hud-label mt-1 tabular-nums" aria-live="off">
           {quota.resetsAt ? (

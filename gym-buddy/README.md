@@ -1,6 +1,6 @@
 # Gym Buddy
 
-Dating, Gym Buddies and local fitness events for active people.
+Dating, Training Partners and local fitness events for active people.
 Next.js 15 (App Router) + Supabase (Postgres/PostGIS, Auth, Storage, Realtime) + Tailwind v4.
 Visual direction: holographic HUD (see `design-system/gym-buddy/MASTER.md`).
 

@@ -112,7 +112,7 @@ export function LikeComposer({
       </div>
       <p id="super-hint" className="mt-2 text-center text-xs text-muted-fg">
         {canSuper
-          ? `Super Like = really interested. 1 per day, and you’ll be at the top of their ${mode === 'dating' ? 'matches' : 'buddies'}.`
+          ? `Super Like = really interested. 1 per day, and you’ll be at the top of their ${mode === 'dating' ? 'matches' : 'training partners'}.`
           : `Today’s Super Like is used${superMs !== null ? `, next in ${formatRemaining(superMs)}` : ''}.`}
       </p>
     </dialog>

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/discover?mode=dating', label: 'Match', icon: Heart, isActive: (p: string, m: string | null) => p === '/discover' && m === 'dating' },
-  { href: '/discover?mode=buddy', label: 'Buddies', icon: Users, isActive: (p: string, m: string | null) => p === '/discover' && m !== 'dating' },
+  { href: '/discover?mode=buddy', label: 'Partners', icon: Users, isActive: (p: string, m: string | null) => p === '/discover' && m !== 'dating' },
   { href: '/likes', label: 'Likes', icon: Inbox, isActive: (p: string) => p.startsWith('/likes') },
   { href: '/events', label: 'Events', icon: CalendarDays, isActive: (p: string) => p.startsWith('/events') },
   { href: '/matches', label: 'Chats', icon: MessageCircle, isActive: (p: string) => p.startsWith('/matches') },

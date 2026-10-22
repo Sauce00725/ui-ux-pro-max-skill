@@ -63,7 +63,7 @@ export function RsvpPanel({
             Show me as going
           </span>
           <span className="block text-muted-fg">
-            Off by default. When on, other members see your first name and photo here, a good way to find a buddy for it.
+            Off by default. When on, other members see your first name and photo here, a good way to find a training partner for it.
           </span>
         </span>
       </label>

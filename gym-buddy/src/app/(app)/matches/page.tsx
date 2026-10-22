@@ -85,7 +85,7 @@ export default async function MatchesPage() {
                     <p className="font-semibold">{m.other.display_name}</p>
                     <p className="flex items-center gap-1 text-sm text-muted-fg">
                       {m.mode === 'dating' ? <Heart className="size-3.5" aria-hidden /> : <Users className="size-3.5" aria-hidden />}
-                      {m.mode === 'dating' ? 'Dating' : 'Gym buddy'}
+                      {m.mode === 'dating' ? 'Dating' : 'Training partner'}
                     </p>
                   </div>
                   <time className="text-xs text-muted-fg" dateTime={m.last_message_at!}>

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 
 const FEATURES = [
   { icon: Heart, title: 'Dating', body: 'Match with people who share your training, schedule and goals.' },
-  { icon: Users, title: 'Gym Buddies', body: 'Find a spotter, a running partner, or someone patient to start with. Friends only.' },
+  { icon: Users, title: 'Training Partners', body: 'Find a spotter, a running partner, or someone patient to start with. Friends only.' },
   { icon: CalendarDays, title: 'Events', body: 'Run clubs, CrossFit, open play: what’s happening near you.' },
 ]
 

@@ -84,7 +84,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           <p className="truncate font-semibold">{other.name}</p>
           <p className="flex items-center gap-1 text-xs text-muted-fg">
             {mode === 'dating' ? <Heart className="size-3" aria-hidden /> : <Users className="size-3" aria-hidden />}
-            {mode === 'dating' ? 'Dating match' : 'Gym buddy'}
+            {mode === 'dating' ? 'Dating match' : 'Training partner'}
             {!connected && <span className="ml-1 text-primary">· reconnecting…</span>}
           </p>
         </div>
@@ -339,7 +339,7 @@ function SafetyMenu({ matchId, name }: { matchId: string; name: string }) {
           title={dialog === 'block' ? `Block ${name}?` : `Unmatch ${name}?`}
           body={
             dialog === 'block'
-              ? 'They won’t be able to message you or see you in Dating or Gym Buddies again. They aren’t notified.'
+              ? 'They won’t be able to message you or see you in Dating or Training Partners again. They aren’t notified.'
               : 'This conversation will be removed for both of you.'
           }
           confirmLabel={dialog === 'block' ? 'Block' : 'Unmatch'}

@@ -263,8 +263,8 @@ export function ModesFields({
       <ModeCard
         mode="buddy"
         icon={<Users className="size-5" aria-hidden />}
-        title="Gym Buddies"
-        description="Training partners and friends. Never dating."
+        title="Training Partners"
+        description="Workout partners and gym friends. Never dating."
         prefs={modes.buddy}
         errors={errors}
         onChange={(p) => onChange('buddy', p)}
@@ -395,7 +395,7 @@ export function ModeCard({
 
           <fieldset>
             <legend className="mb-3 text-sm font-medium text-muted-fg">
-              {mode === 'dating' ? 'Show me' : 'Buddies I’m open to (leave empty for everyone)'}
+              {mode === 'dating' ? 'Show me' : 'Partners I’m open to (leave empty for everyone)'}
             </legend>
             <div className="flex flex-wrap gap-2">
               {GENDERS.map((g) => (

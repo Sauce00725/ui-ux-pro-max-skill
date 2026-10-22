@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Gym Buddy',
     short_name: 'Gym Buddy',
-    description: 'Dating, gym buddies and local fitness events, from day one to race day.',
+    description: 'Dating, training partners and local fitness events, from day one to race day.',
     start_url: '/discover',
     display: 'standalone',
     background_color: '#050510',

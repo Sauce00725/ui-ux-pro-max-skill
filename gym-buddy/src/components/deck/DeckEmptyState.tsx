@@ -25,7 +25,7 @@ export function DeckEmptyState({ view, mode, onRefresh }: { view: EmptyView; mod
   return (
     <Panel icon={<Users className="size-7" aria-hidden />} title="No one new nearby">
       <p>
-        You’ve seen everyone who fits your {mode === 'dating' ? 'dating' : 'buddy'} preferences right now. Widen your
+        You’ve seen everyone who fits your {mode === 'dating' ? 'dating' : 'training partner'} preferences right now. Widen your
         distance, or meet people in person at a local event.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">

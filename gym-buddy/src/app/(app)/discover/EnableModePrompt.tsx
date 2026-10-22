@@ -19,11 +19,11 @@ export function EnableModePrompt({ mode }: { mode: AppMode }) {
         <Icon className="size-8" aria-hidden />
       </span>
       <h1 className="mt-6 font-display text-3xl font-bold uppercase">
-        {mode === 'dating' ? 'Dating is off' : 'Gym Buddies is off'}
+        {mode === 'dating' ? 'Dating is off' : 'Training Partners is off'}
       </h1>
       <p className="mt-2 text-muted-fg">
         {mode === 'dating'
-          ? 'Turn it on to see people who are open to dating. Your buddy matches stay separate.'
+          ? 'Turn it on to see people who are open to dating. Your training partners stay separate.'
           : 'Turn it on to find training partners and friends nearby. No dating, ever.'}
       </p>
       <Button
@@ -37,7 +37,7 @@ export function EnableModePrompt({ mode }: { mode: AppMode }) {
           })
         }
       >
-        Turn on {mode === 'dating' ? 'Dating' : 'Gym Buddies'}
+        Turn on {mode === 'dating' ? 'Dating' : 'Training Partners'}
       </Button>
       {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
     </div>

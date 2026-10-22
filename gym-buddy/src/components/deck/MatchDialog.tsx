@@ -39,7 +39,7 @@ export function MatchDialog({
       )}
       <p className="hud-label mt-6 text-primary">{mode === 'dating' ? '// Signal returned' : '// Link established'}</p>
       <h2 id="match-title" className="font-display text-display font-bold uppercase">
-        {mode === 'dating' ? 'It’s a match' : 'New gym buddy'}
+        {mode === 'dating' ? 'It’s a match' : 'New training partner'}
       </h2>
       <p className="mt-2 text-muted-fg">
         You and {card.name} {mode === 'dating' ? 'liked each other.' : 'both want to train together.'}
