@@ -59,7 +59,7 @@ export function SettingsForm({
   const photos = useSection({ photos: initial.photos }, photosSchema, (v) => ({ photoPaths: v.photos.map((p) => p.path) }), savePhotos)
 
   return (
-    <main className="mx-auto max-w-md space-y-5 px-(--space-gutter) pb-10 pt-3">
+    <main className="cascade mx-auto max-w-md space-y-5 px-(--space-gutter) pb-10 pt-3">
       <div>
         <p className="hud-label text-primary">// Profile</p>
         <h1 className="font-display text-title font-bold uppercase">Settings</h1>

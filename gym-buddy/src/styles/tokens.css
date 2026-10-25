@@ -76,29 +76,6 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   /* Spring. This is the fallback; a real spring curve replaces it below. */
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
-
-  /* The ambient loop (one per screen) and one-shot reveals */
-  --animate-streak: streak 7s cubic-bezier(0.55, 0, 0.35, 1) infinite;
-  --animate-flash: flash 0.8s var(--ease-soft) 0.15s 1 both;
-  --animate-stretch-in: stretch-in 1.2s var(--ease-out-expo) both;
-
-  /* A light trail crossing the background, then a rest */
-  @keyframes streak {
-    0% { opacity: 0; transform: rotate(-24deg) translateX(-80vmax); }
-    10% { opacity: 1; }
-    45%, 100% { opacity: 0; transform: rotate(-24deg) translateX(160vmax); }
-  }
-  /* A fast band of light across a card as it arrives */
-  @keyframes flash {
-    from { transform: translateX(-130%) skewX(-16deg); opacity: 0; }
-    25% { opacity: 1; }
-    to { transform: translateX(230%) skewX(-16deg); opacity: 0; }
-  }
-  /* Kinetic type: letters slide together and widen to their resting stretch */
-  @keyframes stretch-in {
-    from { font-stretch: 50%; letter-spacing: 0.12em; opacity: 0; }
-    35% { opacity: 1; }
-  }
 }
 
 /*
@@ -158,6 +135,24 @@
   --dur-fling: 380ms;
   --dur-spring: 640ms;
 
+  /*
+   * ── Choreography: Spot → Lock → Launch ───────────────────────────────────
+   * Anticipate, strike, settle. One hero motion at a time; everything else
+   * waits its turn on the stagger. Entrances use deceleration (--ease-out-expo
+   * or the spring), exits accelerate away (--ease-leave) and run shorter.
+   */
+  --ease-leave: cubic-bezier(0.55, 0, 1, 0.45);
+  --dur-lock: 520ms;     /* a reticle closes on its target */
+  --dur-slam: 560ms;     /* one headline letter lands */
+  --dur-rise: 480ms;     /* content lifting into place */
+  --dur-exit: 220ms;     /* exits run well under their entrance */
+  --step-letter: 34ms;   /* stagger between letters */
+  --step-item: 45ms;     /* stagger between list items (capped at 8 in CSS) */
+  --rise: 14px;          /* reveal offset */
+  --lean-deg: 3deg;      /* how far a card leans into a throw */
+  --parallax: -0.05;     /* photo drift against the drag (unitless, times px) */
+  --t-impact: 340ms;     /* the match scene: the moment its two photos meet */
+
   /* ── Deck geometry ────────────────────────────────────────────────────── */
   --grid-size: 44px;
   --stack-scale-step: 0.05;
@@ -172,4 +167,14 @@
   --like-strength: 0;
   --pass-strength: 0;
   --super-strength: 0;
+}
+
+/* Reduced motion: no lean, no parallax, no reveal offsets (one-shot reveals
+   also resolve to their end state: see components.css). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lean-deg: 0deg;
+    --parallax: 0;
+    --rise: 0px;
+  }
 }

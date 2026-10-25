@@ -2,6 +2,7 @@
 
 @import '../styles/tokens.css';
 @import '../styles/components.css';
+@import '../styles/motion.css';
 
 @layer base {
   *,
@@ -15,6 +16,8 @@
     scroll-padding-block: calc(var(--topbar-height) + env(safe-area-inset-top)) var(--dock-clearance);
   }
   body {
+    /* Slides and full-bleed layers never add a sideways scrollbar. */
+    overflow-x: clip;
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { CalendarDays, Heart, Users } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { Slam } from '@/components/Slam'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 
@@ -21,14 +22,25 @@ export default async function Home() {
 
   return (
     <main className="@container mx-auto flex min-h-dvh max-w-md flex-col overflow-hidden px-(--space-gutter) pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
-      <Logo size="md" />
+      <Logo size="md" className="rise" />
 
-      <p className="hud-label mt-10 text-primary">// Every body welcome</p>
+      {/* The intro is one sequence (~2.3s): the mark and eyebrow arrive, "Spot" then "the one." land
+          letter by letter, brackets lock on the second line, a band of light crosses, and everything
+          else follows in reading order. See motion.css. */}
+      <p className="hud-label rise mt-10 text-primary" style={{ '--rise-delay': '120ms' } as React.CSSProperties}>
+        // Every body welcome
+      </p>
       <h1 className="hero-title mt-3 font-display text-hero font-black uppercase">
-        <span className="block whitespace-nowrap">Spot</span>
-        <span className="block whitespace-nowrap text-primary">the one.</span>
+        <span className="block whitespace-nowrap">
+          <Slam text="Spot" delay={200} />
+        </span>
+        <span className="block whitespace-nowrap text-primary">
+          <span className="lock">
+            <Slam text="the one." delay={520} />
+          </span>
+        </span>
       </h1>
-      <p className="mt-5 text-lg text-muted-fg">
+      <p className="rise mt-5 text-lg text-muted-fg" style={{ '--rise-delay': '900ms' } as React.CSSProperties}>
         Dates, training partners and local events for every level. Brand new or years in, you belong here.
       </p>
 
@@ -48,12 +60,17 @@ export default async function Home() {
       </ul>
 
       <div className="mt-auto space-y-3 pt-8">
-        <Link href="/signup" className="btn-primary flex h-12 items-center justify-center rounded-full font-semibold">
+        <Link
+          href="/signup"
+          className="btn-primary shine rise flex h-12 items-center justify-center rounded-full font-semibold"
+          style={{ '--rise-delay': '1450ms', '--shine-delay': '2000ms' } as React.CSSProperties}
+        >
           Create account
         </Link>
         <Link
           href="/login"
-          className="glass glass-flat flex h-12 items-center justify-center rounded-full font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)"
+          className="glass glass-flat rise flex h-12 items-center justify-center rounded-full font-semibold transition-colors duration-200 hover:bg-(--glass-fill-hover)"
+          style={{ '--rise-delay': '1530ms' } as React.CSSProperties}
         >
           Log in
         </Link>

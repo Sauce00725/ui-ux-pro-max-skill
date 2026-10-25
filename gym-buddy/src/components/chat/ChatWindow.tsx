@@ -35,6 +35,10 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
     initialHasMore,
   })
   const [draft, setDraft] = useState('')
+  const [sends, setSends] = useState(0) // each send replays the send button's launch
+  // Only messages newer than what was on screen when the chat opened spring in; opening a
+  // long chat, or loading earlier messages, shouldn't animate the history.
+  const [openedAt] = useState(() => initialMessages.reduce((t, m) => Math.max(t, Date.parse(m.created_at) || 0), 0))
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const stickToBottom = useRef(true)
@@ -57,6 +61,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
     if (!draft.trim() || draft.length > MAX_LEN) return
     stickToBottom.current = true
     send(draft)
+    setSends((n) => n + 1)
     setDraft('')
     inputRef.current?.focus()
   }
@@ -138,7 +143,13 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
                     photoUrl={m.context?.photo_id ? contextPhotos[m.context.photo_id] : undefined}
                   />
                 ) : (
-                  <Bubble message={m} mine={mine} grouped={grouped} onRetry={() => retry(m.client_id)} />
+                  <Bubble
+                    message={m}
+                    mine={mine}
+                    grouped={grouped}
+                    fresh={(Date.parse(m.created_at) || 0) > openedAt}
+                    onRetry={() => retry(m.client_id)}
+                  />
                 )}
                 {mine && m.client_id === lastOwnSent?.client_id && m.read_at && (
                   <p className="mt-0.5 text-right text-xs text-muted-fg">Seen</p>
@@ -193,7 +204,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
             aria-label="Send message"
             className="btn-primary grid size-12 shrink-0 place-items-center rounded-full disabled:bg-muted disabled:bg-none disabled:text-muted-fg disabled:shadow-none"
           >
-            <SendHorizontal className="size-5" aria-hidden />
+            <SendHorizontal key={sends} className={cn('size-5', sends > 0 && 'send-launch')} aria-hidden />
           </button>
         </div>
         {draft.length > MAX_LEN - 200 && (
@@ -253,13 +264,27 @@ function LikeOpener({
   )
 }
 
-function Bubble({ message, mine, grouped, onRetry }: { message: ChatMessage; mine: boolean; grouped: boolean; onRetry: () => void }) {
+function Bubble({
+  message,
+  mine,
+  grouped,
+  fresh,
+  onRetry,
+}: {
+  message: ChatMessage
+  mine: boolean
+  grouped: boolean
+  /** Arrived after the chat opened: it springs in from its tail. */
+  fresh: boolean
+  onRetry: () => void
+}) {
   const time = new Date(message.created_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
   const translation = useTranslation(mine ? [] : [message.body])
   return (
     <div className={cn('flex flex-col', mine ? 'items-end' : 'items-start', !grouped && 'mt-3')}>
       <div
         title={time}
+        data-fresh={fresh || undefined}
         className={cn(
           'bubble',
           mine ? 'bubble--mine' : 'bubble--theirs',

@@ -1,0 +1,517 @@
+/*
+ * Motion: the choreography for the whole app, in one file.
+ *
+ * "Spot → Lock → Launch". Every sequence anticipates, strikes, then settles;
+ * one hero motion plays at a time and the rest wait their turn on a stagger.
+ *
+ * Rules this file keeps
+ *  - It only ever ADDS animation. tokens.css + components.css describe the
+ *    finished, static design; delete this import and the app is still whole.
+ *  - Everything that plays is inside `prefers-reduced-motion: no-preference`,
+ *    so reduced motion lands on the end state with nothing moving.
+ *  - transform and opacity only, written with the individual `translate`,
+ *    `scale` and `rotate` properties so they stack on top of the transforms
+ *    components already set (skew, drag) instead of fighting them.
+ *  - Entrances decelerate (--ease-out-expo, or the --ease-spring spring);
+ *    exits accelerate (--ease-leave) and run about a third as long.
+ *  - fill-mode `backwards`: during a delay an element waits in its first
+ *    keyframe; afterwards it returns to its base style, so nothing lingers
+ *    (no stuck transform, no stray containing block for fixed children).
+ *  - Nothing waits on `animationend`; sequencing is delays, and the two JS
+ *    timers that exist (card exit, dialog close) are plain timeouts.
+ */
+
+/* ─── Keyframes ───────────────────────────────────────────────────────────── */
+
+/* Content lifting into place. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--rise);
+  }
+}
+/* Screens slide in the direction you travelled: forward from the right, back from the left. */
+@keyframes page-fwd {
+  from {
+    opacity: 0;
+    translate: 28px 0;
+  }
+}
+@keyframes page-back {
+  from {
+    opacity: 0;
+    translate: -28px 0;
+  }
+}
+/* A headline letter drops in stretched, hits squashed, and settles. */
+@keyframes slam {
+  0% {
+    opacity: 0;
+    translate: 0 -0.5em;
+    scale: 0.85 1.55;
+  }
+  18% {
+    opacity: 1;
+  }
+  58% {
+    translate: 0 0.03em;
+    scale: 1.1 0.86;
+    animation-timing-function: var(--ease-soft);
+  }
+  100% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+/* Brackets close on a target, hold a beat, fade. */
+@keyframes lock {
+  0% {
+    opacity: 0;
+    scale: 1.16;
+  }
+  26% {
+    opacity: 1;
+  }
+  58% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
+/* A band of light crossing a surface once. */
+@keyframes shine {
+  0% {
+    opacity: 0;
+    translate: -130% 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 340% 0;
+  }
+}
+@keyframes pane-in {
+  from {
+    opacity: 0;
+    translate: 36px 0;
+  }
+}
+
+/* Swipe aftermath. */
+@keyframes shock {
+  from {
+    opacity: 0.7;
+    scale: 0.55;
+  }
+  to {
+    opacity: 0;
+    scale: 1.55;
+  }
+}
+@keyframes stomp {
+  from {
+    scale: 1.8;
+  }
+  55% {
+    scale: 0.94;
+  }
+  to {
+    scale: 1;
+  }
+}
+@keyframes pump {
+  35% {
+    scale: 1.2;
+  }
+}
+@keyframes spin-star {
+  from {
+    rotate: 0deg;
+  }
+  45% {
+    scale: 1.3;
+  }
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes shake-x {
+  20% {
+    translate: -5px 0;
+  }
+  45% {
+    translate: 4px 0;
+  }
+  70% {
+    translate: -3px 0;
+  }
+}
+
+/* Quota. */
+@keyframes roll-in {
+  from {
+    opacity: 0;
+    translate: 0 100%;
+  }
+}
+@keyframes roll-out {
+  to {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+}
+@keyframes burn {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Dock. */
+@keyframes dock-pop {
+  from {
+    scale: 0.7;
+  }
+  55% {
+    scale: 1.22;
+  }
+}
+
+/* Chat. */
+@keyframes bubble-mine {
+  from {
+    opacity: 0;
+    translate: 14px 10px;
+    scale: 0.82;
+  }
+}
+@keyframes bubble-theirs {
+  from {
+    opacity: 0;
+    translate: -14px 10px;
+    scale: 0.82;
+  }
+}
+@keyframes launch {
+  0% {
+    translate: 0 0;
+  }
+  40% {
+    opacity: 0;
+    translate: 18px -14px;
+  }
+  41% {
+    opacity: 0;
+    translate: -18px 14px;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* The match scene. */
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes scene-out {
+  to {
+    opacity: 0;
+    scale: 1.04;
+  }
+}
+@keyframes photo-in-left {
+  from {
+    opacity: 0;
+    translate: -125% 8%;
+    rotate: -16deg;
+  }
+}
+@keyframes photo-in-right {
+  from {
+    opacity: 0;
+    translate: 125% -8%;
+    rotate: 16deg;
+  }
+}
+@keyframes impact {
+  20% {
+    translate: -6px 3px;
+  }
+  40% {
+    translate: 5px -3px;
+  }
+  60% {
+    translate: -3px 2px;
+  }
+  80% {
+    translate: 2px -1px;
+  }
+}
+@keyframes flash-screen {
+  0% {
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* Shards fly out along their own axis: --a is the angle, --r how far. */
+@keyframes shard {
+  0% {
+    opacity: 0;
+    translate: calc(cos(var(--a)) * 28px) calc(sin(var(--a)) * 28px);
+    scale: 0.5 1;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: calc(cos(var(--a)) * var(--r)) calc(sin(var(--a)) * var(--r));
+    scale: 1.3 1;
+  }
+}
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+@keyframes link-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes link-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes link-bar {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* Ambient: a light streak crossing the background now and then. */
+@keyframes streak {
+  0% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-80vmax);
+  }
+  10% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(160vmax);
+  }
+}
+/* A fast band of light across a card as it arrives. */
+@keyframes flash {
+  from {
+    transform: translateX(-130%) skewX(-16deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(230%) skewX(-16deg);
+    opacity: 0;
+  }
+}
+
+/* ─── Choreography ────────────────────────────────────────────────────────── */
+
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    /* — Primitives — */
+
+    /* `--rise-delay` (inline) sequences it into a larger moment. */
+    .rise {
+      animation: rise var(--dur-rise) var(--ease-out-expo) var(--rise-delay, 0ms) backwards;
+    }
+    .slam-ch {
+      animation: slam var(--dur-slam) var(--ease-out-expo)
+        calc(var(--slam-delay, 0ms) + var(--i) * var(--step-letter)) backwards;
+    }
+    /* A list reveals item by item. After the eighth the rest arrive together: a long
+       list shouldn't make anyone wait. */
+    .cascade > * {
+      animation: rise var(--dur-rise) var(--ease-out-expo)
+        calc(var(--cascade-delay, 0ms) + var(--step-item) * 7) backwards;
+    }
+    .cascade > :nth-child(1) {
+      animation-delay: var(--cascade-delay, 0ms);
+    }
+    .cascade > :nth-child(2) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item));
+    }
+    .cascade > :nth-child(3) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item) * 2);
+    }
+    .cascade > :nth-child(4) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item) * 3);
+    }
+    .cascade > :nth-child(5) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item) * 4);
+    }
+    .cascade > :nth-child(6) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item) * 5);
+    }
+    .cascade > :nth-child(7) {
+      animation-delay: calc(var(--cascade-delay, 0ms) + var(--step-item) * 6);
+    }
+    .shine::after {
+      animation: shine 900ms var(--ease-soft) var(--shine-delay, 0ms) backwards;
+    }
+
+    /* — Screens — */
+
+    .page-enter[data-dir='up'] {
+      animation: rise var(--dur-rise) var(--ease-out-expo) backwards;
+    }
+    .page-enter[data-dir='fwd'] {
+      animation: page-fwd var(--dur-rise) var(--ease-out-expo) backwards;
+    }
+    .page-enter[data-dir='back'] {
+      animation: page-back var(--dur-rise) var(--ease-out-expo) backwards;
+    }
+
+    /* — Ambient — */
+
+    .ambient-streak {
+      animation: streak 7s cubic-bezier(0.55, 0, 0.35, 1) infinite;
+    }
+
+    /* — Landing: Spot → Lock → Launch — */
+
+    /* Brackets close on "the one." once most letters have landed… */
+    .lock::before {
+      animation: lock 1000ms var(--ease-out-expo) 1000ms backwards;
+    }
+    /* …then one band of light crosses the headline. */
+    .hero-title::after {
+      animation: shine 1100ms var(--ease-soft) 1300ms backwards;
+    }
+    .hero-pane {
+      animation: pane-in var(--dur-rise) var(--ease-out-expo)
+        calc(1100ms + var(--pane-step) * 90ms) backwards;
+    }
+
+    /* — Deck — */
+
+    /* A new top card is spotted, locked… */
+    .deck-card[data-top] .deck-reticle {
+      animation: lock var(--dur-lock) var(--ease-out-expo) 60ms backwards;
+    }
+    /* …then scanned. */
+    .deck-card[data-top] .deck-flash {
+      animation: flash 0.8s var(--ease-soft) 0.38s 1 both;
+    }
+    /* Photos sit a little oversize so the drift against the drag never shows an edge. */
+    .deck-photo {
+      scale: 1.07;
+    }
+
+    /* The control you used answers back, the tag you earned lands, and a ring leaves the deck. */
+    .deck-stage[data-fire='like'] .ctl--like {
+      animation: pump 380ms var(--ease-spring);
+    }
+    .deck-stage[data-fire='super'] .ctl--super {
+      animation: spin-star 520ms var(--ease-out-expo);
+    }
+    .deck-stage[data-fire='pass'] .ctl--pass {
+      animation: shake-x 320ms var(--ease-soft);
+    }
+    .deck-stage[data-fire='like'] .deck-stamp--like,
+    .deck-stage[data-fire='pass'] .deck-stamp--pass,
+    .deck-stage[data-fire='super'] .deck-stamp--super {
+      animation: stomp 260ms var(--ease-out-expo);
+    }
+    .deck-stage[data-fire]::after {
+      animation: shock 640ms var(--ease-out-expo) forwards;
+    }
+
+    /* The quota counter rolls like an odometer; the pick you just spent burns out. */
+    .odo-in {
+      animation: roll-in 300ms var(--ease-out-expo) 70ms backwards;
+    }
+    .odo-out {
+      animation: roll-out 200ms cubic-bezier(0.5, 0, 1, 0.6) forwards;
+    }
+    .quota-cell--fill[data-burn] {
+      animation: burn 620ms var(--ease-leave) backwards;
+    }
+
+    /* — Dock and chat — */
+
+    .dock-pop {
+      animation: dock-pop 460ms var(--ease-spring) backwards;
+    }
+    .bubble--mine[data-fresh] {
+      animation: bubble-mine 380ms var(--ease-spring) backwards;
+    }
+    .bubble--theirs[data-fresh] {
+      animation: bubble-theirs 380ms var(--ease-spring) backwards;
+    }
+    .send-launch {
+      animation: launch 520ms var(--ease-out-expo) backwards;
+    }
+
+    /* — The match: two photos collide, light bursts, the logo locks, the headline lands — */
+
+    .match-scene[open] .match-veil {
+      animation: veil-in 260ms var(--ease-soft) backwards;
+    }
+    .match-scene[open] .match-photo--you {
+      animation: photo-in-left 640ms var(--ease-spring) 80ms backwards;
+    }
+    .match-scene[open] .match-photo--them {
+      animation: photo-in-right 640ms var(--ease-spring) 80ms backwards;
+    }
+    .match-scene[open] .match-photos {
+      animation: impact 300ms linear var(--t-impact) backwards;
+    }
+    .match-scene[open] .match-flash {
+      animation: flash-screen 460ms var(--ease-soft) var(--t-impact) backwards;
+    }
+    .match-scene[open] .match-shard {
+      animation: shard 760ms var(--ease-out-expo) var(--t-impact) backwards;
+    }
+    .match-scene[open] .match-badge {
+      animation: badge-in 420ms var(--ease-spring) var(--t-impact) backwards;
+    }
+    .match-scene[open] .match-mark-left {
+      animation: link-left 700ms var(--ease-spring) calc(var(--t-impact) + 60ms) backwards;
+    }
+    .match-scene[open] .match-mark-right {
+      animation: link-right 700ms var(--ease-spring) calc(var(--t-impact) + 60ms) backwards;
+    }
+    .match-scene[open] .match-mark-bar {
+      animation: link-bar 560ms var(--ease-spring) calc(var(--t-impact) + 320ms) backwards;
+    }
+    .match-scene[data-closing] {
+      animation: scene-out var(--dur-exit) var(--ease-leave) forwards;
+    }
+  }
+}

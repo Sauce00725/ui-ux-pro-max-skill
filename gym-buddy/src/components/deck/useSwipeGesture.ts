@@ -13,6 +13,10 @@ import type { SwipeDirection } from './deckState'
  *   on the card   --drag-x, --drag-y, --drag-rot, --drag-origin
  *   on the stage  --swipe-amount, --like-strength, --pass-strength, --super-strength
  *
+ * One more mark goes on the stage when a swipe commits: `data-fire="like|pass|super"`
+ * for about a second, which is what the one-shot aftermath keys off (the control
+ * you used answers back, the tag lands, a ring leaves the deck; see motion.css).
+ *
  * The stage variables are inherited by everything inside it, so stacked cards,
  * stamps, ambient glows and control buttons all react to the same gesture with
  * zero extra wiring (see styles/components.css).
@@ -21,7 +25,8 @@ import type { SwipeDirection } from './deckState'
  */
 
 export const MOTION = {
-  flingMs: 380,
+  flingMs: 380, // thrown by hand: it already has your momentum, so it leaves fast
+  tossMs: 560, // sent by a button or key: a longer arc, so the throw and its effects can be seen
   snapMs: 720,
   maxRotationDeg: 16,
   commitRatio: 0.32, // of card width (like/pass)
@@ -69,6 +74,7 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit
     frame: 0,
   })
   const reducedMotion = useRef(false)
+  const fireTimer = useRef(0)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -143,6 +149,21 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit
     [stageRef],
   )
 
+  /** Mark what was just done, so CSS can answer back. Restarts cleanly if the same kind fires twice in a row. */
+  const fire = useCallback(
+    (direction: SwipeDirection) => {
+      const stage = stageRef.current
+      if (!stage) return
+      stage.removeAttribute('data-fire')
+      void stage.offsetWidth // commit the removal, so setting it again replays the animations
+      stage.setAttribute('data-fire', direction)
+      window.clearTimeout(fireTimer.current)
+      fireTimer.current = window.setTimeout(() => stage.removeAttribute('data-fire'), 900)
+    },
+    [stageRef],
+  )
+  useEffect(() => () => window.clearTimeout(fireTimer.current), [])
+
   /** Throw the card off-screen. Used by release, buttons and keyboard alike. */
   const fling = useCallback(
     (direction: SwipeDirection, velocity = 0) => {
@@ -154,6 +175,14 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit
       cancelAnimationFrame(s.frame)
       s.frame = 0
       setDragging(false)
+      fire(direction)
+
+      // A hand throw keeps your momentum; a button or key toss starts from rest, so it gets
+      // a longer, gentler arc. The card carries its own timing; the exit timer follows it.
+      const byHand = s.dx !== 0 || s.dy !== 0
+      const flightMs = byHand ? MOTION.flingMs : MOTION.tossMs
+      el.style.setProperty('--dur-fling', `${flightMs}ms`)
+      if (!byHand) el.style.setProperty('--ease-throw', 'cubic-bezier(0.33, 0, 0.2, 1)')
 
       callbacks.current.onCommit(direction)
       el.setAttribute('data-flinging', '')
@@ -176,16 +205,16 @@ export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit
         } else {
           const travel = window.innerWidth / 2 + el.offsetWidth * 1.1 + Math.abs(velocity) * 120
           // Thrown by hand: keep the vertical direction of the throw. By button: a slight upward toss.
-          const lift = s.dx !== 0 ? s.dy * MOTION.verticalDamping * 2 : -30
+          const lift = byHand ? s.dy * MOTION.verticalDamping * 2 : -30
           setCard(el, sign * travel, lift, sign * s.grabSign * MOTION.maxRotationDeg * 1.6)
         }
       }
 
       // A timer rather than transitionend: it fires once, and fires even when a
       // transition is skipped (background tab, reduced motion).
-      window.setTimeout(() => callbacks.current.onExited(), MOTION.flingMs + 20)
+      window.setTimeout(() => callbacks.current.onExited(), flightMs + 20)
     },
-    [writeStage, setDragging],
+    [writeStage, setDragging, fire],
   )
 
   const snapBack = useCallback(() => {

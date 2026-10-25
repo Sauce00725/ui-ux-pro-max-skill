@@ -114,7 +114,7 @@
     height: 2px;
     background: linear-gradient(90deg, transparent, rgb(212 255 58 / 0.6) 70%, #fff 96%, transparent);
     transform-origin: 0 50%;
-    animation: var(--animate-streak);
+    opacity: 0; /* motion.css crosses it now and then */
   }
 
   /* ─── Deck stage: light that reacts to the swipe ─────────────────────── */
@@ -123,12 +123,14 @@
     position: relative;
     isolation: isolate;
   }
-  /* Fills the viewport behind the stage, so there's no hard edge where the stage box ends. */
+  /* Full-bleed behind the stage, so there's no hard edge where its column ends: it reaches the
+     screen's sides, top and bottom. Absolute rather than fixed: a fixed layer inside the sliding
+     page would be carried along while the slide plays, then snap back when it ends. */
   .deck-orbs {
     --grid-floor-offset: var(--dock-clearance);
     --grid-floor-height: 32%;
-    position: fixed;
-    inset: 0;
+    position: absolute;
+    inset: calc((var(--topbar-height) + env(safe-area-inset-top)) * -1) calc(50% - 50vw) calc(var(--dock-clearance) * -1);
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
@@ -251,7 +253,7 @@
   }
   .deck-card[data-flinging] {
     transition:
-      transform var(--dur-fling) var(--ease-out-expo),
+      transform var(--dur-fling) var(--ease-throw, var(--ease-out-expo)),
       opacity var(--dur-fling) var(--ease-soft);
     pointer-events: none;
   }
@@ -267,12 +269,31 @@
     border-radius: inherit;
     background: var(--color-card);
   }
+  /* The face leans into a throw: a shear about its own centre, read from the same signals as the stamps. */
+  .deck-card[data-top] .deck-face {
+    transform: skewX(calc((var(--pass-strength) - var(--like-strength)) * var(--lean-deg)));
+    transition: transform var(--dur-snap) var(--ease-spring);
+  }
+  [data-dragging] .deck-card .deck-face {
+    transition: none;
+  }
+  .deck-card[data-flinging] .deck-face {
+    transition: transform var(--dur-fling) var(--ease-throw, var(--ease-out-expo));
+  }
   .deck-photo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Drifts against the drag, so the photo reads as a layer behind the card (clamped: never shows an edge). */
+    translate: clamp(-14px, calc(var(--drag-x, 0) * var(--parallax) * 1px), 14px) 0;
+  }
+  .deck-card[data-top] .deck-photo {
+    transition: translate var(--dur-snap) var(--ease-spring);
+  }
+  [data-dragging] .deck-card .deck-photo {
+    transition: none;
   }
 
   /* Photo scrim keeps panel text at ≥4.5:1 over any photo. */
@@ -373,8 +394,74 @@
     opacity: 0;
     pointer-events: none;
   }
-  .deck-card[data-top] .deck-flash {
-    animation: var(--animate-flash);
+
+  /* Viewfinder brackets, drawn here and played by motion.css (invisible at rest): they
+     close on a card as it arrives, and on the landing headline. */
+  .deck-reticle,
+  .lock::before {
+    --reticle-len: 22px;
+    --reticle-w: 2px;
+    --reticle-c: var(--color-primary);
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    background:
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 0 0 / var(--reticle-len) var(--reticle-w),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 0 0 / var(--reticle-w) var(--reticle-len),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 100% 0 / var(--reticle-len) var(--reticle-w),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 100% 0 / var(--reticle-w) var(--reticle-len),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 0 100% / var(--reticle-len) var(--reticle-w),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 0 100% / var(--reticle-w) var(--reticle-len),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 100% 100% / var(--reticle-len) var(--reticle-w),
+      linear-gradient(var(--reticle-c), var(--reticle-c)) 100% 100% / var(--reticle-w) var(--reticle-len);
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 6px var(--reticle-c));
+  }
+  .deck-reticle {
+    inset: calc(var(--step) * 3.5);
+    z-index: 7;
+  }
+  .deck-card:not([data-top]) .deck-reticle {
+    display: none;
+  }
+  .lock {
+    position: relative;
+    display: inline-block;
+  }
+  .lock::before {
+    inset: -0.04em -0.1em -0.02em -0.1em;
+    --reticle-len: 0.26em;
+    --reticle-w: 0.032em;
+  }
+
+  /* The ring a swipe sends out from the middle of the deck (played by motion.css),
+     tinted by what you did. Invisible at rest. */
+  .deck-stage::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    z-index: 0;
+    width: min(90%, 24rem);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 9999px;
+    border: 2px solid var(--fire-color, var(--color-primary));
+    box-shadow:
+      0 0 40px -4px var(--fire-color, var(--color-primary)),
+      inset 0 0 40px -8px var(--fire-color, var(--color-primary));
+    opacity: 0;
+    pointer-events: none;
+  }
+  .deck-stage[data-fire='like'] {
+    --fire-color: var(--color-like);
+  }
+  .deck-stage[data-fire='pass'] {
+    --fire-color: var(--color-pass);
+  }
+  .deck-stage[data-fire='super'] {
+    --fire-color: var(--color-super);
   }
 
   /* Info panel. Never taller than the card: when the details are open, they
@@ -754,6 +841,24 @@
   .quota-glow {
     filter: drop-shadow(0 0 3px rgb(212 255 58 / 0.7));
   }
+  /* The pick you just spent goes out hot. */
+  .quota-cell--fill[data-burn] {
+    stroke: var(--color-accent);
+  }
+  /* Odometer: the old digit rolls out the top while the new one rolls in from below. */
+  .odo {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    padding-inline: 0.15em; /* room for the italic's overhang inside the clip */
+    overflow: hidden;
+  }
+  .odo-out {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
 
   /* ─── Chrome: top bar and floating dock ──────────────────────────────── */
 
@@ -814,26 +919,153 @@
     opacity: 0;
   }
 
-  /* ─── Match moment ───────────────────────────────────────────────────── */
+  /* ─── Match moment: a full-screen scene ──────────────────────────────── */
+  /*
+   * Final state only; motion.css plays the collision. Two photos meet in the
+   * middle, the logo locks between them, the headline lands under them.
+   */
 
-  .match-dialog[open] {
-    animation: dialog-in var(--dur-spring) var(--ease-spring) both;
+  .match-scene[open] {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: transparent;
+    color: var(--color-fg);
   }
-  /* The logo's two figures meet, then the bar locks them together. */
-  .match-mark-left {
-    animation: link-left 700ms var(--ease-spring) 160ms both;
+  .match-scene::backdrop {
+    background: transparent; /* the veil below does the dimming, so it can fade in */
   }
-  .match-mark-right {
-    animation: link-right 700ms var(--ease-spring) 160ms both;
+  .match-veil {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 38% at 50% 34%, rgb(212 255 58 / 0.16), transparent 72%),
+      rgb(10 10 11 / 0.94);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+  }
+  .match-flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 34%, #fff, rgb(212 255 58 / 0.55) 28%, transparent 60%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .match-stage {
+    container: match-stage / inline-size;
+    position: relative;
+    width: min(100%, 26rem);
+    padding: var(--space-gutter) var(--space-gutter) calc(var(--space-gutter) + env(safe-area-inset-bottom));
+    text-align: center;
+  }
+  .match-photos {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-block: calc(var(--step) * 6);
+  }
+  .match-photo {
+    position: relative;
+    width: 42cqi;
+    max-width: 11rem;
+    aspect-ratio: 3 / 4;
+    padding: 2px;
+    border-radius: var(--radius-card);
+    background: conic-gradient(from 210deg, var(--rim-stops));
+    box-shadow:
+      0 24px 48px -20px rgb(0 0 0 / 0.9),
+      0 0 40px -10px var(--glow-color);
+  }
+  .match-photo > img,
+  .match-photo-blank {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: calc(var(--radius-card) - 2px);
+    background: var(--color-card);
+    object-fit: cover;
+  }
+  .match-photo--you {
+    z-index: 1;
+    margin-right: calc(var(--step) * -6);
+    rotate: -6deg;
+    translate: 0 calc(var(--step) * -3);
+  }
+  .match-photo--them {
+    z-index: 2;
+    margin-left: calc(var(--step) * -6);
+    rotate: 6deg;
+    translate: 0 calc(var(--step) * 3);
+  }
+  .match-tag {
+    position: absolute;
+    left: calc(var(--step) * 2);
+    bottom: calc(var(--step) * 2);
+    max-width: calc(100% - var(--step) * 4);
+    padding: calc(var(--step) * 0.5) calc(var(--step) * 2);
+    border-radius: 0.375rem;
+    background: rgb(10 10 11 / 0.72);
+    color: var(--color-fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .match-badge {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: calc(var(--step) * 14);
+    height: calc(var(--step) * 14);
+    translate: -50% -50%;
+    border-radius: 9999px;
+  }
+  /* The light that bursts from the collision. */
+  .match-shards {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+  }
+  .match-shard {
+    position: absolute;
+    left: -22px;
+    top: -1.5px;
+    width: 44px;
+    height: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent, var(--color-primary) 55%, #fff);
+    rotate: var(--a);
+    opacity: 0;
+  }
+  .match-title {
+    margin-top: 0.25rem;
+    font-size: min(4rem, 17cqi);
+    font-stretch: 72%;
+    line-height: 0.9;
+  }
+  .match-actions {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--step) * 3);
+    margin-top: calc(var(--step) * 7);
   }
   .match-mark-bar {
     transform-box: fill-box;
     transform-origin: center;
-    animation: link-bar 560ms var(--ease-spring) 520ms both;
-  }
-  .match-title {
-    animation: var(--animate-stretch-in);
-    animation-delay: 260ms;
   }
 
   /* ─── Chat bubbles ───────────────────────────────────────────────────── */
@@ -847,12 +1079,14 @@
     overflow-wrap: anywhere;
   }
   .bubble--mine {
+    transform-origin: 100% 100%;
     border-bottom-right-radius: 0.25rem;
     background: var(--color-primary);
     color: var(--color-on-primary);
     box-shadow: 0 10px 24px -16px rgb(212 255 58 / 0.8);
   }
   .bubble--theirs {
+    transform-origin: 0 100%;
     border: 1px solid var(--glass-stroke);
     border-bottom-left-radius: 0.25rem;
     background: var(--color-card);
@@ -864,8 +1098,20 @@
 
   /* With text-hero (container units), the longer hero line ("the one.") spans the column at this stretch. */
   .hero-title {
+    position: relative;
     font-stretch: 68%;
-    animation: var(--animate-stretch-in);
+  }
+  /* A band of light that crosses the headline once (motion.css). */
+  .hero-title::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 24%;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.5) 50%, transparent);
+    mix-blend-mode: screen;
+    transform: skewX(-16deg);
+    opacity: 0;
+    pointer-events: none;
   }
   /* What's inside: slanted panes, each a lane further over. */
   .hero-stage {
@@ -914,6 +1160,28 @@
     box-shadow: 0 0 6px var(--color-primary);
   }
 
+  /* ─── Motion hooks (the animation is in motion.css) ──────────────────── */
+
+  /* Headline letters: split so each can land on its own. */
+  .slam-ch {
+    display: inline-block;
+  }
+  /* A surface a band of light can cross, once. */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: '';
+    position: absolute;
+    inset: -20% auto -20% 0;
+    width: 38%;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.55), transparent);
+    transform: skewX(-16deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+
   /* ─── Kbd hint ───────────────────────────────────────────────────────── */
 
   .kbd {
@@ -932,37 +1200,10 @@
   }
 }
 
-@keyframes dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.94);
-  }
-}
-@keyframes link-left {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-}
-@keyframes link-right {
-  from {
-    opacity: 0;
-    transform: translateX(12px);
-  }
-}
-@keyframes link-bar {
-  from {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .ambient-streak {
+  .ambient-streak,
+  .odo-out {
     display: none;
-  }
-  .deck-flash {
-    animation: none !important;
   }
   /* No rotation or travel: cards cross-fade instead (see useSwipeGesture). */
   .deck-card[data-top] {

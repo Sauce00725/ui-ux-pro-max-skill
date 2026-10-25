@@ -60,7 +60,7 @@ export default async function MatchesPage() {
       {fresh.length > 0 && (
         <section className="mt-5">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-fg">New matches</h2>
-          <ul className="-mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
+          <ul className="cascade -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
             {fresh.map((m) => (
               <li key={m.id} className="shrink-0">
                 <Link href={`/matches/${m.id}`} className="flex w-20 flex-col items-center gap-1.5">
@@ -76,7 +76,7 @@ export default async function MatchesPage() {
       {convos.length > 0 && (
         <section className="mt-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-fg">Messages</h2>
-          <ul className="mt-2 divide-y">
+          <ul className="cascade mt-2 divide-y">
             {convos.map((m) => (
               <li key={m.id}>
                 <Link href={`/matches/${m.id}`} className="flex min-h-16 items-center gap-3 py-3 transition-colors hover:bg-surface">

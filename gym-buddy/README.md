@@ -51,6 +51,7 @@ other, turn on the same mode, and like each other.
 | Like composer (comment on a photo/prompt) | `src/components/deck/LikeComposer.tsx` |
 | Daily Selection deck | `src/components/deck/` (see below) |
 | Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
+| Motion (all choreography, reduced-motion safe) | `src/styles/motion.css`, `src/components/Slam.tsx`, `src/app/(app)/template.tsx` |
 | Design system rationale | `design-system/gym-buddy/MASTER.md` |
 | Chat (real-time) | `src/components/chat/useChat.ts`, `src/components/chat/ChatWindow.tsx` |
 | Block / report / unmatch | `src/app/(app)/matches/actions.ts` |

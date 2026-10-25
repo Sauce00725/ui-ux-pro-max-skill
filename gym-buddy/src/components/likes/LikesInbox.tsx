@@ -32,7 +32,7 @@ export function LikesInbox({ mode, initialLikes }: { mode: AppMode; initialLikes
 
   return (
     <>
-      <ul className="mt-5 space-y-3 pb-6">
+      <ul className="cascade mt-5 space-y-3 pb-6">
         {likes.map((like) => (
           <li key={like.id}>
             <button

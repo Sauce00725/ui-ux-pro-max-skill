@@ -27,12 +27,15 @@ export function DailyDeck({
   initialCards,
   initialQuota,
   initialSuperQuota,
+  selfPhoto,
   api,
 }: {
   mode: AppMode
   initialCards: DiscoveryCard[]
   initialQuota: SwipeQuota
   initialSuperQuota: SuperQuota
+  /** Your own first photo (signed URL), for the match scene. */
+  selfPhoto?: string | null
   api?: DeckApi
 }) {
   const deck = useDailyDeck({ mode, initialCards, initialQuota, initialSuperQuota, api })
@@ -138,7 +141,7 @@ export function DailyDeck({
         />
       )}
 
-      {state.match && <MatchDialog mode={mode} {...state.match} onClose={deck.dismissMatch} />}
+      {state.match && <MatchDialog mode={mode} {...state.match} selfPhoto={selfPhoto} onClose={deck.dismissMatch} />}
     </DeckStage>
   )
 }

@@ -33,7 +33,7 @@ export function EventList({ events }: { events: EventItem[] }) {
   }
 
   return (
-    <div className="mt-4 space-y-6 pb-6">
+    <div className="cascade mt-4 space-y-6 pb-6">
       {groups.map((g) => (
         <section key={g.key} aria-labelledby={`day-${g.key}`}>
           <h2 id={`day-${g.key}`} className="hud-label mb-2 text-primary">// {g.label}</h2>

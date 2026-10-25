@@ -3,7 +3,7 @@ import { Logo } from '@/components/Logo'
 
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10">
+    <main className="cascade mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10">
       <Link href="/" className="mb-8 self-start" aria-label="Gym Buddy home">
         <Logo size="md" />
       </Link>

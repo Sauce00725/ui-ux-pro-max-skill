@@ -90,6 +90,7 @@ export function ProfileCard({
         )}
         <div className="deck-scrim" />
         <div className="deck-flash" />
+        <div className="deck-reticle" aria-hidden />
         <div className="deck-glyphs" aria-hidden>
           <span />
           <span />
