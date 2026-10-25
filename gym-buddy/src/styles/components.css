@@ -925,11 +925,15 @@
    * middle, the logo locks between them, the headline lands under them.
    */
 
+  /* Fills the screen. Content centres itself with auto margins (the "safe" way to centre: on a
+     screen too short for the scene, such as a phone on its side, it scrolls from the top instead
+     of spilling off both ends). Sideways, nothing scrolls: the photos arrive from off-screen. */
   .match-scene[open] {
     position: fixed;
     inset: 0;
-    display: grid;
-    place-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     height: 100%;
     max-width: none;
@@ -937,7 +941,8 @@
     margin: 0;
     padding: 0;
     border: 0;
-    overflow: hidden;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
     background: transparent;
     color: var(--color-fg);
   }
@@ -945,7 +950,7 @@
     background: transparent; /* the veil below does the dimming, so it can fade in */
   }
   .match-veil {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background:
       radial-gradient(60% 38% at 50% 34%, rgb(212 255 58 / 0.16), transparent 72%),
@@ -954,7 +959,7 @@
     -webkit-backdrop-filter: blur(14px) saturate(120%);
   }
   .match-flash {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: radial-gradient(circle at 50% 34%, #fff, rgb(212 255 58 / 0.55) 28%, transparent 60%);
     mix-blend-mode: screen;
@@ -964,6 +969,8 @@
   .match-stage {
     container: match-stage / inline-size;
     position: relative;
+    flex-shrink: 0;
+    margin-block: auto;
     width: min(100%, 26rem);
     padding: var(--space-gutter) var(--space-gutter) calc(var(--space-gutter) + env(safe-area-inset-bottom));
     text-align: center;
@@ -1066,6 +1073,25 @@
   .match-mark-bar {
     transform-box: fill-box;
     transform-origin: center;
+  }
+  /* A phone on its side: smaller photos and title, buttons side by side, so the scene still fits. */
+  @media (max-height: 560px) {
+    .match-photos {
+      padding-block: calc(var(--step) * 3);
+    }
+    .match-photo {
+      max-width: 6.5rem;
+    }
+    .match-title {
+      font-size: min(2.75rem, 12cqi);
+    }
+    .match-actions {
+      flex-direction: row;
+      margin-top: calc(var(--step) * 4);
+    }
+    .match-actions > * {
+      flex: 1;
+    }
   }
 
   /* ─── Chat bubbles ───────────────────────────────────────────────────── */

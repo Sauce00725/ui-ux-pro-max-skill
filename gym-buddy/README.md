@@ -16,6 +16,9 @@ Visual direction: "Volt": graphite and electric lime, condensed italic type, spe
    `ANTHROPIC_API_KEY` for translation (server-side only).
 5. `npm install && npm run dev` and open http://localhost:3000.
 
+Just want to click around? `npm run prototype` builds a single HTML file with the real screens and motion on
+invented people: no Supabase needed (see `prototype/README.md`).
+
 **Sample events:** `supabase/seed.sql` adds fictional upcoming events in 8 US metros (Austin, NYC, LA,
 Chicago, Denver, Miami, Seattle, Atlanta). `supabase db reset` runs it; or paste it into the SQL editor.
 Member-posted events start `pending`: approve with `update events set moderation = 'approved' where id = '…';`
@@ -51,6 +54,7 @@ other, turn on the same mode, and like each other.
 | Like composer (comment on a photo/prompt) | `src/components/deck/LikeComposer.tsx` |
 | Daily Selection deck | `src/components/deck/` (see below) |
 | Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
+| Clickable prototype (real screens on demo data, one HTML file) | `prototype/` (`npm run prototype`) |
 | Motion (all choreography, reduced-motion safe) | `src/styles/motion.css`, `src/components/Slam.tsx`, `src/app/(app)/template.tsx` |
 | Design system rationale | `design-system/gym-buddy/MASTER.md` |
 | Chat (real-time) | `src/components/chat/useChat.ts`, `src/components/chat/ChatWindow.tsx` |
