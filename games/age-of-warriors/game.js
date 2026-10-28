@@ -84,9 +84,9 @@
     return 'sword';
   };
   const RANGED = new Set(['bow', 'throw', 'pistol', 'rifle']);
-  const LONG_RANGE = { arrow: 230, bolt: 240, javelin: 165, stone: 200, dart: 210, star: 140, bullet: 270, rocket: 250 };
-  const LONG_CD = { arrow: 1.6, bolt: 2.0, javelin: 1.8, stone: 1.5, dart: 1.6, star: 1.0, bullet: 1.5, rocket: 2.2 };
-  const PROJ_SPEED = { bullet: 950, arrow: 430, bolt: 520, javelin: 340, stone: 380, dart: 400, star: 380, rocket: 380, bomb: 300, fire: 320, nest: 300, net: 300, rope: 360, bola: 360, flash: 330, shell: 460, stake: 320 };
+  const LONG_RANGE = { arrow: 230, bolt: 240, javelin: 165, stone: 200, dart: 210, star: 140, bullet: 270, rocket: 250, plasma: 280, acid: 190, ion: 300 };
+  const LONG_CD = { arrow: 1.6, bolt: 2.0, javelin: 1.8, stone: 1.5, dart: 1.6, star: 1.0, bullet: 1.5, rocket: 2.2, plasma: 1.2, acid: 1.5, ion: 2.4 };
+  const PROJ_SPEED = { bullet: 950, arrow: 430, bolt: 520, javelin: 340, stone: 380, dart: 400, star: 380, rocket: 380, bomb: 300, fire: 320, nest: 300, net: 300, rope: 360, bola: 360, flash: 330, shell: 460, stake: 320, plasma: 640, acid: 360, ion: 520 };
 
   function projOf(kind, n) {
     if (kind === 'bow') return /crossbow|scorpio|gastraphetes/.test(n) ? 'bolt' : 'arrow';
@@ -200,7 +200,7 @@
   }
   const DEFS = DATA.warriors.map((raw) => makeDef(raw));
   // Turrets: priced like weapons, damage scaled so fast guns hit lighter.
-  const TURRET_BASE = [110, 240, 480, 950, 1800];
+  const TURRET_BASE = [110, 240, 480, 950, 1800, 3400];
   ERAS.forEach((era, i) => era.turrets.forEach((t) => {
     t.cost = Math.round(TURRET_BASE[i] * Math.pow(t.power / 7, 2.5) * (t.aoe ? 1.1 : 1));
     t.dmg0 = effPower(t.power) * 3.2 * Math.pow(t.cd / 1.6, 0.75);
@@ -289,7 +289,8 @@
   const ACH = [
     { id: 'firstblood', name: 'First Blood', desc: 'Slay your first enemy' },
     { id: 'steel', name: 'Forged in Steel', desc: 'Reach the Age of Steel' },
-    { id: 'modern', name: 'Modern Warfare', desc: 'Reach the final era' },
+    { id: 'modern', name: 'Modern Warfare', desc: 'Reach Modern Warfare' },
+    { id: 'alien', name: 'First Contact', desc: 'Evolve into the Alien Invasion' },
     { id: 'victory', name: 'Victory', desc: 'Win a skirmish' },
     { id: 'deadliest', name: 'Deadliest Warrior', desc: 'Win a skirmish on Deadliest' },
     { id: 'fortress', name: 'Untouchable', desc: 'Win with your stronghold above 90% health' },
@@ -413,7 +414,7 @@
       b.maxHp = next.baseHp * upMul(sd, 'walls');
       b.hp = Math.min(b.maxHp, ratio * b.maxHp + 0.2 * b.maxHp);
     }
-    if (sd.team === 0 && playing()) { if (sd.era >= 1) unlock('steel'); if (sd.era >= 4) unlock('modern'); }
+    if (sd.team === 0 && playing()) { if (sd.era >= 1) unlock('steel'); if (sd.era >= 4) unlock('modern'); if (sd.era >= 5) unlock('alien'); }
     if (sd.team === 0 && S.mode === 'play') {
       showBanner(next.name, next.span);
       Sound.play('evolve');
@@ -1386,7 +1387,7 @@ void main(){
   // Per-era art direction: daylight sky, terrain, flora and weather.
   const ART = [
     { sky: ['#e59a62', '#f2c58c', '#f9e2b8'], haze: '#f3cf9c', far: '#c79a74', mid: '#a9734d', near: '#7c4f33',
-      ground: ['#b88a55', '#7d5733'], lane: '#cfa06a', grass: '#a08f4c', trees: 'cypress', weather: 'motes', tint: [0.05, 0.02, -0.01], stone: '#d8c39a' },
+      ground: ['#dcb87e', '#a8824c'], lane: '#efd6a4', grass: '#b8a060', trees: 'cypress', weather: 'motes', tint: [0.05, 0.02, -0.01], stone: '#d8c39a' },
     { sky: ['#5d6f7d', '#9fb0b2', '#d9ddd0'], haze: '#c9d0c6', far: '#7f8a86', mid: '#5d6863', near: '#3d4842',
       ground: ['#6f7650', '#474c31'], lane: '#88805c', grass: '#5d7040', trees: 'pine', weather: 'leaves', tint: [-0.01, 0.0, 0.02], stone: '#9a9c93' },
     { sky: ['#1f6d6c', '#6fae92', '#f1d27c'], haze: '#bfd9a0', far: '#4f8a63', mid: '#2f6544', near: '#1e4630',
@@ -1395,6 +1396,8 @@ void main(){
       ground: ['#6f5b43', '#463829'], lane: '#8a7457', grass: '#6a6a3a', trees: 'oak', weather: 'ash', tint: [0.03, 0.01, -0.01], stone: '#9c8a74' },
     { sky: ['#47586a', '#7c8fa0', '#b4bec6'], haze: '#9aa8b4', far: '#4f5e6c', mid: '#3a4654', near: '#26303a',
       ground: ['#4a504c', '#2a2e30'], lane: '#5a605c', grass: '#3a463a', trees: 'pole', weather: 'rain', tint: [-0.02, 0.0, 0.03], stone: '#7a8086' },
+    { sky: ['#2a1450', '#7a3a8a', '#e88ab0'], nightSky: ['#0a0418', '#1e0c34', '#3a1a4a'], haze: '#b08ac8', far: '#4a3a6a', mid: '#3a2a5a', near: '#2a2238',
+      ground: ['#5a4a6a', '#2e2438'], lane: '#7a6a8a', grass: '#6aa898', trees: 'crystal', weather: 'spores', tint: [0.03, -0.01, 0.05], stone: '#8a7aa8' },
   ];
   const artOf = () => ART[S.sides[0].era];
 
@@ -1425,7 +1428,8 @@ void main(){
     };
     const [sunX, sunY] = arc(tod);
     const [moonX, moonY] = arc((tod + 0.5) % 1);
-    const sky = [0, 1, 2].map((i) => css3(mix3(mix3(hex3(NIGHT_SKY[i]), hex3(A.sky[i]), dayK), hex3(DUSK_SKY[i]), duskK * 0.7)));
+    const ns = A.nightSky || NIGHT_SKY;
+    const sky = [0, 1, 2].map((i) => css3(mix3(mix3(hex3(ns[i]), hex3(A.sky[i]), dayK), hex3(DUSK_SKY[i]), duskK * (A.nightSky ? 0.3 : 0.7))));
     const sunCol = mix3(SUN_COL, DUSK_COL, duskK);
     const amb = mix3(mix3([0.28, 0.33, 0.5], [0.66, 0.66, 0.64], dayK), [0.6, 0.45, 0.45], duskK * 0.4);
     const direct = mix3(mix3([0, 0, 0], sunCol.map((v) => v * 0.42), dayK), MOON_COL.map((v) => v * 0.1), nightK);
@@ -1594,98 +1598,344 @@ void main(){
     }
   }
 
-  function drawLandmark(c, era, x, y, A) {
-    const body = litK(A.mid, -0.08), lit = litK(A.mid, 0.12), dark = litK(A.mid, -0.25);
-    const glowA = 0.12 + 0.88 * LIGHT.nightK;
-    c.save();
-    c.translate(x, y + 4);
-    switch (era) {
-      case 0: // Greek temple on a hill
-        c.fillStyle = dark; c.fillRect(-40, -2, 80, 6);
-        c.fillStyle = body; poly(c, [[-36, -34], [0, -48], [36, -34]]);
-        c.fillStyle = lit; c.fillRect(-36, -34, 72, 5);
-        for (let i = 0; i < 7; i++) { c.fillStyle = i % 2 ? body : lit; c.fillRect(-33 + i * 10.5, -29, 5, 28); }
-        c.fillStyle = dark; c.fillRect(-38, -1, 76, 3);
-        break;
-      case 1: // castle
-        c.fillStyle = body; c.fillRect(-32, -36, 64, 36);
-        c.fillStyle = dark; c.fillRect(-42, -54, 15, 54); c.fillRect(27, -54, 15, 54);
-        c.fillStyle = body; for (let i = 0; i < 5; i++) c.fillRect(-32 + i * 14, -42, 8, 6);
-        c.fillStyle = dark; poly(c, [[-44, -54], [-34.5, -70], [-25, -54]]); poly(c, [[25, -54], [34.5, -70], [44, -54]]);
-        c.fillStyle = LIGHT.nightK > 0.3 ? `rgba(255,200,120,${glowA})` : lit; c.fillRect(-4, -26, 3, 8); c.fillRect(12, -26, 3, 8);
-        break;
-      case 2: // stepped pyramid
-        for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? body : lit; c.fillRect(-52 + i * 8, -i * 11 - 11, 104 - i * 16, 11); }
-        c.fillStyle = dark; c.fillRect(-7, -66, 14, 66);
-        c.fillStyle = body; c.fillRect(-12, -82, 24, 16);
-        c.fillStyle = dark; poly(c, [[-14, -82], [0, -92], [14, -82]]);
-        break;
-      case 3: // windmill and church
-        c.fillStyle = body; poly(c, [[-9, 0], [-6, -42], [6, -42], [9, 0]]);
-        c.save(); c.translate(0, -42); c.rotate(S.t * 0.5);
-        c.fillStyle = dark;
-        for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); c.fillRect(-2.5, 0, 5, 28); }
-        c.restore();
-        c.fillStyle = body; c.fillRect(26, -26, 32, 26); c.fillRect(34, -48, 11, 22);
-        c.fillStyle = dark; poly(c, [[33, -48], [39.5, -62], [46, -48]]); poly(c, [[24, -26], [42, -36], [60, -26]]);
-        break;
-      case 4: // skyline with lit windows
-        for (let i = 0; i < 8; i++) {
-          const h = 34 + hash(i + x) * 56, w = 14;
-          c.fillStyle = i % 2 ? body : dark;
-          c.fillRect(-64 + i * 16, -h, w, h);
-          for (let k = 0; k < 10; k++) {
-            if (hash(i * 31 + k + x) < 0.45) continue;
-            c.fillStyle = `rgba(255,214,140,${(0.35 + 0.4 * hash(k + i)) * glowA})`;
-            c.fillRect(-62 + i * 16 + (k % 3) * 4, -h + 5 + Math.floor(k / 3) * 7, 2, 3);
-          }
-        }
-        c.fillStyle = 'rgba(255,60,60,.8)';
-        if (Math.sin(S.t * 3) > 0) c.fillRect(-1, -96, 2, 2);
-        c.fillStyle = dark; c.fillRect(-1, -94, 2, 10);
-        break;
-    }
-    c.restore();
+  // ── Battlefields ────────────────────────────────────────────────────────
+  // Each era fights somewhere of its own: the Colosseum, a castle siege,
+  // Tenochtitlan on its lake, a harbor under the guns, a ruined city, and
+  // an alien world. Scenes are built from parallax layers; layer(par) maps a
+  // world x on that layer to the screen-space world x.
+  const layerX = (wx, par) => wx + S.cam * par;
+  const onScreen = (x, pad = 120) => x > S.cam - pad && x < S.cam + viewW + pad;
+  function eachRepeat(par, step, fn, offset = 0) {
+    const first = Math.floor((S.cam - S.cam * par - 200 - offset) / step);
+    const last = Math.ceil((S.cam + viewW - S.cam * par + 200 - offset) / step);
+    for (let i = first; i <= last; i++) fn(layerX(i * step + offset, par), i);
   }
+  const night = () => LIGHT.nightK;
+  const windowGlow = (a = 1) => `rgba(255,200,120,${(0.08 + 0.85 * night()) * a})`;
+  function glowDot(x, y, r, rgb, a) {
+    ectx.save(); ectx.globalCompositeOperation = 'lighter';
+    const g = ectx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ectx.fillStyle = g; circle(ectx, x, y, r);
+    ectx.restore();
+  }
+
+  // 0 · The Colosseum: three tiers of arches, a roaring crowd, the velarium.
+  function sceneColosseum(A) {
+    const c = ctx;
+    const par = 0.3, top = GROUND - 196;
+    const stone = litK('#dcc49a'), stoneD = litK('#b89a6c'), dark = litK('#4a3622', -0.2);
+    c.fillStyle = stone;
+    c.fillRect(S.cam - 20, top, viewW + 40, GROUND - top);
+    // Crowd in the stands
+    eachRepeat(par, 6, (x, i) => {
+      for (let r = 0; r < 4; r++) {
+        const hue = ['#a8322a', '#e6dccb', '#2f4f8a', '#c9a23a', '#6a4a2a', '#efe4cf'][Math.floor(hash(i * 7 + r) * 6)];
+        const cheer = Math.sin(S.t * 6 + i * 1.7 + r) > 0.6 ? -1.4 : 0;
+        c.fillStyle = litK(hue, -0.1);
+        rr(c, x + (r % 2) * 3, top + 8 + r * 7 + cheer, 4, 5, 1.5);
+        c.fillStyle = litK('#c99067', -0.1);
+        circle(c, x + 2 + (r % 2) * 3, top + 7 + r * 7 + cheer, 1.6);
+      }
+    });
+    c.fillStyle = stoneD; c.fillRect(S.cam - 20, top + 36, viewW + 40, 4);
+    // Three tiers of arches
+    for (let tier = 0; tier < 3; tier++) {
+      const y0 = top + 42 + tier * 40;
+      c.fillStyle = stoneD; c.fillRect(S.cam - 20, y0 + 34, viewW + 40, 4);
+      eachRepeat(par, 30, (x) => {
+        c.fillStyle = dark;
+        c.beginPath(); c.moveTo(x + 6, y0 + 34); c.lineTo(x + 6, y0 + 12); c.arc(x + 15, y0 + 12, 9, Math.PI, 0); c.lineTo(x + 24, y0 + 34); c.closePath(); c.fill();
+        if (night() > 0.3 && tier === 2) { c.fillStyle = windowGlow(0.6); c.fillRect(x + 9, y0 + 18, 12, 14); }
+        c.fillStyle = stone; c.fillRect(x + 1, y0 + 4, 4, 30);
+        c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(x + 1, y0 + 4, 1.4, 30);
+      });
+    }
+    // Velarium awning poles and canvas
+    eachRepeat(par, 150, (x, i) => {
+      c.strokeStyle = litK('#5a3a22'); c.lineWidth = 2; line(c, x, top + 6, x, top - 30);
+      c.fillStyle = litK(i % 2 ? '#a8322a' : '#e6dccb', -0.05);
+      poly(c, [[x, top - 28], [x + 150, top - 22], [x + 150, top - 12], [x, top - 18]]);
+    });
+    // Imperial banners
+    eachRepeat(par, 300, (x) => { c.fillStyle = litK('#8e1b16'); poly(c, [[x + 140, top + 42], [x + 156, top + 42], [x + 156, top + 74], [x + 148, top + 68], [x + 140, top + 74]]); c.fillStyle = litK('#d9b45a'); c.fillRect(x + 143, top + 50, 10, 2); }, 70);
+    // Podium wall around the arena floor
+    const pPar = 0.62;
+    c.fillStyle = litK('#e8dcc4'); c.fillRect(S.cam - 20, GROUND - 46, viewW + 40, 26);
+    c.fillStyle = litK('#8e1b16'); c.fillRect(S.cam - 20, GROUND - 40, viewW + 40, 4);
+    c.fillStyle = litK('#b8a888'); c.fillRect(S.cam - 20, GROUND - 22, viewW + 40, 4);
+    eachRepeat(pPar, 220, (x, i) => {
+      // Gate of life with a portcullis
+      if (i % 3 === 0) {
+        c.fillStyle = litK('#2a1e14');
+        c.beginPath(); c.moveTo(x - 14, GROUND - 20); c.lineTo(x - 14, GROUND - 40); c.arc(x, GROUND - 40, 14, Math.PI, 0); c.lineTo(x + 14, GROUND - 20); c.fill();
+        c.strokeStyle = litK('#5a5a5a'); c.lineWidth = 1; for (let k = -10; k <= 10; k += 5) line(c, x + k, GROUND - 50, x + k, GROUND - 20);
+      } else {
+        // Statue on a plinth
+        c.fillStyle = litK('#e8dcc4', 0.05); c.fillRect(x - 6, GROUND - 58, 12, 12);
+        c.fillStyle = litK('#d0c4ac'); circle(c, x, GROUND - 75, 3.4); c.fillRect(x - 3.5, GROUND - 72, 7, 14); line(c, x + 3, GROUND - 70, x + 9, GROUND - 80);
+      }
+      if (night() > 0.2) { c.fillStyle = litK('#3a2a1a'); c.fillRect(x + 60, GROUND - 56, 4, 10); flameOn(ectx, x + 62, GROUND - 56, 0.8); }
+    });
+  }
+
+  // 1 · Castle siege: curtain walls, towers, siege camp and trebuchets.
+  function sceneCastle(A) {
+    const c = ctx;
+    ridge(0.35, GROUND - 78, 20, 0.007, 4, litK(A.mid), A.haze, 0.5);
+    const par = 0.35, wallTop = GROUND - 128;
+    const stone = litK('#8c8f88'), stoneD = litK('#6a6d66'), stoneL = litK('#a8aba2');
+    c.fillStyle = stone; c.fillRect(S.cam - 20, wallTop, viewW + 40, 70);
+    c.fillStyle = stoneD;
+    eachRepeat(par, 14, (x) => c.fillRect(x, wallTop - 8, 8, 8));
+    eachRepeat(par, 260, (x, i) => {
+      c.fillStyle = stoneL; c.fillRect(x - 18, wallTop - 46, 36, 116);
+      c.fillStyle = stoneD; for (let k = 0; k < 4; k++) c.fillRect(x - 18 + k * 10, wallTop - 54, 6, 8);
+      c.fillStyle = litK('#5a2f22'); poly(c, [[x - 21, wallTop - 54], [x, wallTop - 84], [x + 21, wallTop - 54]]);
+      c.fillStyle = night() > 0.3 ? windowGlow() : litK('#1e1610'); c.fillRect(x - 2, wallTop - 30, 4, 10); c.fillRect(x - 2, wallTop - 6, 4, 10);
+      const col = ['#2f4f9a', '#a8322a', '#e0b84a', '#2f6a3a'][i & 3];
+      c.fillStyle = litK(col); poly(c, [[x + 24, wallTop + 4], [x + 38, wallTop + 4], [x + 38, wallTop + 36], [x + 31, wallTop + 30], [x + 24, wallTop + 36]]);
+      if (i % 2 === 0) { c.fillStyle = litK('#1e1610'); c.beginPath(); c.moveTo(x + 112, wallTop + 70); c.lineTo(x + 112, wallTop + 40); c.arc(x + 126, wallTop + 40, 14, Math.PI, 0); c.lineTo(x + 140, wallTop + 70); c.fill(); }
+    });
+    c.strokeStyle = litK('#6a6d66', -0.1); c.lineWidth = 0.5;
+    for (let y = wallTop + 10; y < wallTop + 70; y += 9) line(c, S.cam - 20, y, S.cam + viewW + 20, y);
+    // Siege camp
+    const nPar = 0.6;
+    ridge(nPar, GROUND - 30, 10, 0.012, 9, litK(A.near), A.haze, 0.2);
+    eachRepeat(nPar, 170, (x, i) => {
+      const cols = ['#e6dccb', '#a8322a', '#2f4f9a'];
+      const m3 = ((i % 3) + 3) % 3;
+      const tc = litK(cols[m3]), ts = litK(cols[m3], -0.25);
+      c.fillStyle = tc; poly(c, [[x - 18, GROUND - 22], [x, GROUND - 52], [x + 18, GROUND - 22]]);
+      c.fillStyle = ts; poly(c, [[x, GROUND - 52], [x + 18, GROUND - 22], [x + 4, GROUND - 22]]);
+      c.strokeStyle = litK('#3a2a1a'); c.lineWidth = 1; line(c, x, GROUND - 52, x, GROUND - 62);
+      c.fillStyle = litK(cols[(m3 + 1) % 3]); poly(c, [[x, GROUND - 62], [x + 9, GROUND - 59], [x, GROUND - 56]]);
+      if (i % 3 === 1) {
+        // Trebuchet
+        const bx = x + 80;
+        c.strokeStyle = litK('#4a321e'); c.lineWidth = 2.2;
+        line(c, bx - 14, GROUND - 22, bx, GROUND - 56); line(c, bx + 14, GROUND - 22, bx, GROUND - 56);
+        const a = -0.9 + Math.sin(S.t * 0.5 + i) * 0.25;
+        line(c, bx - Math.cos(a) * 26, GROUND - 56 - Math.sin(a) * 26, bx + Math.cos(a) * 14, GROUND - 56 + Math.sin(a) * 14);
+        c.fillStyle = litK('#4a321e'); c.fillRect(bx + Math.cos(a) * 14 - 4, GROUND - 56 + Math.sin(a) * 14, 8, 8);
+      }
+      if (night() > 0.2 && i % 2) { c.fillStyle = litK('#3a2a1a'); c.fillRect(x + 40, GROUND - 26, 6, 3); flameOn(ectx, x + 43, GROUND - 26, 1.1); }
+    });
+    // Palisade
+    c.fillStyle = litK('#5a3a20');
+    eachRepeat(0.75, 9, (x, i) => { if (hash(i) < 0.75) poly(c, [[x, GROUND - 2], [x + 3, GROUND - 20 - hash(i + 1) * 5], [x + 6, GROUND - 2]]); });
+  }
+
+  // 2 · Tenochtitlan: volcanoes, Lake Texcoco, the Templo Mayor.
+  function sceneTenochtitlan(A) {
+    const c = ctx;
+    // Volcanoes on the far rim
+    eachRepeat(0.12, 700, (x, i) => {
+      c.fillStyle = litK('#5f8a7a', -0.05);
+      poly(c, [[x - 160, GROUND - 60], [x - 18, GROUND - 190 - hash(i) * 20], [x + 18, GROUND - 190 - hash(i) * 20], [x + 160, GROUND - 60]]);
+      c.fillStyle = litK('#efe4cf', -0.05); poly(c, [[x - 30, GROUND - 168], [x - 18, GROUND - 190 - hash(i) * 20], [x + 18, GROUND - 190 - hash(i) * 20], [x + 30, GROUND - 168]]);
+      c.fillStyle = 'rgba(200,200,200,.25)';
+      for (let k = 0; k < 4; k++) ell(c, x + Math.sin(S.t * 0.2 + k) * 6 + k * 8, GROUND - 205 - hash(i) * 20 - k * 12, 10 + k * 4, 6 + k * 2);
+    }, 200);
+    // The lake
+    const lakeTop = GROUND - 66, lakeBot = GROUND - 30;
+    const lg = c.createLinearGradient(0, lakeTop, 0, lakeBot);
+    lg.addColorStop(0, css3(mix3(hex3('#5fa8a0'), LIGHT.fog, 0.3), 1)); lg.addColorStop(1, litK('#2f6a6a'));
+    c.fillStyle = lg; c.fillRect(S.cam - 20, lakeTop, viewW + 40, lakeBot - lakeTop);
+    c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 0.6;
+    for (let k = 0; k < 40; k++) {
+      const x = S.cam + ((hash(k) * 1600 + S.t * 6) % (viewW + 40)) - 20, y = lakeTop + 4 + hash(k + 9) * 30;
+      line(c, x, y, x + 8 + hash(k) * 10, y);
+    }
+    // City on the island
+    const par = 0.35;
+    eachRepeat(par, 520, (x, i) => {
+      const base = lakeTop + 4;
+      // Great pyramid with twin shrines
+      for (let s = 0; s < 5; s++) { c.fillStyle = litK(s % 2 ? '#d8cfb8' : '#cfc4aa'); c.fillRect(x - 60 + s * 9, base - (s + 1) * 13, 120 - s * 18, 13); }
+      c.fillStyle = litK('#b8ad94'); c.fillRect(x - 14, base - 65, 9, 65); c.fillRect(x + 5, base - 65, 9, 65);
+      c.fillStyle = litK('#a8322a'); c.fillRect(x - 24, base - 86, 18, 21);
+      c.fillStyle = litK('#2f6aa8'); c.fillRect(x + 6, base - 86, 18, 21);
+      c.fillStyle = litK('#efe4cf'); c.fillRect(x - 24, base - 90, 18, 4); c.fillRect(x + 6, base - 90, 18, 4);
+      if (night() > 0.2) { flameOn(ectx, x - 15, base - 90, 1); flameOn(ectx, x + 15, base - 90, 1); }
+      // White city blocks
+      for (let k = 0; k < 7; k++) {
+        const bx = x + 80 + k * 30, h = 12 + hash(i * 9 + k) * 14;
+        c.fillStyle = litK('#e6dccb', -0.05); c.fillRect(bx, base - h, 24, h);
+        c.fillStyle = night() > 0.3 ? windowGlow(0.8) : litK('#5a4a3a'); c.fillRect(bx + 9, base - 8, 6, 8);
+        c.fillStyle = litK('#2f6a3a'); c.fillRect(bx, base - h - 2, 24, 2);
+      }
+    });
+    // Causeway across the water
+    c.fillStyle = litK('#b8a888'); c.fillRect(S.cam - 20, lakeBot - 6, viewW + 40, 4);
+    // Chinampas reeds and palms in the foreground
+    const nPar = 0.6;
+    ridge(nPar, GROUND - 26, 8, 0.012, 13, litK(A.near), A.haze, 0.15);
+    eachRepeat(nPar, 46, (x, i) => { if (hash(i + 3) > 0.45) drawTree(c, 'palm', x, GROUND - 22 + hash(i) * 4, 26 + hash(i + 5) * 20, litK(A.near, -0.2), i); });
+  }
+
+  // 3 · Harbor battle: tall ships under sail, a star fort, gun smoke.
+  function sceneHarbor(A) {
+    const c = ctx;
+    const seaTop = GROUND - 92, seaBot = GROUND - 40;
+    const sg = c.createLinearGradient(0, seaTop, 0, seaBot);
+    sg.addColorStop(0, css3(mix3(hex3('#7a8a96'), LIGHT.fog, 0.4))); sg.addColorStop(1, litK('#3a5060'));
+    c.fillStyle = sg; c.fillRect(S.cam - 20, seaTop, viewW + 40, seaBot - seaTop);
+    c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 0.6;
+    for (let k = 0; k < 50; k++) { const x = S.cam + ((hash(k) * 1800 + S.t * 4) % (viewW + 40)) - 20, y = seaTop + 3 + hash(k + 5) * 46; line(c, x, y, x + 6 + hash(k) * 10, y); }
+    // Tall ships
+    eachRepeat(0.22, 360, (x, i) => {
+      const y = seaTop + 26 + hash(i) * 10, bob = Math.sin(S.t * 0.8 + i) * 1.2, s = 0.8 + hash(i + 2) * 0.4;
+      c.save(); c.translate(x, y + bob); c.scale(s * (i % 2 ? 1 : -1), s);
+      c.fillStyle = litK('#3a2a1e'); poly(c, [[-40, 0], [40, 0], [32, 10], [-34, 10]]);
+      c.fillStyle = litK('#c9a23a', -0.2); c.fillRect(-36, 2, 70, 1.5);
+      c.fillStyle = litK('#1e1610'); for (let k = -28; k < 30; k += 9) c.fillRect(k, 4, 3, 3);
+      c.strokeStyle = litK('#3a2a1e'); c.lineWidth = 1.5;
+      for (const mx of [-20, 0, 20]) {
+        line(c, mx, 0, mx, -58);
+        c.fillStyle = litK('#efe4cf', -0.08);
+        for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(mx - 11, -54 + k * 17); c.quadraticCurveTo(mx + 3, -47 + k * 17, mx - 11, -40 + k * 17); c.lineTo(mx + 11, -40 + k * 17); c.quadraticCurveTo(mx + 15, -47 + k * 17, mx + 11, -54 + k * 17); c.closePath(); c.fill(); }
+      }
+      c.fillStyle = litK(i % 2 ? '#a8322a' : '#2f4f9a'); poly(c, [[0, -58], [12, -55], [0, -52]]);
+      c.restore();
+      if ((S.t * 0.4 + i) % 5 < 0.4) emitSmokeAt(x + (i % 2 ? 30 : -30), y + 4);
+    }, 120);
+    // Star fort on the headland
+    const par = 0.38;
+    eachRepeat(par, 640, (x) => {
+      c.fillStyle = litK('#8a7562');
+      poly(c, [[x - 90, seaBot], [x - 70, seaBot - 38], [x - 30, seaBot - 30], [x, seaBot - 52], [x + 30, seaBot - 30], [x + 70, seaBot - 38], [x + 90, seaBot]]);
+      c.fillStyle = litK('#6a5644'); c.fillRect(x - 70, seaBot - 6, 140, 6);
+      c.strokeStyle = litK('#2a2016'); c.lineWidth = 1; line(c, x, seaBot - 52, x, seaBot - 80);
+      c.fillStyle = litK('#efe4cf'); poly(c, [[x, seaBot - 80], [x + 14, seaBot - 76 + Math.sin(S.t * 3)], [x, seaBot - 72]]);
+      if (night() > 0.3) { c.fillStyle = windowGlow(); c.fillRect(x - 40, seaBot - 26, 3, 4); c.fillRect(x + 36, seaBot - 26, 3, 4); }
+    }, 300);
+    // Earthworks, gabions and guns
+    const nPar = 0.6;
+    ridge(nPar, GROUND - 28, 9, 0.012, 21, litK(A.near), A.haze, 0.15);
+    eachRepeat(nPar, 140, (x, i) => {
+      c.fillStyle = litK('#6a5a3a');
+      for (let k = 0; k < 4; k++) { rr(c, x + k * 9, GROUND - 38, 8, 16, 3); }
+      c.strokeStyle = litK('#4a3a22'); c.lineWidth = 0.6; for (let k = 0; k < 4; k++) for (let y = GROUND - 35; y < GROUND - 22; y += 3) line(c, x + k * 9, y, x + k * 9 + 8, y);
+      if (i % 2) {
+        c.fillStyle = litK('#2a2a2a'); rr(c, x + 44, GROUND - 34, 20, 5, 2);
+        c.fillStyle = litK('#5a3a20'); circle(c, x + 48, GROUND - 28, 4);
+      }
+      if (i % 3 === 0) drawTree(c, 'oak', x + 90, GROUND - 22, 40, litK(A.near, -0.2), i);
+    });
+  }
+  function emitSmokeAt(x, y) { if (!S.paused && Math.random() < 0.08) emitSmoke(x, y, 1, 6, '200,196,190', 0.3); }
+
+  // 4 · Ruined city: shattered towers, fires, rubble and wire.
+  function sceneRuins(A) {
+    const c = ctx;
+    const par = 0.3;
+    eachRepeat(par, 46, (x, i) => {
+      const h = 60 + hash(i) * 110, w = 34 + hash(i + 3) * 10;
+      const top = GROUND - 40 - h;
+      c.fillStyle = litK(i % 2 ? '#4a5664' : '#3a4450');
+      c.beginPath();
+      c.moveTo(x, GROUND - 40); c.lineTo(x, top + 8);
+      // Jagged broken roofline
+      for (let k = 0; k <= 4; k++) c.lineTo(x + (w * k) / 4, top + (hash(i * 5 + k) * 18) * (hash(i + 8) < 0.6 ? 1 : 0.1));
+      c.lineTo(x + w, GROUND - 40); c.closePath(); c.fill();
+      // Floors and windows; some blown out
+      for (let y = top + 16; y < GROUND - 46; y += 9) for (let k = 0; k < 4; k++) {
+        const v = hash(i * 31 + y + k);
+        if (v < 0.15) { c.fillStyle = litK('#1a1f26'); c.fillRect(x + 3 + k * 8, y, 7, 7); }
+        else if (v < 0.4) { c.fillStyle = night() > 0.3 ? windowGlow(0.5) : litK('#2a323c'); c.fillRect(x + 4 + k * 8, y + 1, 4, 5); }
+      }
+      if (hash(i + 2) < 0.18) {
+        const fx = x + w / 2, fy = top + 20;
+        flameOn(ectx, fx, fy, 1.4);
+        c.fillStyle = 'rgba(40,36,34,.35)';
+        for (let k = 0; k < 6; k++) ell(c, fx + Math.sin(S.t * 0.3 + k + i) * 6 + k * 6, fy - 10 - k * 16, 8 + k * 4, 6 + k * 2.5);
+      }
+    });
+    // Rubble, wrecks and wire in the foreground
+    const nPar = 0.6;
+    ridge(nPar, GROUND - 28, 10, 0.014, 31, litK('#3a3a36'), A.haze, 0.2);
+    eachRepeat(nPar, 120, (x, i) => {
+      c.fillStyle = litK('#4a4a44');
+      for (let k = 0; k < 6; k++) poly(c, [[x + k * 7, GROUND - 22], [x + k * 7 + 4, GROUND - 30 - hash(i + k) * 10], [x + k * 7 + 10, GROUND - 22]]);
+      if (i % 3 === 0) {
+        // Burnt-out car
+        c.fillStyle = litK('#2a2622'); rr(c, x + 60, GROUND - 34, 34, 10, 3); rr(c, x + 66, GROUND - 42, 20, 9, 3);
+        c.fillStyle = litK('#111'); circle(c, x + 68, GROUND - 23, 4); circle(c, x + 86, GROUND - 23, 4);
+      } else {
+        c.strokeStyle = litK('#5a5a52'); c.lineWidth = 1.2; line(c, x + 60, GROUND - 20, x + 60, GROUND - 38); line(c, x + 110, GROUND - 20, x + 110, GROUND - 38);
+        c.strokeStyle = litK('#7a7a72'); c.lineWidth = 0.6;
+        c.beginPath(); for (let k = 0; k <= 50; k += 2) c.lineTo(x + 60 + k, GROUND - 34 + Math.sin(k * 0.9) * 2.4); c.stroke();
+        c.beginPath(); for (let k = 0; k <= 50; k += 2) c.lineTo(x + 60 + k, GROUND - 27 + Math.cos(k * 0.9) * 2.4); c.stroke();
+      }
+    });
+  }
+
+  // 5 · Alien world: ringed planet, crystal spires, hive citadel, mothership.
+  function sceneAlien(A) {
+    const c = ctx;
+    // Ringed planet and moons, fixed to the view
+    const px = S.cam + viewW * 0.22, py = 92;
+    const pg = c.createRadialGradient(px - 20, py - 20, 6, px, py, 62);
+    pg.addColorStop(0, '#f2a2e0'); pg.addColorStop(0.6, '#8a4ab0'); pg.addColorStop(1, '#2a1a4a');
+    c.fillStyle = pg; circle(c, px, py, 58);
+    c.strokeStyle = 'rgba(240,200,255,.55)'; c.lineWidth = 3;
+    c.beginPath(); c.ellipse(px, py, 96, 16, -0.25, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = '#d8f2ff'; circle(c, S.cam + viewW * 0.55, 46, 7);
+    c.fillStyle = '#ffd8a8'; circle(c, S.cam + viewW * 0.62, 70, 4);
+    // Crystal mountains
+    eachRepeat(0.15, 90, (x, i) => {
+      const h = 70 + hash(i) * 90;
+      c.fillStyle = litK(i % 2 ? '#3a2a5a' : '#4a3a6a');
+      poly(c, [[x - 30, GROUND - 60], [x - 4, GROUND - 60 - h], [x + 6, GROUND - 60 - h * 0.9], [x + 34, GROUND - 60]]);
+      c.fillStyle = 'rgba(160,255,240,.12)'; poly(c, [[x - 4, GROUND - 60 - h], [x + 6, GROUND - 60 - h * 0.9], [x + 2, GROUND - 60]]);
+    });
+    // Hive citadel with glowing windows
+    const par = 0.35;
+    eachRepeat(par, 300, (x, i) => {
+      const h = 120 + hash(i) * 60;
+      c.fillStyle = litK('#2a1a3a');
+      c.beginPath(); c.moveTo(x - 26, GROUND - 40); c.quadraticCurveTo(x - 30, GROUND - 40 - h * 0.6, x, GROUND - 40 - h); c.quadraticCurveTo(x + 30, GROUND - 40 - h * 0.6, x + 26, GROUND - 40); c.closePath(); c.fill();
+      for (let k = 0; k < 6; k++) glowDot(x + (k % 2 ? 6 : -6), GROUND - 60 - k * (h / 7), 5, '255,90,210', 0.6);
+      c.fillStyle = litK('#3a2a4a'); ell(c, x + 120, GROUND - 46, 46, 22);
+      glowDot(x + 120, GROUND - 52, 14, '110,255,220', 0.35);
+    });
+    // Mothership with a tractor beam
+    const mx = S.cam + viewW * 0.68 + Math.sin(S.t * 0.2) * 40, my = 60 + Math.sin(S.t * 0.7) * 4;
+    c.fillStyle = '#1a1424'; ell(c, mx, my, 120, 16);
+    c.fillStyle = '#2a2236'; ell(c, mx, my - 10, 50, 14);
+    for (let k = -5; k <= 5; k++) glowDot(mx + k * 20, my + 6, 6, k % 2 ? '255,120,220' : '120,255,230', 0.5 + 0.4 * Math.sin(S.t * 4 + k));
+    ectx.save(); ectx.globalCompositeOperation = 'lighter';
+    const bg = ectx.createLinearGradient(0, my, 0, GROUND);
+    bg.addColorStop(0, 'rgba(120,255,230,.22)'); bg.addColorStop(1, 'rgba(120,255,230,0)');
+    ectx.fillStyle = bg; poly(ectx, [[mx - 16, my + 10], [mx + 16, my + 10], [mx + 60, GROUND - 40], [mx - 60, GROUND - 40]]);
+    ectx.restore();
+    // Crystal spires and glowing fungi up close
+    const nPar = 0.6;
+    ridge(nPar, GROUND - 28, 10, 0.014, 41, litK('#2a2238'), A.haze, 0.2);
+    eachRepeat(nPar, 70, (x, i) => {
+      if (hash(i) < 0.5) {
+        const h = 26 + hash(i + 4) * 30;
+        c.fillStyle = litK('#5a3a8a'); poly(c, [[x - 5, GROUND - 22], [x - 1, GROUND - 22 - h], [x + 5, GROUND - 22]]);
+        c.fillStyle = 'rgba(200,160,255,.35)'; poly(c, [[x - 1, GROUND - 22 - h], [x + 5, GROUND - 22], [x + 1, GROUND - 22]]);
+        glowDot(x, GROUND - 22 - h * 0.6, 8, '190,140,255', 0.35);
+      } else {
+        c.fillStyle = litK('#3a5a4a'); c.fillRect(x - 1, GROUND - 34, 2, 12);
+        c.fillStyle = litK('#2f8a7a'); ell(c, x, GROUND - 35, 8, 4);
+        glowDot(x, GROUND - 33, 10, '110,255,200', 0.45 + 0.2 * Math.sin(S.t * 2 + i));
+      }
+    });
+  }
+
+  const SCENES = [sceneColosseum, sceneCastle, sceneTenochtitlan, sceneHarbor, sceneRuins, sceneAlien];
 
   function drawBackground() {
     const A = artOf();
     const era = S.sides[0].era;
-    const c = ctx;
     drawSky();
     drawClouds();
-    // Distant range
     ridge(0.15, GROUND - 120, 30, 0.004, era * 7 + 3, litK(A.far), A.haze, 0.55);
-    // Mid range with landmarks
-    const midPar = 0.35, midBase = GROUND - 78, midAmp = 22, midFreq = 0.007, midSeed = era * 3 + 1;
-    ridge(midPar, midBase, midAmp, midFreq, midSeed, litK(A.mid), A.haze, 0.5);
-    for (const wx of [230, 780, 1260]) {
-      const x = wx + S.cam * midPar;
-      if (x < S.cam - 120 || x > S.cam + viewW + 120) continue;
-      drawLandmark(c, era, x, ridgeY(wx, midPar, midBase, midAmp, midFreq, midSeed), A);
-    }
-    // Near hills with trees
-    const nPar = 0.6, nBase = GROUND - 34, nAmp = 14, nFreq = 0.012, nSeed = era * 5 + 2;
-    const treeCol = litK(A.near, -0.18);
-    for (let i = 0; i < 40; i++) {
-      const wx = i * 46 + hash(i + era) * 30;
-      const x = wx + S.cam * nPar;
-      if (x < S.cam - 40 || x > S.cam + viewW + 40 || hash(i * 3 + era) < 0.35) continue;
-      drawTree(c, A.trees, x, ridgeY(wx, nPar, nBase, nAmp, nFreq, nSeed) + 4, 24 + hash(i + 5) * 22, treeCol, i);
-    }
-    if (A.trees === 'pole') {
-      c.strokeStyle = treeCol; c.lineWidth = 0.6;
-      c.beginPath();
-      for (let i = 0; i < 40; i++) {
-        const wx = i * 46 + hash(i + era) * 30;
-        if (hash(i * 3 + era) < 0.35) continue;
-        const x = wx + S.cam * nPar;
-        const y = ridgeY(wx, nPar, nBase, nAmp, nFreq, nSeed) + 4 - (24 + hash(i + 5) * 22) + 5;
-        c.lineTo(x, y);
-      }
-      c.stroke();
-    }
-    ridge(nPar, nBase, nAmp, nFreq, nSeed, litK(A.near), A.haze, 0.25);
+    SCENES[era](A);
     drawGround(A, era);
   }
 
@@ -1944,6 +2194,27 @@ void main(){
         break;
       }
     }
+    if (era === 5) {
+      // Hive spire: an organic tower with a glowing core under a shield dome.
+      const g2 = c.createLinearGradient(-40, 0, 40, 0);
+      g2.addColorStop(0, '#5a4a7a'); g2.addColorStop(0.6, '#3a2a5a'); g2.addColorStop(1, '#22183a');
+      c.fillStyle = g2;
+      c.beginPath(); c.moveTo(-50, 0); c.quadraticCurveTo(-46, -70, -16, -100); c.quadraticCurveTo(0, -150, 4, -150); c.quadraticCurveTo(10, -150, 18, -100); c.quadraticCurveTo(46, -70, 50, 0); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(200,160,255,.35)'; c.lineWidth = 1;
+      for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(-40 + i * 4, 0); c.quadraticCurveTo(-30 + i * 6, -60, 2, -140 + i * 8); c.stroke(); }
+      c.fillStyle = '#14101e'; c.beginPath(); c.moveTo(-14, 0); c.quadraticCurveTo(0, -46, 14, 0); c.fill();
+      const pulse = 0.6 + 0.3 * Math.sin(S.t * 3);
+      onEmit(c, (e) => {
+        const cg = e.createRadialGradient(2, -84, 0, 2, -84, 26);
+        cg.addColorStop(0, `rgba(120,255,230,${pulse})`); cg.addColorStop(1, 'rgba(120,255,230,0)');
+        e.fillStyle = cg; circle(e, 2, -84, 26);
+        e.strokeStyle = `rgba(150,200,255,${0.18 + 0.08 * Math.sin(S.t * 2)})`; e.lineWidth = 1.5;
+        e.beginPath(); e.ellipse(0, -10, 70, 150, 0, Math.PI, 0); e.stroke();
+        for (let i = 0; i < 6; i++) { e.fillStyle = 'rgba(255,120,220,.8)'; circle(e, -30 + i * 12, -30 - Math.sin(i) * 20, 1.6); }
+      });
+      c.fillStyle = TEAM_COL[sd.team]; c.fillRect(-20, -46, 40, 3);
+      top = -150;
+    }
     // Damage: cracks grow as the stronghold weakens.
     const hpk = b.hp / b.maxHp;
     if (hpk < 0.7) {
@@ -2004,6 +2275,10 @@ void main(){
       const g = c.createLinearGradient(0, -6, 0, 2);
       g.addColorStop(0, '#5a5c60'); g.addColorStop(1, '#1e2024');
       c.fillStyle = g; rr(c, -6, -6, id === 'mortar' ? 14 : 24, 7, 3);
+    } else if (id === 'plasma' || id === 'ion') {
+      c.fillStyle = '#2a2236'; ell(c, 0, -3, 8, 5);
+      c.fillStyle = '#3a3050'; rr(c, 0, -5, id === 'ion' ? 26 : 18, 4.4, 2);
+      onEmit(c, (e) => { e.fillStyle = id === 'ion' ? 'rgba(150,190,255,.9)' : 'rgba(120,255,220,.9)'; circle(e, 0, -3, 2.6); e.fillRect(4, -3.6, id === 'ion' ? 20 : 12, 1.2); });
     } else if (id === 'swivel' || id === 'm2') {
       c.fillStyle = metal; c.fillRect(-6, -5, 9, 7); c.fillRect(2, -3.5, 20, 3);
       c.fillStyle = '#4a4c50'; c.fillRect(2, -3.5, 20, 1);
@@ -2278,6 +2553,195 @@ void main(){
   }
 
   // Draws one warrior facing right, feet at the origin.
+  // ── Alien bodies ────────────────────────────────────────────────────────
+  // Facing right, feet at the origin, like drawFigure. Glows go on the
+  // emissive layer when drawing in the world, inline in portraits.
+  function glowAt(c, x, y, r, col, a = 0.8) {
+    const draw = (e) => {
+      const g = e.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
+      e.fillStyle = g; circle(e, x, y, r);
+    };
+    if (c === ctx) onEmit(c, draw);
+    else { c.save(); c.globalCompositeOperation = 'lighter'; draw(c); c.restore(); }
+  }
+  function alienLeg(c, x0, y0, ph, len, col, w = 3) {
+    const th = Math.sin(ph) * 0.5;
+    const kx = x0 + Math.sin(th) * len, ky = y0 + Math.cos(th) * len;
+    const fx = kx - Math.sin(th - 0.9) * len * 0.9, fy = ky + Math.cos(th - 0.9) * len * 0.9;
+    c.strokeStyle = col; c.lineWidth = w;
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(kx, ky); c.lineTo(fx, Math.min(0, fy)); c.stroke();
+  }
+  function alienWeapon(c, k, hx, hy, th, sw, glow) {
+    c.save(); c.translate(hx, hy);
+    if (k === 'rifle' || k === 'pistol' || k === 'throw' || k === 'bow') {
+      c.rotate(-0.06);
+      const len = k === 'rifle' ? 18 : 11;
+      c.fillStyle = '#20242c'; rr(c, -6, -2.2, len + 6, 4.4, 2);
+      c.fillStyle = glow; c.fillRect(-2, -0.8, len - 2, 1.6);
+      if (sw > 0.6) glowAt(c, len + 2, 0, 7, glow, 0.9);
+    } else if (k === 'sword' || k === 'knife' || k === 'spear') {
+      c.rotate(th - 1.25);
+      const len = k === 'spear' ? 28 : k === 'sword' ? 20 : 11;
+      c.strokeStyle = '#20242c'; c.lineWidth = 2; line(c, -3, 0, 3, 0);
+      c.strokeStyle = glow; c.lineWidth = 2.2; line(c, 3, 0, len, 0);
+      c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 0.7; line(c, 4, 0, len - 1, 0);
+      glowAt(c, len * 0.6, 0, 7, glow, 0.35);
+    } else {
+      glowAt(c, 2, 0, 5 + sw * 4, glow, 0.6);
+    }
+    c.restore();
+  }
+  function drawAlien(c, def, o) {
+    const L = def.look;
+    const walk = o.walk || 0, sw = o.swing || 0;
+    const glow = L.glow || '#6ff2c8';
+    const Lt = o.light || PORTRAIT_LIGHT;
+    const lunge = sw > 0 ? Math.sin((1 - sw) * Math.PI) * 3 : 0;
+    const w = o.weapon, k = w ? w.kind || 'sword' : 'sword';
+    const body = L.body, skin = L.skin, dark = shade(body, -0.35);
+    const shadeG = (x0, y0, x1, y1, col) => { const g = c.createLinearGradient(x0 + Lt.lx * 5, y0 + Lt.ly * 5, x1, y1); g.addColorStop(0, shade(col, 0.22)); g.addColorStop(1, shade(col, -0.3)); return g; };
+    c.save();
+    c.translate(lunge, 0);
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    let th = k === 'rifle' || k === 'pistol' || k === 'throw' ? -0.08 : sw > 0 ? -1.6 + (1 - sw) * 2.6 : 0.9;
+    switch (L.alien) {
+      case 'grey': case 'trooper': case 'stalker': {
+        const tall = L.alien === 'stalker' ? 1.15 : 1;
+        // Digitigrade legs for the stalker, plain for the others
+        const legY = -18 * tall;
+        for (const [ph, back] of [[walk + Math.PI, true], [walk, false]]) {
+          if (L.alien === 'stalker') alienLeg(c, 0, legY, ph, 10, back ? dark : body, 3);
+          else {
+            const t2 = Math.sin(ph) * 0.5;
+            c.strokeStyle = back ? dark : body; c.lineWidth = L.alien === 'grey' ? 2.4 : 4;
+            line(c, 0, legY, Math.sin(t2) * 9, -1);
+          }
+        }
+        if (L.alien === 'stalker') {
+          // Phase cloak shimmer
+          c.fillStyle = rgba('#3a3a6a', 0.55 + 0.2 * Math.sin(S_t() * 3));
+          poly(c, [[-4, -42 * tall], [-14 + Math.sin(walk) * 2, -10], [4, -12], [4, -40 * tall]]);
+        }
+        c.fillStyle = shadeG(-6, -38 * tall, 6, -18 * tall, body);
+        rr(c, L.alien === 'grey' ? -4 : -6.5, -37 * tall, L.alien === 'grey' ? 8 : 13, 19 * tall, 3);
+        if (L.alien === 'trooper') {
+          c.fillStyle = '#20242c'; rr(c, -9, -36, 5, 14, 2);
+          glowAt(c, -6.5, -30, 6, glow, 0.5);
+          c.fillStyle = shade(body, 0.25); ell(c, 2, -35, 5, 3);
+        }
+        c.fillStyle = o.teamCol; c.fillRect(-5, -21 * tall, 10, 2.4);
+        // Head
+        if (L.alien === 'grey') {
+          c.fillStyle = shadeG(-6, -56, 6, -40, skin); ell(c, 2, -47, 8, 9.5);
+          c.fillStyle = '#05070a'; ell(c, 6, -47, 3, 4.6, 0.5);
+          c.fillStyle = 'rgba(255,255,255,.6)'; circle(c, 6.5, -48.5, 0.8);
+          c.fillStyle = shade(skin, -0.2); c.fillRect(-0.5, -38.5, 3, 2);
+        } else if (L.alien === 'trooper') {
+          c.fillStyle = shadeG(-6, -50, 6, -36, '#3a4a5e'); ell(c, 1.5, -43, 7, 7.5);
+          c.fillStyle = glow; rr(c, 2.5, -46, 6.5, 3, 1.5);
+          glowAt(c, 6, -44.5, 7, glow, 0.6);
+        } else {
+          c.fillStyle = shadeG(-6, -60, 6, -44, skin); ell(c, 2, -51, 5, 7, 0.3);
+          c.fillStyle = glow; ell(c, 5, -52, 1.6, 0.9); glowAt(c, 5, -52, 5, glow, 0.7);
+        }
+        const shy = -33 * tall;
+        const hx = Math.cos(th) * 10, hy = shy + Math.sin(th) * 10;
+        c.strokeStyle = L.alien === 'grey' ? skin : body; c.lineWidth = L.alien === 'grey' ? 2 : 3.2;
+        line(c, 0, shy, hx, hy);
+        alienWeapon(c, k, hx, hy, th, sw, glow);
+        break;
+      }
+      case 'drone': case 'queen': {
+        const big = L.alien === 'queen' ? 1.45 : 1;
+        c.scale(big, big);
+        // Six legs
+        for (let i = 0; i < 3; i++) alienLeg(c, -6 + i * 6, -14, walk + i * 2.1, 7, dark, 2);
+        for (let i = 0; i < 3; i++) alienLeg(c, -4 + i * 6, -14, walk + i * 2.1 + Math.PI, 7, body, 2);
+        // Abdomen, thorax, head
+        c.fillStyle = shadeG(-22, -26, -6, -10, body); ell(c, -12, -18, 11, 7, -0.2);
+        if (L.alien === 'queen') { glowAt(c, -14, -18, 12, glow, 0.6); c.fillStyle = rgba(glow, 0.5); for (let i = 0; i < 4; i++) circle(c, -18 + i * 3, -16, 1.4); }
+        c.fillStyle = shadeG(-6, -26, 8, -12, body); ell(c, 2, -20, 8, 6);
+        c.fillStyle = o.teamCol; c.fillRect(-3, -16, 8, 2);
+        c.fillStyle = shadeG(6, -32, 16, -20, skin); ell(c, 12, -26, 6, 4.6, 0.3);
+        c.fillStyle = glow; circle(c, 14, -27.5, 1.3); glowAt(c, 14, -27.5, 4, glow, 0.8);
+        c.strokeStyle = dark; c.lineWidth = 1.2;
+        const m = sw > 0 ? 0.6 : 0.2;
+        line(c, 16, -24, 21, -24 + m * 4); line(c, 16, -23, 20, -20 - m * 2);
+        if (L.alien === 'queen') { c.fillStyle = shade(skin, 0.2); poly(c, [[8, -30], [10, -40], [13, -31], [16, -39], [17, -29]]); }
+        // Wings and claws
+        c.fillStyle = 'rgba(220,255,200,.25)';
+        const flap = Math.sin(S_t() * 40) * 3;
+        ell(c, -2, -30 - flap, 10, 3, -0.6); ell(c, -6, -28 + flap, 9, 2.6, -0.4);
+        c.strokeStyle = shade(skin, 0.2); c.lineWidth = 1.8;
+        const cl = sw > 0 ? -0.8 + (1 - sw) * 1.6 : 0.3;
+        c.beginPath(); c.moveTo(8, -20); c.lineTo(16, -24 + cl * 6); c.lineTo(22, -18 + cl * 8); c.stroke();
+        if (k === 'throw') glowAt(c, 20, -24, 4 + sw * 4, glow, 0.6);
+        break;
+      }
+      case 'brute': {
+        for (const [ph, back] of [[walk + Math.PI, true], [walk, false]]) {
+          const t2 = Math.sin(ph) * 0.4;
+          c.strokeStyle = back ? dark : body; c.lineWidth = 6;
+          line(c, 0, -18, Math.sin(t2) * 8, -1);
+        }
+        c.fillStyle = shadeG(-10, -44, 10, -16, body);
+        c.beginPath(); c.moveTo(-10, -18); c.quadraticCurveTo(-14, -44, 2, -46); c.quadraticCurveTo(14, -44, 10, -18); c.closePath(); c.fill();
+        c.strokeStyle = glow; c.lineWidth = 0.9;
+        for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(0, -30 + i * 5, 7, 0.4, Math.PI - 0.4); c.stroke(); }
+        glowAt(c, 0, -28, 9, glow, 0.35);
+        c.fillStyle = shade(body, 0.3); for (let i = 0; i < 4; i++) poly(c, [[-8 + i * 4, -44], [-6 + i * 4, -52], [-4 + i * 4, -44]]);
+        c.fillStyle = o.teamCol; c.fillRect(-9, -21, 18, 3);
+        c.fillStyle = shadeG(4, -48, 12, -38, skin); ell(c, 8, -42, 5, 4);
+        c.fillStyle = glow; circle(c, 10.5, -43, 1.1); glowAt(c, 10.5, -43, 4, glow, 0.8);
+        const hx = Math.cos(th) * 12, hy = -36 + Math.sin(th) * 12;
+        c.strokeStyle = body; c.lineWidth = 5; line(c, 2, -36, hx, hy);
+        c.fillStyle = shade(body, -0.1); circle(c, hx, hy, 3.4);
+        if (k === 'club' && w && /hammer/i.test(w.name)) {
+          c.save(); c.translate(hx, hy); c.rotate(th - 1.25);
+          c.strokeStyle = '#20242c'; c.lineWidth = 2.4; line(c, -2, 0, 18, 0);
+          c.fillStyle = '#2a2e36'; rr(c, 14, -6, 9, 12, 2);
+          c.restore();
+          glowAt(c, hx + Math.cos(th - 1.25) * 18, hy + Math.sin(th - 1.25) * 18, 10, glow, 0.5);
+        } else if (k === 'throw') glowAt(c, hx + 3, hy, 6, glow, 0.6);
+        break;
+      }
+      case 'spore': {
+        for (const [ph, back] of [[walk + Math.PI, true], [walk, false]]) alienLeg(c, 0, -14, ph, 8, back ? dark : body, 3.5);
+        c.fillStyle = shadeG(-12, -46, 10, -12, body); ell(c, 0, -28, 11, 15);
+        c.fillStyle = shade(skin, 0.15);
+        for (let i = 0; i < 6; i++) { const a = i * 1.05; ell(c, Math.cos(a) * 8, -28 + Math.sin(a) * 11, 2.6, 2.6); }
+        for (let i = 0; i < 6; i++) { const a = i * 1.05; glowAt(c, Math.cos(a) * 8, -28 + Math.sin(a) * 11, 4.5, glow, 0.5 + 0.3 * Math.sin(S_t() * 3 + i)); }
+        c.fillStyle = shade(body, 0.1); ell(c, 2, -45, 9, 5);
+        c.fillStyle = o.teamCol; c.fillRect(-8, -16, 16, 2.4);
+        c.strokeStyle = shade(body, 0.2); c.lineWidth = 2;
+        const tl = sw > 0 ? (1 - sw) * 10 : Math.sin(walk) * 2;
+        c.beginPath(); c.moveTo(8, -30); c.quadraticCurveTo(16, -34 + tl, 22, -26 + tl); c.stroke();
+        break;
+      }
+      case 'overmind': {
+        const hover = Math.sin(S_t() * 2) * 2.5;
+        c.translate(0, hover - 6);
+        glowAt(c, 0, -30, 26, glow, 0.25);
+        c.fillStyle = shadeG(-8, -36, 8, -2, body);
+        poly(c, [[-7, -32], [7, -32], [11, -4 + Math.sin(walk) * 1.5], [-11, -4 - Math.sin(walk) * 1.5]]);
+        c.fillStyle = shade('#d9b45a', 0); c.fillRect(-7, -32, 14, 2);
+        c.fillStyle = o.teamCol; c.fillRect(-8, -20, 16, 2.4);
+        c.fillStyle = shadeG(-12, -56, 10, -34, skin); ell(c, 0, -44, 12, 11);
+        c.strokeStyle = shade(skin, -0.25); c.lineWidth = 0.8;
+        for (let i = -2; i <= 2; i++) { c.beginPath(); c.arc(i * 3.5, -48, 3, 0.2, Math.PI - 0.2); c.stroke(); }
+        c.fillStyle = glow; ell(c, 7, -40, 2, 1.2); glowAt(c, 7, -40, 5, glow, 0.9);
+        c.strokeStyle = rgba(glow, 0.8); c.lineWidth = 1.2;
+        c.beginPath(); c.ellipse(0, -58, 12, 3, 0, 0, Math.PI * 2); c.stroke();
+        glowAt(c, 0, -58, 12, glow, 0.35);
+        if (sw > 0) glowAt(c, 14 + (1 - sw) * 8, -36, 9, glow, 0.8);
+        break;
+      }
+    }
+    if (o.shield) glowAt(c, 2, -26, 20, glow, 0.25);
+    c.restore();
+  }
+
   let CUR_LT = PORTRAIT_LIGHT;
 
   // ── Uniform rendering ───────────────────────────────────────────────────
@@ -2430,6 +2894,7 @@ void main(){
     const L = def.look;
     const Lt = o.light || PORTRAIT_LIGHT;
     CUR_LT = Lt;
+    if (L.alien) { drawAlien(c, def, o); return; }
     const walk = o.walk || 0;
     const sw = o.swing || 0;
     const lunge = sw > 0 ? Math.sin((1 - sw) * Math.PI) * 3 : 0;
@@ -2999,6 +3464,22 @@ void main(){
         if (p.kind === 'bola') { c.fillStyle = '#7a7468'; circle(c, 5, 0, 1.6); circle(c, -5, 0, 1.6); }
         break;
       case 'flash': c.fillStyle = '#3a3f46'; rr(c, -2.5, -2, 5, 4, 1); break;
+      case 'plasma': case 'ion':
+        onEmit(c, (e) => {
+          const big = p.kind === 'ion' ? 2 : 1;
+          const col = p.kind === 'ion' ? '150,190,255' : '120,255,220';
+          const g = e.createLinearGradient(-16 * big, 0, 0, 0);
+          g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},.9)`);
+          e.strokeStyle = g; e.lineWidth = 2.4 * big; line(e, -16 * big, 0, 0, 0);
+          const r = e.createRadialGradient(0, 0, 0, 0, 0, 5 * big);
+          r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.4, `rgba(${col},.9)`); r.addColorStop(1, `rgba(${col},0)`);
+          e.fillStyle = r; circle(e, 0, 0, 5 * big);
+        });
+        break;
+      case 'acid':
+        c.fillStyle = '#7ad82a'; ell(c, 0, 0, 3.4, 2.4);
+        onEmit(c, (e) => { e.fillStyle = 'rgba(180,255,80,.5)'; ell(e, -3, 0, 5, 2.4); });
+        break;
     }
     c.restore();
   }
@@ -3382,7 +3863,7 @@ void main(){
   }
 
   function sheetHTML(def, full) {
-    const isAdded = def.show.startsWith('Added');
+    const isAdded = !def.show.startsWith('S');
     let h = `<div class="wname">${esc(def.name)}</div>
       <div class="wsub">${esc(def.roleInfo.label)} · ${esc(def.origin)}</div>
       <span class="record${isAdded ? ' added' : ''}">${esc(def.show)}</span>
@@ -3509,7 +3990,7 @@ void main(){
       xpbar.classList.add('full');
     }
     $('eraName').textContent = era.name;
-    $('eraSpan').textContent = `Era ${sd.era + 1} of 5 · ${era.span}`;
+    $('eraSpan').textContent = `Era ${sd.era + 1} of ${ERAS.length} · ${era.span}`;
     const ev = $('btnEvolve');
     ev.disabled = S.mode !== 'play' || !next || sd.xp < next.xp;
     ev.textContent = next ? `Evolve to ${next.name}` : 'Final era';
@@ -3619,7 +4100,7 @@ void main(){
       const p = S.sides[0];
       const m = Math.floor(S.t / 60), s2 = Math.floor(S.t % 60);
       $('endStats').innerHTML = [
-        ['Time', `${m}:${String(s2).padStart(2, '0')}`], ['Era reached', `${p.era + 1} of 5`], ['Enemies slain', p.kills],
+        ['Time', `${m}:${String(s2).padStart(2, '0')}`], ['Era reached', `${p.era + 1} of ${ERAS.length}`], ['Enemies slain', p.kills],
         ['Warriors trained', p.trained], ['Best record', `${REC.bestWave} waves`], ['Difficulty', DIFF[difficulty].label],
       ].map(([k, v]) => `<div><span class="lbl">${k}</span><b>${v}</b></div>`).join('');
       $('end').hidden = false;
@@ -3635,7 +4116,7 @@ void main(){
       : `Your stronghold falls in the ${ERAS[p.era].name}. Regroup, evolve sooner, and build turrets before the next wave.`;
     const m = Math.floor(S.t / 60), s = Math.floor(S.t % 60);
     $('endStats').innerHTML = [
-      ['Time', `${m}:${String(s).padStart(2, '0')}`], ['Era reached', `${p.era + 1} of 5`], ['Enemies slain', p.kills],
+      ['Time', `${m}:${String(s).padStart(2, '0')}`], ['Era reached', `${p.era + 1} of ${ERAS.length}`], ['Enemies slain', p.kills],
       ['Warriors trained', p.trained], ['Warriors lost', p.lost], ['Difficulty', DIFF[difficulty].label],
     ].map(([k, v]) => `<div><span class="lbl">${k}</span><b>${v}</b></div>`).join('');
     $('end').hidden = false;
@@ -3884,8 +4365,8 @@ void main(){
   // ── Boot ────────────────────────────────────────────────────────────────
   $('eraList').innerHTML = ERAS.map((e) => `<span>${esc(e.name)}</span>`).join('');
   const total = DEFS.length;
-  const shown = DEFS.filter((d) => !d.show.startsWith('Added')).length;
-  $('lede').textContent = `Command ${total} warriors across five eras: ${shown} from Deadliest Warrior, plus the Aztec, Maya and Inca armies and the soldiers of history's great commanders. Each warrior picks the right weapon for the range, from the show's short, mid, long and special slots. Research upgrades, raise veterans, give battle orders, survive endless waves, or settle the old arguments in the Deadliest Warrior simulator.`;
+  const shown = DEFS.filter((d) => /^S\d/.test(d.show)).length;
+  $('lede').textContent = `Command ${total} warriors across ${ERAS.length} eras: ${shown} from Deadliest Warrior, the Aztec, Maya and Inca armies, the soldiers of history's great commanders, and an alien invasion. Every era fights on its own battlefield, from the Colosseum to an alien world. Each warrior picks the right weapon for the range, from the show's short, mid, long and special slots. Research upgrades, raise veterans, give battle orders, survive endless waves, or settle the old arguments in the Deadliest Warrior simulator.`;
 
   newGame('attract');
   resize();

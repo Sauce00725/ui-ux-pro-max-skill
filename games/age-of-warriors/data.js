@@ -75,6 +75,15 @@ window.AOW_DATA = (() => {
         { id: 'mortar', name: 'M252 Mortar', power: 9, cd: 3, r: 440, proj: 'shell', aoe: 80, cost: 2600 },
       ],
     },
+    {
+      id: 'alien', name: 'Alien Invasion', span: 'The future',
+      xp: 38000, baseHp: 10500, hpMul: 12.5, dmgMul: 12.5, costMul: 30,
+      ability: { name: 'Orbital Lance', desc: 'The mothership burns the field with ion fire.', proj: 'ion', n: 9, power: 11, cd: 55, aoe: 80 },
+      turrets: [
+        { id: 'plasma', name: 'Plasma Turret', power: 6, cd: 0.55, r: 380, proj: 'plasma' },
+        { id: 'ion', name: 'Ion Cannon', power: 9, cd: 3, r: 460, proj: 'ion', aoe: 90 },
+      ],
+    },
   ];
 
   // look: skin, body (tunic), legs, helm type, hc (helm color), plume,
@@ -285,6 +294,42 @@ window.AOW_DATA = (() => {
   W('lawrence', 'Lawrence of Arabia', 4, 'hero', 'Arab Revolt · 1916–1918', 'S3 · vs Teddy Roosevelt',
     L(S.light, '#f0e6d0', '#e6dccb', 'keffiyeh', '#f0e6d0', { agal: '#2a2a2a', sash: '#c9a23a' }),
     [['Jambiya', 'short', 6], ['Webley Revolver', 'mid', 6], ['Lee-Enfield', 'long', 8], ['Rail Demolition Charge', 'special', 9, { fx: 'splash' }]]);
+
+  // ── Alien Invasion (fictional) ─────────────────────────────────────────
+  // The final era, as in Age of War 2's future age. look.alien picks a body plan.
+  const A = (alien, skin, body, glow, extra = {}) => ({ alien, skin, body, legs: body, helm: 'none', hc: body, glow, ...extra });
+  W('grey', 'Zeta Grey', 5, 'ranged', 'Zeta Reticuli scouts', 'Fictional · alien invaders',
+    A('grey', '#9fb0a6', '#c4ccd0', '#6ff2c8'),
+    [['Psi Probe', 'short', 5, { k: 'knife' }], ['Stun Baton', 'mid', 6, { k: 'club' }], ['Plasma Pistol', 'long', 8, { k: 'pistol', proj: 'plasma', r: 230, cd: 1.1 }], ['Mind Blast', 'special', 8, { fx: 'fear' }]],
+    { uniform: 'Silver flight suit, bare grey head, black almond eyes' });
+  W('drone', 'Xeno Drone', 5, 'infantry', 'Hive swarm caste', 'Fictional · alien invaders',
+    A('drone', '#3a4a2a', '#4f6a2a', '#b6ff4a'),
+    [['Mandibles', 'short', 6, { k: 'knife' }], ['Scythe Claws', 'mid', 7, { k: 'sword' }], ['Acid Spit', 'long', 6, { k: 'throw', proj: 'acid', r: 190 }], ['Swarm Frenzy', 'special', 7, { fx: 'flurry' }]],
+    { speed: 1.35, armor: 0.05, uniform: 'Green chitin shell, translucent wings, acid glands' });
+  W('brute', 'Hive Brute', 5, 'heavy', 'Hive siege caste', 'Fictional · alien invaders',
+    A('brute', '#5a3a4a', '#6a3a5a', '#ff5ad2'),
+    [['Crusher Fists', 'short', 7, { k: 'club' }], ['Gravity Hammer', 'mid', 9, { k: 'club' }], ['Spike Launcher', 'long', 7, { k: 'throw', proj: 'acid', r: 200 }], ['Bio-Carapace', 'special', 9, { fx: 'shield' }]],
+    { armor: 0.4, uniform: 'Plated purple carapace with glowing seams' });
+  W('stalker', 'Void Stalker', 5, 'infantry', 'Phase assassins', 'Fictional · alien invaders',
+    A('stalker', '#2a2a44', '#3a3a6a', '#8a7aff'),
+    [['Energy Blade', 'short', 9, { k: 'sword' }], ['Phase Glaive', 'mid', 8, { k: 'spear', r: 56 }], ['Needle Gun', 'long', 6, { k: 'pistol', proj: 'plasma', r: 200 }], ['Cloak Ambush', 'special', 9, { fx: 'charge' }]],
+    { speed: 1.25, uniform: 'Shimmering phase cloak over a black exo-frame' });
+  W('trooper', 'Plasma Trooper', 5, 'ranged', 'Invasion infantry', 'Fictional · alien invaders',
+    A('trooper', '#4a5a6a', '#2f3e52', '#4ad8ff'),
+    [['Arc Knife', 'short', 6, { k: 'knife' }], ['Shock Pike', 'mid', 7, { k: 'spear', r: 52 }], ['Plasma Rifle', 'long', 9, { k: 'rifle', proj: 'plasma', cd: 0.7 }], ['Plasma Grenade', 'special', 9, { fx: 'splash', proj: 'plasma' }]],
+    { uniform: 'Blue powered armor, glowing visor, plasma cell backpack' });
+  W('sporewalker', 'Spore Walker', 5, 'ranged', 'Bio-war gardeners', 'Fictional · alien invaders',
+    A('spore', '#6a5a3a', '#8a6a4a', '#ffb84a'),
+    [['Tendril Lash', 'short', 5, { k: 'club' }], ['Thorn Whip', 'mid', 6, { k: 'spear' }], ['Spore Cannon', 'long', 7, { k: 'throw', proj: 'acid', r: 220 }], ['Spore Cloud', 'special', 8, { fx: 'hornets' }]],
+    { uniform: 'Fungal hide studded with glowing spore sacs' });
+  W('overmind', 'The Overmind', 5, 'hero', 'Psionic hive ruler', 'Fictional · alien invaders',
+    A('overmind', '#c48aa8', '#4a2a5a', '#ff7af0'),
+    [['Psionic Lash', 'short', 9, { k: 'club' }], ['Gravity Well', 'mid', 9, { k: 'club', r: 60 }], ['Mind Spear', 'long', 9, { k: 'throw', proj: 'ion', r: 260 }], ['Psionic Storm', 'special', 10, { fx: 'fear' }]],
+    { uniform: 'Floating brain crowned by a violet psionic halo, robed in living silk' });
+  W('queen', 'Hive Queen', 5, 'hero', 'Mother of the swarm', 'Fictional · alien invaders',
+    A('queen', '#2a3a1a', '#3a5a2a', '#d4ff4a'),
+    [['Royal Mandibles', 'short', 9, { k: 'knife' }], ['Barbed Tail', 'mid', 9, { k: 'spear', r: 60 }], ['Acid Torrent', 'long', 8, { k: 'throw', proj: 'acid', r: 220 }], ['Brood Call', 'special', 9, { fx: 'rally' }]],
+    { uniform: 'Crested crown carapace, glowing egg-sac abdomen' });
 
   // Show matchups left out of the game: Taliban, IRA, Nazi SS, Khmer Rouge,
   // Saddam's Fedayeen, Somali pirates, the Medellín cartel, and the fictional
