@@ -24,7 +24,7 @@
     hero: { hp: 400, armor: 0.25, speed: 40, cost: 115, train: 4.5, label: 'Hero' },
   };
   const DIFF = {
-    recruit: { income: 0.72, think: 2.4, xp: 0.85, label: 'Recruit' },
+    recruit: { income: 0.62, think: 2.8, xp: 0.75, label: 'Recruit' },
     warrior: { income: 1.0, think: 1.6, xp: 1.0, label: 'Warrior' },
     deadliest: { income: 1.35, think: 1.0, xp: 1.2, label: 'Deadliest' },
   };
@@ -48,14 +48,14 @@
   // Damage comes from the 1–10 power rating, the slot and the era.
   const KIND_RULES = [
     ['spear', /bayonet/],
-    ['rifle', /musket|arquebus|rifle|carbine|\bm4|ak-|famas|tavor|vintorez|psg|mp5|thompson|smg|shotgun|blunderbuss|remington|lupara|pishchal|brown bess|winchester|krag|lee-enfield|mauser|saiga|uzi|m1014|\bsks|type 88|ar-15|mk 11|coach gun|sawed|hand cannon/],
-    ['pistol', /pistol|revolver|glock|sig p|\bp7\b|nambu|colt|webley/],
+    ['rifle', /musket|arquebus|rifle|carbine|\bm4|ak-|famas|tavor|vintorez|psg|mp5|thompson|smg|shotgun|blunderbuss|remington|lupara|pishchal|brown bess|winchester|krag|lee-enfield|mauser|saiga|uzi|m1014|\bsks|type 88|ar-15|mk 11|coach gun|sawed|hand cannon|sten gun|mossberg|dragunov|\bm24/],
+    ['pistol', /pistol|revolver|glock|sig p|\bp7\b|nambu|colt|webley|walther|makarov|beretta/],
     ['bow', /\bbow\b|crossbow|yumi|scorpio|gastraphetes|rocket arrows/],
     ['throw', /javelin|pilum|sling|huaraca|atlatl|shuriken|chakram|kpinga|throwing|stingray|rope dart/],
     ['spear', /spear|dory|sarissa|lance|naginata|halberd|trident|taiaha|tepoztopilli|guan dao|^ji$|bardiche|kontos|jida|kusari|chuqui|iklwa/],
-    ['axe', /axe|tomahawk|sagaris/],
-    ['club', /club|mace|kanabo|knobkerrie|champi|morning star|mere|ball & chain|staff|knuckles|krav/],
-    ['knife', /knife|dirk|tanto|piercer|katar|pugio|kukri|bowie|ka-bar|tecpatl|tumi|ice pick|main gauche|makraka|jambiya|seax|dagger/],
+    ['axe', /axe|tomahawk|sagaris|e-tool/],
+    ['club', /club|mace|kanabo|knobkerrie|champi|morning star|mere|ball & chain|staff|knuckles|krav|nunchaku|cestus|baseball bat/],
+    ['knife', /knife|dirk|tanto|piercer|katar|pugio|kukri|bowie|ka-bar|tecpatl|tumi|ice pick|main gauche|makraka|jambiya|seax|dagger|\bsai\b/],
   ];
   const kindOf = (name) => {
     const n = name.toLowerCase();
@@ -81,7 +81,7 @@
   function buildWeapon(t, era) {
     const [name, slot, power, o = {}] = t;
     const n = name.toLowerCase();
-    const kind = kindOf(name);
+    const kind = o.k || kindOf(name);
     const mul = ERAS[era].dmgMul;
     const w = { name, slot, power, kind, pierce: o.pierce || 0, ammo: o.ammo ?? null };
     if (slot === 'special') return buildSpecial(w, o, mul, era);
@@ -89,7 +89,7 @@
     let cd0, base;
     if (w.ranged) {
       w.proj = o.proj || projOf(kind, n);
-      const sniper = /sniper|psg|vintorez|mk 11|long rifle/.test(n);
+      const sniper = /sniper|psg|vintorez|mk 11|long rifle|dragunov|\bm24/.test(n);
       if (slot === 'long') {
         w.range = o.r || (sniper ? 340 : kind === 'pistol' ? 160 : LONG_RANGE[w.proj]);
         cd0 = sniper ? 2.2 : kind === 'pistol' ? 1.2 : LONG_CD[w.proj];
@@ -134,10 +134,11 @@
     if (o.proj) w.proj = o.proj;
     const n = w.name.toLowerCase();
     if (fx === 'volley' && !w.proj) w.proj = era >= 3 ? 'bullet' : 'arrow';
+    if (fx === 'fire' && /molotov/.test(n)) { w.r = 150; }
     if (fx === 'stun' && w.r > 50 && !w.proj) {
       w.proj = /net/.test(n) ? 'net' : /lasso/.test(n) ? 'rope' : /bola/.test(n) ? 'bola' : /flash/.test(n) ? 'flash' : 'stone';
     }
-    if (fx === 'splash' && /cannon|12-pounder|grapeshot|mangonel/.test(n)) w.proj = 'shell';
+    if (fx === 'splash' && /cannon|pounder|pound cannon|grapeshot|mangonel|catapult/.test(n)) w.proj = /catapult|mangonel/.test(n) ? 'stone' : 'shell';
     if (fx === 'splash' && /rpg/.test(n)) w.proj = 'rocket';
     w.dmg *= mul;
     w.dot *= mul;
@@ -152,7 +153,7 @@
     const weapons = raw.weapons.map((t) => buildWeapon(t, raw.era));
     const normal = weapons.filter((w) => w.slot !== 'special');
     const special = weapons.find((w) => w.slot === 'special') || null;
-    const sumP = raw.weapons.reduce((s, t) => s + t[2], 0);
+    const avgP = raw.weapons.reduce((s, t) => s + t[2], 0) / raw.weapons.length;
     const mounted = !!raw.look.mounted;
     const melee = normal.filter((w) => !w.ranged);
     return {
@@ -164,7 +165,7 @@
       hp: Math.round(role.hp * era.hpMul * (raw.hpMul || 1) * (mounted ? 1.15 : 1)),
       armor: raw.armor ?? role.armor,
       speed: role.speed * (raw.speed || 1) * (mounted && raw.role === 'hero' ? 1.15 : 1),
-      cost: Math.round(role.cost * (0.7 + sumP / 90) * era.costMul * (mounted ? 1.1 : 1)),
+      cost: Math.round(role.cost * (0.7 + (avgP * 4) / 90) * era.costMul * (mounted ? 1.1 : 1)),
       train: role.train,
       reach: melee.length ? Math.max(...melee.map((w) => w.range)) : 26,
     };
@@ -261,6 +262,7 @@
   }
 
   function recruit(sd, def) {
+    if (S.over) return null;
     if (def.era !== sd.era) return 'That warrior belongs to another era';
     if (sd.queue.length >= MAX_QUEUE) return 'Training queue is full (5 max)';
     if (def.hero && heroActive(sd)) return 'Only one hero can take the field at a time';
@@ -271,6 +273,7 @@
   }
 
   function evolve(sd) {
+    if (S.over) return null;
     if (sd.era >= ERAS.length - 1) return 'You have reached the final era';
     const next = ERAS[sd.era + 1];
     if (sd.xp < next.xp) return `Need ${Math.ceil(next.xp - sd.xp)} more experience`;
@@ -319,6 +322,8 @@
   }
 
   function useAbility(sd) {
+    if (S.over) return null;
+    if (S.paused) return 'Resume the game to use the era attack';
     if (sd.abilityCd > 0) return `${ERAS[sd.era].ability.name} is ready in ${Math.ceil(sd.abilityCd)} s`;
     const era = ERAS[sd.era];
     const ab = era.ability;
@@ -413,13 +418,13 @@
   }
 
   const targetY = (tg) => (tg.isBase ? GROUND - 40 - Math.random() * 40 : GROUND - (tg.def.mounted ? 44 : 30));
-  const targetX = (tg, team) => (tg.isBase ? baseEdge(tg.team) + DIR[tg.team] * -6 + (Math.random() - 0.5) * 20 : tg.x);
+  const targetX = (tg) => (tg.isBase ? baseEdge(tg.team) + DIR[tg.team] * -6 + (Math.random() - 0.5) * 20 : tg.x);
 
   function spawnProj(u, target, o) {
     const dir = DIR[u.team];
     const sx = u.x + dir * 10;
     const sy = GROUND - (u.def.mounted ? 52 : 34);
-    const tx = targetX(target, u.team);
+    const tx = targetX(target);
     const ty = targetY(target);
     const dist = Math.abs(tx - sx);
     const kind = o.kind;
@@ -835,7 +840,7 @@
     c.beginPath(); c.arc(sx, sy, era === 4 ? 14 : 24, 0, Math.PI * 2); c.fill();
     if (era === 4) {
       c.fillStyle = 'rgba(255,255,255,.6)';
-      for (let i = 0; i < 40; i++) { const x = ((i * 137.5) % 1) * 0 + left + ((i * 211) % 1000) / 1000 * (right - left); c.fillRect(x, (i * 53) % 150, 1.2, 1.2); }
+      for (let i = 0; i < 40; i++) c.fillRect(left + ((i * 211) % 1000) / 1000 * (right - left), (i * 53) % 150, 1.2, 1.2);
     }
     // Clouds
     c.fillStyle = era === 4 ? 'rgba(120,140,160,.18)' : 'rgba(255,255,255,.28)';
@@ -1732,7 +1737,7 @@
     const isAdded = def.show.startsWith('Added');
     let h = `<div class="wname">${esc(def.name)}</div>
       <div class="wsub">${esc(def.roleInfo.label)} · ${esc(def.origin)}</div>
-      <span class="show${isAdded ? ' added' : ''}">${esc(def.show)}</span>
+      <span class="record${isAdded ? ' added' : ''}">${esc(def.show)}</span>
       <div class="statrow"><div><span>HP</span>${def.hp}</div><div><span>Armor</span>${Math.round(def.armor * 100)}%</div><div><span>Speed</span>${Math.round(def.speed)}</div><div><span>Cost</span>${def.cost}</div></div>`;
     if (full !== false) {
       h += '<div class="weps">';
@@ -1745,6 +1750,7 @@
   }
 
   function buildCards() {
+    hideTip();
     const box = $('cards');
     box.innerHTML = '';
     if (!S || S.mode !== 'play') return;
@@ -1933,7 +1939,7 @@
     arm.innerHTML = E.turrets.map((t) => `<div><b>${esc(t.name)}</b><br>Turret · ${t.cost} gold · ${Math.round(t.power * 3.2 * E.dmgMul)} dmg every ${t.cd} s · range ${t.r}${t.aoe ? ' · blast' : ''}</div>`).join('') +
       `<div><b>${esc(E.ability.name)}</b><br>Era attack · ${esc(E.ability.desc)} Recharges in ${E.ability.cd} s.</div>`;
     body.appendChild(arm);
-    body.appendChild(el('p', 'note', 'Matchups and results come from Spike TV’s Deadliest Warrior (2009–2011). Warriors marked “Added” never appeared on the show. Power ratings are game balance numbers based on each weapon’s reputation, not the show’s simulated kill counts. Episodes featuring terrorist groups, death squads and the Nazi SS are left out.'));
+    body.appendChild(el('p', 'note', 'Matchups come from Spike TV’s Deadliest Warrior (2009–2011). A win or loss is shown only where the episode result was confirmed against published episode guides. Loadouts follow the show where sources confirm them; the rest use each warrior’s historically documented weapons. Warriors marked “Added” never appeared on the show. Power ratings are game balance numbers based on each weapon’s reputation, not the show’s simulated kill counts. Episodes featuring terrorist groups, death squads and the Nazi SS are left out.'));
     if (focusId) {
       const t = $('cx-' + focusId);
       if (t) { t.classList.add('flash'); requestAnimationFrame(() => t.scrollIntoView({ block: 'center' })); }
@@ -2064,6 +2070,9 @@
     if (v) { S.cam += v * 520 * dt; clampCam(); }
   }
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && S && S.mode === 'play' && !S.over && !S.paused) { S.paused = true; refreshHud(true); }
+  });
   window.addEventListener('resize', () => { resize(); });
   if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv);
 

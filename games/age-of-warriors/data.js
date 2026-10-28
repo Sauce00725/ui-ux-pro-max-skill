@@ -9,8 +9,15 @@
 // the game (see weapon tuning in game.js). These are balance numbers, not the
 // show's simulated kill counts.
 //
+// show: matchup and result. A result appears only where it was confirmed
+// against published episode guides; the rest list the opponent alone.
+// Weapon lists follow the show where sources confirm them (Apache, Gladiator,
+// Spartan, Samurai, Viking, Yakuza, Mafia, Green Beret, Spetsnaz, Washington,
+// Napoleon, Joan of Arc, William the Conqueror); the rest use each warrior's
+// historically documented weapons.
+//
 // Weapon tuple: [name, slot, power, options]
-//   options: r range, cd cooldown (s), ammo thrown uses, pierce 0–1 armor
+//   options: k weapon kind override, r range, cd cooldown (s), ammo thrown uses, pierce 0–1 armor
 //   ignored, proj projectile look, fx special effect, n volley size,
 //   aoe blast radius.
 // Special fx: shield, stun, charge, splash, volley, poison, fire, flurry,
@@ -84,16 +91,16 @@ window.AOW_DATA = (() => {
   W('spartan', 'Spartan', 0, 'heavy', 'Sparta, Greece · 5th c. BC', 'S1 · vs Ninja · Won',
     L(S.tan, '#8f2a1f', '#6b3b22', 'crest', '#b8913a', { plume: '#9c1d1d', shield: '#b8862e', cape: '#7a1f1a' }),
     [['Xiphos', 'short', 6], ['Dory', 'mid', 7, { r: 52 }], ['Javelin', 'long', 6, { ammo: 2 }], ['Aspis', 'special', 9, { fx: 'shield' }]]);
-  W('centurion', 'Roman Centurion', 0, 'heavy', 'Roman Empire · 1st c.', 'S2 · vs Rajput · Won',
+  W('centurion', 'Roman Centurion', 0, 'heavy', 'Roman Empire · 1st c.', 'S2 · vs Rajput',
     L(S.tan, '#9b2a24', '#5c3b25', 'crest', '#a7a9a8', { plume: '#c8312b', crossPlume: true, shield: '#9b2a24', cape: '#6f1f1a' }),
     [['Pugio', 'short', 4], ['Gladius', 'mid', 8, { r: 34 }], ['Pilum', 'long', 7, { ammo: 2, pierce: 0.6 }], ['Scutum', 'special', 8, { fx: 'shield' }]]);
   W('gladiator', 'Gladiator', 0, 'infantry', 'Roman arena · 1st c.', 'S1 · vs Apache · Lost',
     L(S.mid, '#c8a25a', '#7b5a3a', 'gladiator', '#9ea3a6', {}),
-    [['Sica', 'short', 6], ['Scissor', 'short', 7], ['Trident', 'mid', 7, { r: 52 }], ['Net', 'special', 7, { fx: 'stun', r: 64 }]]);
-  W('celt', 'Celt', 0, 'infantry', 'Gaul and Britain · 1st c. BC', 'S2 · vs Persian Immortal · Won',
+    [['Cestus', 'short', 5], ['Scissor', 'short', 7], ['Trident & Net', 'mid', 7, { r: 52 }], ['Sling', 'long', 5], ['Sica', 'special', 7, { fx: 'flurry' }]]);
+  W('celt', 'Celt', 0, 'infantry', 'Gaul and Britain · 1st c. BC', 'S2 · vs Persian Immortal',
     L(S.light, '#3f6b3a', '#8a6a3c', 'celt', '#c9a23a', { cape: '#5b7e3d', shield: '#3b5a8a' }),
     [['Dagger', 'short', 4], ['Long Sword', 'mid', 8, { r: 36 }], ['Sling', 'long', 6], ['War Chariot', 'special', 8, { fx: 'charge' }]]);
-  W('immortal', 'Persian Immortal', 0, 'ranged', 'Achaemenid Persia · 5th c. BC', 'S2 · vs Celt · Lost',
+  W('immortal', 'Persian Immortal', 0, 'ranged', 'Achaemenid Persia · 5th c. BC', 'S2 · vs Celt',
     L(S.mid, '#5a3d7a', '#3a2a55', 'tiara', '#e6d6b0', { shield: '#a07b3a' }),
     [['Sagaris', 'short', 6], ['Spear', 'mid', 6], ['Composite Bow', 'long', 7], ['Scythed Chariot', 'special', 7, { fx: 'charge' }]]);
   W('alexander', 'Alexander the Great', 0, 'hero', 'Macedon · 336–323 BC', 'S2 · vs Attila the Hun · Lost',
@@ -105,45 +112,45 @@ window.AOW_DATA = (() => {
   W('attila', 'Attila the Hun', 0, 'hero', 'Hunnic Empire · AD 434–453', 'S2 · vs Alexander the Great · Won',
     L(S.tan, '#6b4a2a', '#3e2e22', 'fur', '#7a5a3a', { cape: '#3e2e22', mounted: '#5a3a26' }),
     [['Hunnic Sword', 'short', 7], ['Kontos Lance', 'mid', 7, { r: 56 }], ['Hunnic Bow', 'long', 9], ['Lasso', 'special', 7, { fx: 'stun', r: 96 }]]);
-  W('suntzu', 'Sun Tzu', 0, 'hero', 'Zhou China · 5th c. BC', 'S2 · vs Vlad the Impaler · Lost',
+  W('suntzu', 'Sun Tzu', 0, 'hero', 'Zhou China · 5th c. BC', 'S2 · vs Vlad the Impaler',
     L(S.light, '#2f4a6a', '#20324a', 'guan', '#1a1a1a', { cape: '#8a2a22' }),
     [['Jian', 'short', 6], ['Ji', 'mid', 7, { r: 54 }], ['Repeating Crossbow', 'long', 7, { cd: 0.9 }], ['Fire Arrows', 'special', 8, { fx: 'fire' }]]);
 
   // ── Age of Steel ────────────────────────────────────────────────────────
   W('viking', 'Viking', 1, 'heavy', 'Scandinavia · 8th–11th c.', 'S1 · vs Samurai · Lost',
     L(S.light, '#5a6a7a', '#6a4a2a', 'horned', '#8a8f92', { shield: '#a8322a', beard: '#c9883a' }),
-    [['Seax', 'short', 5], ['Battle Axe', 'mid', 8], ['Throwing Spear', 'long', 6, { ammo: 1 }], ['Round Shield', 'special', 7, { fx: 'shield' }]]);
+    [['Long Sword', 'short', 7], ['Great Axe', 'mid', 8], ['Spear', 'long', 6, { k: 'throw', ammo: 1 }], ['Shield', 'special', 7, { fx: 'shield' }]]);
   W('samurai', 'Samurai', 1, 'infantry', 'Feudal Japan · 12th–16th c.', 'S1 · vs Viking · Won',
     L(S.light, '#9a2b2b', '#2a2a2a', 'kabuto', '#2a2a2a', { plume: '#c9a23a' }),
     [['Katana', 'short', 9], ['Naginata', 'mid', 8, { r: 56 }], ['Yumi', 'long', 7], ['Kanabo', 'special', 7, { fx: 'stun', r: 34 }]]);
-  W('knight', 'Knight', 1, 'heavy', 'Western Europe · 14th c.', 'S1 · vs Pirate · Won',
+  W('knight', 'Knight', 1, 'heavy', 'Western Europe · 14th c.', 'S1 · vs Pirate · Lost',
     L(S.light, '#b9bec2', '#8a8f92', 'greathelm', '#c4c8cb', { plume: '#2f4f8a', shield: '#2f4f8a' }),
     [['Broadsword', 'short', 7], ['Halberd', 'mid', 8, { r: 54 }], ['Crossbow', 'long', 8, { pierce: 0.5 }], ['Morning Star', 'special', 8, { fx: 'stun', r: 34 }]], { armor: 0.4 });
   W('ninja', 'Ninja', 1, 'infantry', 'Feudal Japan · 15th–17th c.', 'S1 · vs Spartan · Lost',
     L(S.light, '#1d1f24', '#1d1f24', 'hood', '#1d1f24', {}),
     [['Ninjato', 'short', 7], ['Kusari-gama', 'mid', 6, { r: 58 }], ['Shuriken', 'long', 4, { r: 140 }], ['Blowgun', 'special', 6, { fx: 'poison' }]], { speed: 1.35, armor: 0 });
-  W('shaolin', 'Shaolin Monk', 1, 'infantry', 'Henan, China · 16th c.', 'S1 · vs Maori · Lost',
+  W('shaolin', 'Shaolin Monk', 1, 'infantry', 'Henan, China · 16th c.', 'S1 · vs Maori',
     L(S.tan, '#d98a2b', '#a85a1a', 'bald', S.tan, {}),
     [['Emei Piercers', 'short', 5], ['Three-Section Staff', 'mid', 6, { r: 50 }], ['Rope Dart', 'long', 5, { r: 120, proj: 'dart' }], ['Twin Hook Swords', 'special', 7, { fx: 'flurry' }]], { speed: 1.15 });
-  W('mongol', 'Mongol', 1, 'ranged', 'Mongol Empire · 13th c.', 'S2 · vs Comanche · Lost',
+  W('mongol', 'Mongol', 1, 'ranged', 'Mongol Empire · 13th c.', 'S2 · vs Comanche',
     L(S.tan, '#3a5a8a', '#5a3a26', 'mongol', '#7a5a3a', { mounted: '#8a6a4a' }),
     [['Ild Sword', 'short', 6], ['Jida Lance', 'mid', 6, { r: 56 }], ['Composite Bow', 'long', 9], ['Horse Archer Volley', 'special', 7, { fx: 'volley' }]], { speed: 1.3 });
-  W('rajput', 'Rajput', 1, 'infantry', 'Rajputana, India · 12th–16th c.', 'S2 · vs Roman Centurion · Lost',
+  W('rajput', 'Rajput', 1, 'infantry', 'Rajputana, India · 12th–16th c.', 'S2 · vs Roman Centurion',
     L(S.mid, '#e0b24a', '#a8322a', 'turban', '#d84a2a', { shield: '#6a4a2a' }),
     [['Katar', 'short', 6], ['Khanda', 'mid', 7, { r: 36 }], ['Chakram', 'long', 5, { ammo: 3 }], ['Aara Whip-Sword', 'special', 6, { fx: 'flurry' }]]);
-  W('ming', 'Ming Warrior', 1, 'ranged', 'Ming China · 14th–17th c.', 'S2 · vs Musketeer · Lost',
+  W('ming', 'Ming Warrior', 1, 'ranged', 'Ming China · 14th–17th c.', 'S2 · vs Musketeer',
     L(S.light, '#a8322a', '#2a2a2a', 'ming', '#2a2a2a', { plume: '#a8322a' }),
     [['Dao', 'short', 6], ['Guan Dao', 'mid', 7, { r: 54 }], ['Rocket Arrows', 'long', 6, { proj: 'rocket' }], ['Fire Lance', 'special', 7, { fx: 'fire', r: 120 }]]);
-  W('wallace', 'William Wallace', 1, 'hero', 'Scotland · 1270–1305', 'S1 · vs Shaka Zulu · Won',
+  W('wallace', 'William Wallace', 1, 'hero', 'Scotland · 1270–1305', 'S1 · vs Shaka Zulu',
     L(S.light, '#2f5a3a', '#3a5a8a', 'none', '#b8662a', { kilt: true, shield: '#7a5a3a', cape: '#2f4f8a', paint: '#3a6ab0' }),
     [['Targe & Dirk', 'short', 6], ['Claymore', 'mid', 9, { r: 40 }], ['Ball & Chain', 'mid', 7], ['Highland War Cry', 'special', 8, { fx: 'rally' }]]);
   W('joan', 'Joan of Arc', 1, 'hero', 'France · 1412–1431', 'S3 · vs William the Conqueror',
     L(S.light, '#c4c8cb', '#8a8f92', 'none', '#5a3a26', { shortHair: true, cape: '#2f4f8a', shield: '#2f4f8a' }),
-    [['Arming Sword', 'short', 7], ['Lance', 'mid', 7, { r: 56 }], ['Crossbow', 'long', 7], ['Battle Standard', 'special', 8, { fx: 'rally' }]]);
+    [['French Arming Sword', 'short', 7], ['Lance', 'mid', 7, { r: 56 }], ['Iron Crossbow', 'long', 7], ['Siege Cannon', 'special', 9, { fx: 'splash' }]]);
   W('conqueror', 'William the Conqueror', 1, 'hero', 'Normandy · 1028–1087', 'S3 · vs Joan of Arc',
     L(S.light, '#8a8f92', '#5a3a26', 'nasal', '#9ea3a6', { shield: '#a8322a', kite: true, mounted: '#3a2a20' }),
-    [['Norman Sword', 'short', 8], ['Couched Lance', 'mid', 7, { r: 58 }], ['Norman Crossbow', 'long', 7], ['Norman Cavalry Charge', 'special', 9, { fx: 'charge' }]]);
-  W('vlad', 'Vlad the Impaler', 1, 'hero', 'Wallachia · 1428–1477', 'S2 · vs Sun Tzu · Won',
+    [['Norman Broadsword', 'short', 8], ['Couched Lance', 'mid', 7, { r: 58 }], ['Composite Crossbow', 'long', 7], ['Torsion Catapult', 'special', 9, { fx: 'splash' }]]);
+  W('vlad', 'Vlad the Impaler', 1, 'hero', 'Wallachia · 1428–1477', 'S2 · vs Sun Tzu',
     L(S.light, '#6a1a2a', '#2a1a1a', 'cap', '#6a1a2a', { plume: '#e0c46a', cape: '#2a1a1a', mustache: true }),
     [['Kilij', 'short', 7], ['Halberd', 'mid', 8, { r: 54 }], ['Hand Cannon', 'long', 6, { r: 170, proj: 'bullet' }], ['Impalement Terror', 'special', 8, { fx: 'fear' }]]);
   W('genghis', 'Genghis Khan', 1, 'hero', 'Mongol Empire · 1162–1227', 'S3 · vs Hannibal',
@@ -163,7 +170,7 @@ window.AOW_DATA = (() => {
   W('inca', 'Inca Warrior', 2, 'infantry', 'Inca Empire · 15th–16th c.', 'Added · not on the show',
     L(S.mid, '#c8312b', '#2a2a2a', 'inca', '#e0c46a', { checker: true, shield: '#e0c46a' }),
     [['Tumi', 'short', 4], ['Champi Star Mace', 'mid', 8], ['Huaraca Sling', 'long', 7], ['Liwi Bola', 'special', 6, { fx: 'stun', r: 130 }]]);
-  W('maori', 'Maori', 2, 'infantry', 'Aotearoa (New Zealand) · 18th–19th c.', 'S1 · vs Shaolin Monk · Won',
+  W('maori', 'Maori', 2, 'infantry', 'Aotearoa (New Zealand) · 18th–19th c.', 'S1 · vs Shaolin Monk',
     L(S.mid, '#5a3a26', '#3a2a1a', 'topknot', '#1a1a1a', { moko: true, skirt: true }),
     [['Mere', 'short', 7], ['Taiaha', 'mid', 8, { r: 50 }], ['Stingray Spear', 'long', 5, { ammo: 1 }], ['Haka', 'special', 7, { fx: 'fear' }]]);
   W('zande', 'Zande Warrior', 2, 'infantry', 'Central Africa · 19th c.', 'S2 · vs Aztec Jaguar',
@@ -171,14 +178,14 @@ window.AOW_DATA = (() => {
     [['Makraka', 'short', 6], ['Spear', 'mid', 6, { r: 52 }], ['Kpinga', 'long', 8, { ammo: 3 }], ['Wicker Shield', 'special', 6, { fx: 'shield' }]]);
   W('apache', 'Apache', 2, 'ranged', 'American Southwest · 19th c.', 'S1 · vs Gladiator · Won',
     L(S.mid, '#c9a26a', '#6a4a2a', 'headband', '#a8322a', { longHair: true }),
-    [['Knife', 'short', 5], ['Tomahawk', 'mid', 7], ['Bow & Arrow', 'long', 8], ['War Club', 'special', 6, { fx: 'stun', r: 34 }]], { speed: 1.15 });
-  W('comanche', 'Comanche', 2, 'ranged', 'Southern Plains · 19th c.', 'S2 · vs Mongol · Won',
+    [['Tomahawk', 'short', 7], ['Knife', 'mid', 5], ['Bow & Arrow', 'long', 8], ['War Club', 'special', 6, { fx: 'stun', r: 34 }]], { speed: 1.15 });
+  W('comanche', 'Comanche', 2, 'ranged', 'Southern Plains · 19th c.', 'S2 · vs Mongol',
     L(S.mid, '#a87a4a', '#6a4a2a', 'feather', '#f0e6d0', { longHair: true, mounted: '#e2d6c0', shield: '#d8c8a0' }),
     [['Steel Knife', 'short', 5], ['Lance', 'mid', 7, { r: 56 }], ['Bow', 'long', 8], ['Horseback Charge', 'special', 8, { fx: 'charge' }]], { speed: 1.3 });
   W('nacom', 'Maya Nacom', 2, 'hero', 'Maya war captain', 'Added · not on the show',
     L(S.mid, '#2f8a7c', '#e0c46a', 'quetzal', '#2f8a7c', { feathers: '#2f9a6a', cape: '#2f8a7c', paint: '#1a1a1a' }),
     [['Obsidian Blade', 'short', 7], ['War Club', 'mid', 8], ['Atlatl', 'long', 7], ['War Drums', 'special', 8, { fx: 'rally' }]]);
-  W('shaka', 'Shaka Zulu', 2, 'hero', 'Zulu Kingdom · 1787–1828', 'S1 · vs William Wallace · Lost',
+  W('shaka', 'Shaka Zulu', 2, 'hero', 'Zulu Kingdom · 1787–1828', 'S1 · vs William Wallace',
     L(S.dark, '#e6dccb', '#3a2a1a', 'zulu', '#1a1a1a', { shield: '#f0e6d0', cowhide: true, skirt: true }),
     [['Iklwa', 'short', 8], ['Iwisa Knobkerrie', 'mid', 6], ['Throwing Assegai', 'long', 6, { ammo: 2 }], ['Bull Horn Formation', 'special', 8, { fx: 'rally' }]]);
   W('crazyhorse', 'Crazy Horse', 2, 'hero', 'Oglala Lakota · c. 1840–1877', 'S3 · vs Pancho Villa',
@@ -192,10 +199,10 @@ window.AOW_DATA = (() => {
     [['Champi', 'short', 8], ['Chuqui Lance', 'mid', 7, { r: 54 }], ['Huaraca Sling', 'long', 8], ['Pururauca Stones', 'special', 8, { fx: 'volley', proj: 'stone', n: 6 }]]);
 
   // ── Age of Powder ───────────────────────────────────────────────────────
-  W('pirate', 'Pirate', 3, 'infantry', 'Caribbean · 17th–18th c.', 'S1 · vs Knight · Lost',
+  W('pirate', 'Pirate', 3, 'infantry', 'Caribbean · 17th–18th c.', 'S1 · vs Knight · Won',
     L(S.tan, '#e6dccb', '#3a3a5a', 'tricorn', '#1d1f24', { sash: '#a8322a', beard: '#2a1a1a' }),
     [['Cutlass', 'short', 6], ['Blunderbuss', 'mid', 8], ['Flintlock Pistol', 'long', 6, { cd: 2.4 }], ['Grenado', 'special', 7, { fx: 'splash' }]]);
-  W('musketeer', 'Musketeer', 3, 'ranged', 'France · 17th c.', 'S2 · vs Ming Warrior · Won',
+  W('musketeer', 'Musketeer', 3, 'ranged', 'France · 17th c.', 'S2 · vs Ming Warrior',
     L(S.light, '#2f4f8a', '#5a3a26', 'cavalier', '#3a2a22', { plume: '#f0e6d0', cross: true, mustache: true }),
     [['Main Gauche', 'short', 5], ['Rapier', 'mid', 7, { r: 40 }], ['Matchlock Musket', 'long', 8, { cd: 2.6 }], ['Wheellock Pistol', 'special', 7, { fx: 'snipe', r: 160 }]]);
   W('conquistador', 'Conquistador', 3, 'heavy', 'Spain · 16th c. (Cortés’s soldiers)', 'Added · Hernán Cortés’s army',
@@ -218,21 +225,21 @@ window.AOW_DATA = (() => {
     [['Shashka Sabre', 'short', 7], ['Bardiche', 'mid', 8, { r: 50 }], ['Pishchal', 'long', 7], ['Gulyay-Gorod', 'special', 8, { fx: 'shield' }]]);
   W('washington', 'George Washington', 3, 'hero', 'United States · 1732–1799', 'S3 · vs Napoleon · Won',
     L(S.light, '#2f3f6a', '#e6dccb', 'tricorn', '#1d1f24', { facing: '#e0c46a', whiteHair: true, mounted: '#f0e6d0' }),
-    [['Officer’s Sabre', 'short', 7], ['Brown Bess Bayonet', 'mid', 7, { r: 48 }], ['Brown Bess Musket', 'long', 7], ['Field Cannon', 'special', 9, { fx: 'splash' }]]);
+    [['Colichemarde Sword', 'short', 7], ['Brown Bess Bayonet', 'mid', 7, { r: 48 }], ['Brown Bess Musket', 'long', 7], ['Pennsylvania Long Rifle', 'long', 8, { cd: 2.6 }], ['6-Pound Cannon', 'special', 9, { fx: 'splash' }]]);
   W('napoleon', 'Napoleon Bonaparte', 3, 'hero', 'French Empire · 1769–1821', 'S3 · vs George Washington · Lost',
     L(S.light, '#2f3f8a', '#e6dccb', 'bicorne', '#1d1f24', { facing: '#e0c46a', mounted: '#e2d6c0' }),
-    [['Briquet Sabre', 'short', 6], ['Charleville Bayonet', 'mid', 7, { r: 48 }], ['Charleville Musket', 'long', 7], ['Gribeauval 12-Pounder', 'special', 9, { fx: 'splash' }]]);
-  W('jessejames', 'Jesse James', 3, 'hero', 'American frontier · 1847–1882', 'S2 · vs Al Capone · Won',
+    [['Cavalry Saber', 'short', 7], ['Charleville Bayonet', 'mid', 7, { r: 48 }], ['1777 Charleville Musket', 'long', 7], ['8-Pound Cannon', 'special', 9, { fx: 'splash' }]]);
+  W('jessejames', 'Jesse James', 3, 'hero', 'American frontier · 1847–1882', 'S2 · vs Al Capone',
     L(S.light, '#7a5a3a', '#3a3a4a', 'cowboy', '#4a3a2a', { duster: '#8a7a5a', mustache: true }),
     [['Bowie Knife', 'short', 6], ['Coach Gun', 'mid', 8], ['Colt Navy Revolver', 'long', 7, { cd: 1.1, r: 160 }], ['Winchester Rapid Fire', 'special', 8, { fx: 'volley', proj: 'bullet' }]]);
 
   // ── Modern Warfare ──────────────────────────────────────────────────────
-  W('greenberet', 'Green Beret', 4, 'ranged', 'U.S. Army Special Forces', 'S1 · vs Spetsnaz · Won',
+  W('greenberet', 'Green Beret', 4, 'ranged', 'U.S. Army Special Forces', 'S1 · vs Spetsnaz · Lost',
     L(S.light, '#5a6a3a', '#4a5a32', 'beret', '#2f5a3a', { vest: '#3a4228' }),
-    [['Ka-Bar', 'short', 5], ['Remington 870', 'mid', 8], ['M4 Carbine', 'long', 8, { cd: 0.8 }], ['M67 Frag Grenade', 'special', 8, { fx: 'splash' }]]);
-  W('spetsnaz', 'Spetsnaz', 4, 'ranged', 'Russian special forces', 'S1 · vs Green Beret · Lost',
+    [['E-Tool', 'short', 5], ['Beretta M9', 'mid', 6], ['Mossberg 500', 'mid', 8], ['M4A1 Carbine', 'long', 8, { cd: 0.8 }], ['M24 Sniper Rifle', 'long', 9, { cd: 2.2 }], ['M67 Frag Grenade', 'special', 8, { fx: 'splash' }]]);
+  W('spetsnaz', 'Spetsnaz', 4, 'ranged', 'Russian special forces', 'S1 · vs Green Beret · Won',
     L(S.light, '#5a6a6a', '#3a4a4a', 'balaclava', '#2a2a2a', { vest: '#2a3232', stripes: true }),
-    [['Ballistic Knife', 'short', 6], ['Saiga-12', 'mid', 8], ['AK-74', 'long', 8, { cd: 0.8 }], ['VSS Vintorez', 'special', 9, { fx: 'snipe' }]]);
+    [['Ballistic Knife', 'short', 6], ['Makarov PM', 'mid', 6], ['Saiga-12', 'mid', 8], ['AK-74', 'long', 8, { cd: 0.8 }], ['Dragunov SVD', 'long', 9, { cd: 2.2 }], ['RGD-5 Grenade', 'special', 8, { fx: 'splash' }]]);
   W('seal', 'Navy SEAL', 4, 'ranged', 'U.S. Navy special warfare', 'S2 · vs Israeli Commando',
     L(S.light, '#3a4a5a', '#2a3440', 'boonie', '#3a4a3a', { vest: '#2a2a2a' }),
     [['Ka-Bar', 'short', 5], ['SIG P226', 'mid', 6], ['Mk 11 Sniper', 'long', 9, { cd: 2.2 }], ['C4 Charge', 'special', 9, { fx: 'splash' }]]);
@@ -262,11 +269,11 @@ window.AOW_DATA = (() => {
     [['Machete', 'short', 6], ['SKS Bayonet', 'mid', 6, { r: 46 }], ['AK-47', 'long', 8, { cd: 0.85 }], ['Punji Trap', 'special', 7, { fx: 'poison', r: 120, proj: 'stake' }]], { speed: 1.1 });
   W('mafia', 'Mafia', 4, 'ranged', 'Chicago and New York · 1920s', 'S1 · vs Yakuza · Won',
     L(S.light, '#3a3a42', '#2a2a32', 'fedora', '#2a2a32', { tie: '#a8322a' }),
-    [['Ice Pick', 'short', 4], ['Lupara', 'mid', 8], ['Thompson SMG', 'long', 8, { cd: 0.6, r: 190 }], ['Tommy-Gun Spray', 'special', 8, { fx: 'volley', n: 6, proj: 'bullet' }]]);
-  W('yakuza', 'Yakuza', 4, 'infantry', 'Japan · 20th c.', 'S1 · vs Mafia · Lost',
+    [['Ice Pick', 'short', 4], ['Baseball Bat', 'short', 5], ['Sawed-off Shotgun', 'mid', 8], ['Thompson SMG', 'long', 8, { cd: 0.6, r: 190 }], ['Molotov Cocktail', 'special', 7, { fx: 'fire' }]]);
+  W('yakuza', 'Yakuza', 4, 'ranged', 'Japan · 20th c.', 'S1 · vs Mafia · Lost',
     L(S.light, '#1d1f24', '#1d1f24', 'slick', '#1a1a1a', { tie: '#e6dccb', tattoo: true }),
-    [['Tanto', 'short', 5], ['Katana', 'mid', 8, { r: 38 }], ['Nambu Pistol', 'long', 5, { cd: 1.4, r: 150 }], ['Wakizashi Flurry', 'special', 7, { fx: 'flurry' }]], { speed: 1.1 });
-  W('capone', 'Al Capone', 4, 'hero', 'Chicago · 1899–1947', 'S2 · vs Jesse James · Lost',
+    [['Nunchaku', 'short', 5], ['Sai', 'short', 5], ['Walther P38', 'mid', 6], ['Sten Gun', 'long', 7, { cd: 0.7, r: 190 }], ['Ceramic Grenade', 'special', 7, { fx: 'splash' }]], { speed: 1.1 });
+  W('capone', 'Al Capone', 4, 'hero', 'Chicago · 1899–1947', 'S2 · vs Jesse James',
     L(S.light, '#e6dccb', '#3a3a42', 'fedora', '#e6dccb', { tie: '#2a2a32', coat: '#3a3a42' }),
     [['Brass Knuckles', 'short', 4], ['Sawed-off Shotgun', 'mid', 8], ['Thompson SMG', 'long', 8, { cd: 0.6, r: 190 }], ['Chicago Typewriter', 'special', 9, { fx: 'volley', n: 9, proj: 'bullet' }]]);
   W('pancho', 'Pancho Villa', 4, 'hero', 'Mexico · 1878–1923', 'S3 · vs Crazy Horse',
