@@ -61,7 +61,9 @@
 
   /* ── Battlefield ── */
   .stage { position: relative; min-height: 0; overflow: hidden; background: #2a2016; }
-  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #cv, #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #gl { pointer-events: none; }
+  #cv { touch-action: none; cursor: grab; }
   #banner {
     position: absolute; left: 50%; top: 22%; transform: translate(-50%, -50%); pointer-events: none;
     font-family: var(--display); font-size: clamp(32px, 6vw, 64px); line-height: 1; color: var(--bone);
@@ -215,12 +217,14 @@
       <button class="btn" id="btnAbility" title="Era special attack (Q)"><span id="abilityName">Ability</span><i class="cd" id="abilityCd"></i></button>
       <button class="btn" id="btnSpeed" title="Game speed">1×</button>
       <button class="btn" id="btnPause" title="Pause (P)">Pause</button>
+      <button class="btn" id="btnGfx" title="Lighting, reflections and bloom">Effects: high</button>
       <button class="btn" id="btnSound">Sound off</button>
       <button class="btn" id="btnCodex">Codex</button>
     </div>
   </header>
 
   <main class="stage">
+    <canvas id="gl" aria-hidden="true"></canvas>
     <canvas id="cv" aria-label="Battlefield"></canvas>
     <div id="banner"></div>
     <div id="toast" role="status"></div>
