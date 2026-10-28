@@ -194,7 +194,45 @@
   .endstats div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
   .endstats b { display: block; font-family: var(--mono); font-size: 18px; font-weight: 500; }
 
+  .stance { margin-left: 8px; }
+  .stance button { padding: 4px 10px; font-size: 13px; }
+  .card.upgrade { width: 168px; }
+  .pips { display: flex; gap: 3px; }
+  .pips i { width: 14px; height: 5px; border-radius: 2px; background: #3a3024; }
+  .pips i.on { background: var(--brass); }
+  .modenote { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+  .records { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .records b { font-family: var(--mono); font-weight: 500; color: var(--bone); margin-right: 3px; }
+  .linkbtn { border: 0; background: none; padding: 0; margin-top: 6px; color: var(--brass); text-decoration: underline; cursor: pointer; font-size: 13px; }
+  .achlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 60vh; overflow-y: auto; }
+  .ach { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; opacity: .55; }
+  .ach.got { opacity: 1; border-color: var(--brass); }
+  .ach span { font-size: 12.5px; color: var(--muted); }
+  .ach em { font-style: normal; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+  #sim .sheet { width: min(860px, 100%); padding: 0; display: grid; grid-template-rows: auto 1fr; max-height: calc(100dvh - 32px); }
+  .simpick { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .simpick .side { display: grid; gap: 6px; justify-items: center; flex: 1 1 200px; min-width: 0; }
+  .simpick canvas { width: 96px; height: 96px; border-radius: 6px; }
+  .simpick select { width: 100%; max-width: 280px; padding: 7px 8px; background: var(--panel-2); color: var(--bone); border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+  .vs { font-family: var(--display); font-size: 34px; color: var(--brass); }
+  .simprog { color: var(--muted); }
+  .tally { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 18px; text-align: center; }
+  .tally b { display: block; font-family: var(--display); font-size: 64px; line-height: .9; font-weight: 600; }
+  .tally span { color: var(--muted); font-size: 13px; }
+  .tally .dash { font-family: var(--display); font-size: 40px; color: var(--muted); }
+  .split { height: 8px; border-radius: 4px; background: var(--foe); overflow: hidden; margin-top: 10px; }
+  .split i { display: block; height: 100%; background: var(--team); }
+  .verdict { text-align: center; margin: 10px 0 0; }
+  .verdict b { color: var(--brass); }
+  .kills { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
+  .kills h3 { margin: 0 0 8px; font-family: var(--display); font-weight: 500; font-size: 22px; line-height: 1; }
+  .wk { display: grid; grid-template-columns: minmax(0, 1fr) 90px 36px; gap: 8px; align-items: center; font-size: 13px; margin-bottom: 4px; }
+  .wk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wk i { height: 6px; border-radius: 3px; background: var(--brass); }
+  .wk b { font-family: var(--mono); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+
   @media (max-width: 640px) {
+    .stance { margin-left: 0; }
     .brand { display: none; }
     .hud { gap: 6px 14px; }
     .actions { margin-left: 0; width: 100%; }
@@ -236,6 +274,12 @@
     <div class="dockhead">
       <button class="tab on" data-tab="warriors">Warriors</button>
       <button class="tab" data-tab="turrets">Turrets</button>
+      <button class="tab" data-tab="armory">Armory</button>
+      <div class="seg stance" id="stance" role="group" aria-label="Battle orders">
+        <button data-s="advance" class="on" title="Charge (C)">Charge</button>
+        <button data-s="hold" title="Hold the line mid-field (H)">Hold line</button>
+        <button data-s="retreat" title="Fall back to the stronghold (F)">Fall back</button>
+      </div>
       <div class="queue"><span class="lbl">Training</span><div id="queue" style="display:flex;gap:4px"></div></div>
     </div>
     <div class="cards" id="cards"></div>
@@ -250,6 +294,15 @@
     <p class="lede" id="lede">Train the fighters of Deadliest Warrior, plus the Aztec, Maya and Inca armies, across five eras. Each warrior uses the right weapon for the range, just like the show's short, mid, long and special slots. Earn gold and experience from every kill, evolve your stronghold, and tear down the enemy's.</p>
     <div class="eras" id="eraList"></div>
     <div class="row">
+      <span class="lbl">Mode</span>
+      <div class="seg" id="modeSeg">
+        <button data-m="skirmish" class="on">Skirmish</button>
+        <button data-m="survival">Survival</button>
+        <button data-m="simulator">Simulator</button>
+      </div>
+    </div>
+    <p class="modenote" id="modeNote">Destroy the enemy stronghold before it destroys yours.</p>
+    <div class="row" id="diffRow">
       <span class="lbl">Difficulty</span>
       <div class="seg" id="diff">
         <button data-d="recruit">Recruit</button>
@@ -261,7 +314,9 @@
       <button class="btn prime big" id="btnStart">To battle</button>
       <button class="btn big" id="btnCodex2">Open the codex</button>
     </div>
-    <div class="keys"><kbd>1</kbd>–<kbd>9</kbd> train warriors · <kbd>Q</kbd> era attack · <kbd>E</kbd> evolve · <kbd>←</kbd><kbd>→</kbd> or drag to scroll · <kbd>P</kbd> pause</div>
+    <div class="records" id="records"></div>
+    <button class="linkbtn" id="btnAch">View achievements</button>
+    <div class="keys"><kbd>1</kbd>–<kbd>9</kbd> train warriors · <kbd>C</kbd> <kbd>H</kbd> <kbd>F</kbd> charge, hold, fall back · <kbd>Q</kbd> era attack · <kbd>E</kbd> evolve · <kbd>←</kbd><kbd>→</kbd> or drag to scroll · <kbd>P</kbd> pause</div>
   </div>
 </div>
 
@@ -273,6 +328,35 @@
       <button class="btn close" id="codexClose">Close</button>
     </div>
     <div class="codexbody" id="codexBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="sim" hidden>
+  <div class="sheet simsheet" role="dialog" aria-label="Deadliest Warrior simulator">
+    <div class="codexhead">
+      <h2>Simulator</h2>
+      <button class="btn close" id="simClose">Main menu</button>
+    </div>
+    <div class="codexbody">
+      <p class="eranote">Pick two warriors. The simulator runs 1,000 one-on-one duels with the game's combat engine, both built at the same era strength, and counts every kill by the weapon that landed it, like the show's battle simulation. Picking the first warrior loads their opponent from the show.</p>
+      <div class="simpick">
+        <label class="side"><canvas id="simCvA" width="96" height="96"></canvas><select id="simA" aria-label="First warrior"></select></label>
+        <div class="vs">vs</div>
+        <label class="side"><canvas id="simCvB" width="96" height="96"></canvas><select id="simB" aria-label="Second warrior"></select></label>
+      </div>
+      <div class="row"><button class="btn prime big" id="simRun">Run 1,000 battles</button><button class="btn big" id="simWatch">Watch one duel</button></div>
+      <div id="simOut"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ach" hidden>
+  <div class="sheet" role="dialog" aria-label="Achievements">
+    <div class="codexhead" style="padding:0 0 12px">
+      <h2>Achievements</h2>
+      <button class="btn close" id="achClose">Close</button>
+    </div>
+    <div class="achlist" id="achList"></div>
   </div>
 </div>
 

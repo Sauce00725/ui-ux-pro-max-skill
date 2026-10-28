@@ -171,10 +171,11 @@
   }
 
   // ── Warrior definitions ─────────────────────────────────────────────────
-  const DEFS = DATA.warriors.map((raw) => {
+  // duel: equal base health for every warrior, so weapons, armor and speed decide.
+  function makeDef(raw, statEra = raw.era, duel = false) {
     const role = ROLE[raw.role];
-    const era = ERAS[raw.era];
-    const weapons = raw.weapons.map((t) => buildWeapon(t, raw.era));
+    const era = ERAS[statEra];
+    const weapons = raw.weapons.map((t) => buildWeapon(t, statEra));
     const normal = weapons.filter((w) => w.slot !== 'special');
     const special = weapons.find((w) => w.slot === 'special') || null;
     const price = priceOf(weapons);
@@ -183,19 +184,21 @@
     const melee = normal.filter((w) => !w.ranged);
     return {
       ...raw,
+      raw,
       roleInfo: role,
       weapons, normal, special,
       hero: raw.role === 'hero',
       mounted,
-      hp: Math.round(role.hp * era.hpMul * (raw.hpMul || 1) * (mounted ? 1.15 : 1)),
-      armor: raw.armor ?? role.armor,
+      hp: Math.round((duel ? 95 : role.hp) * era.hpMul * (raw.hpMul || 1) * (mounted ? 1.15 : 1)),
+      armor: duel ? Math.min(0.2, (raw.armor ?? role.armor) * 0.5) : raw.armor ?? role.armor,
       speed: role.speed * (raw.speed || 1) * (mounted && raw.role === 'hero' ? 1.15 : 1),
       cost: Math.round(role.cost * price * era.costMul * (mounted ? 1.1 : 1)),
       tier: best.tier,
       train: role.train,
       reach: melee.length ? Math.max(...melee.map((w) => w.range)) : 26,
     };
-  });
+  }
+  const DEFS = DATA.warriors.map((raw) => makeDef(raw));
   // Turrets: priced like weapons, damage scaled so fast guns hit lighter.
   const TURRET_BASE = [110, 240, 480, 950, 1800];
   ERAS.forEach((era, i) => era.turrets.forEach((t) => {
@@ -261,12 +264,68 @@
   // ── Game state ──────────────────────────────────────────────────────────
   let S = null;
   let difficulty = 'warrior';
+  let variant = 'skirmish';
+
+  // Armory research: bought with gold during a battle, five levels each.
+  const UPGRADES = [
+    { id: 'blades', name: 'Forged Weapons', desc: '+10% damage for every warrior', per: 0.1, base: 120 },
+    { id: 'armor', name: 'Hardened Armor', desc: '+10% health for warriors you train', per: 0.1, base: 120 },
+    { id: 'drill', name: 'Drill Masters', desc: 'Train warriors 12% faster', per: 0.12, base: 90 },
+    { id: 'tribute', name: 'Tribute', desc: '+20% gold over time', per: 0.2, base: 150 },
+    { id: 'walls', name: 'Fortify', desc: '+12% stronghold health', per: 0.12, base: 140 },
+    { id: 'engineers', name: 'Engineers', desc: '+12% turret damage, +6% range', per: 0.12, base: 130 },
+  ];
+  const UP_MAX = 5;
+  const UP_BY_ID = Object.fromEntries(UPGRADES.map((u) => [u.id, u]));
+  const upMul = (sd, id) => 1 + sd.up[id] * UP_BY_ID[id].per;
+  const upCost = (sd, up) => Math.round(up.base * Math.pow(1 + sd.up[up.id], 1.4) * Math.pow(ERAS[sd.era].costMul, 0.85));
+
+  // Veterancy: kills needed for Veteran, Elite and Legend.
+  const RANKS = [2, 5, 9];
+  const RANK_NAMES = ['Recruit', 'Veteran', 'Elite', 'Legend'];
+  const HOLD_DIST = 470;
+
+  // Records and achievements live in this browser only.
+  const ACH = [
+    { id: 'firstblood', name: 'First Blood', desc: 'Slay your first enemy' },
+    { id: 'steel', name: 'Forged in Steel', desc: 'Reach the Age of Steel' },
+    { id: 'modern', name: 'Modern Warfare', desc: 'Reach the final era' },
+    { id: 'victory', name: 'Victory', desc: 'Win a skirmish' },
+    { id: 'deadliest', name: 'Deadliest Warrior', desc: 'Win a skirmish on Deadliest' },
+    { id: 'fortress', name: 'Untouchable', desc: 'Win with your stronghold above 90% health' },
+    { id: 'legend', name: 'Living Legend', desc: 'Raise a warrior to Legend rank' },
+    { id: 'armorer', name: 'Master Armorer', desc: 'Max out an armory upgrade' },
+    { id: 'engineer', name: 'Siege Engineer', desc: 'Man all three turret slots' },
+    { id: 'heroes', name: 'Hall of Heroes', desc: 'Field five heroes in one battle' },
+    { id: 'wave10', name: 'Hold the Line', desc: 'Survive 10 waves' },
+    { id: 'wave20', name: 'Last Stand', desc: 'Survive 20 waves' },
+    { id: 'analyst', name: 'Battle Analyst', desc: 'Run 10 simulations' },
+    { id: 'nightowl', name: 'Night Raider', desc: 'Slay 50 enemies at night in one battle' },
+  ];
+  const REC = (() => {
+    const base = { ach: {}, wins: { recruit: 0, warrior: 0, deadliest: 0 }, losses: 0, bestWave: 0, kills: 0, sims: 0 };
+    try { const v = JSON.parse(localStorage.getItem('aow-records') || 'null'); if (v) return { ...base, ...v, wins: { ...base.wins, ...(v.wins || {}) } }; } catch (e) { /* storage blocked */ }
+    return base;
+  })();
+  function saveRec() { try { localStorage.setItem('aow-records', JSON.stringify(REC)); } catch (e) { /* storage blocked */ } }
+  function unlock(id) {
+    if (REC.ach[id]) return;
+    REC.ach[id] = Date.now();
+    saveRec();
+    const a = ACH.find((x) => x.id === id);
+    if (a && typeof toast === 'function') toast(`Achievement unlocked: ${a.name}`);
+    Sound.play('evolve');
+  }
+  const playing = () => S && S.mode === 'play' && !S.sim;
 
   function newBase(team) {
     return { isBase: true, team, x: BASE_X[team], hp: ERAS[0].baseHp, maxHp: ERAS[0].baseHp, slots: 1, turrets: [null, null, null], flash: 0 };
   }
   function newSide(team, ai) {
-    return { team, ai, gold: 180, xp: 0, era: 0, queue: [], trainT: 0, abilityCd: 12, base: newBase(team), kills: 0, lost: 0, trained: 0, aiT: 1.5, dmgDealt: 0 };
+    return {
+      team, ai, gold: 180, xp: 0, era: 0, queue: [], trainT: 0, abilityCd: 12, base: newBase(team), kills: 0, lost: 0, trained: 0, aiT: 1.5, dmgDealt: 0,
+      up: Object.fromEntries(UPGRADES.map((u) => [u.id, 0])), stance: 'advance', heroesTrained: 0,
+    };
   }
   function newGame(mode) {
     S = {
@@ -274,7 +333,17 @@
       sides: [newSide(0, mode === 'attract'), newSide(1, true)],
       units: [], projs: [], fx: [], texts: [], teams: [[], []], parts: [], decals: [], shake: 0, heroes: [[], []],
       cam: mode === 'attract' ? WORLD_W / 2 : 0, endT: 0, uid: 0, tod: mode === 'attract' ? Math.random() : 0.3,
+      variant: mode === 'play' ? variant : mode, nightKills: 0, killLog: [], sim: mode === 'sim',
     };
+    if (mode === 'sim' || mode === 'duel') {
+      for (const sd of S.sides) { sd.ai = false; sd.base.hp = sd.base.maxHp = Infinity; }
+    }
+    if (S.variant === 'survival') {
+      const e = S.sides[1];
+      e.ai = false;
+      e.base.hp = e.base.maxHp = Infinity;
+      S.wave = { n: 0, t: 8, queue: [], spawnT: 0 };
+    }
     if (mode === 'attract') { S.sides[0].gold = 400; S.sides[1].gold = 400; }
   }
 
@@ -283,15 +352,42 @@
   const heroActive = (sd) => S.units.some((u) => !u.dead && u.team === sd.team && u.def.hero) || sd.queue.some((d) => d.hero);
   const slotCost = (sd) => Math.round(SLOT_COST[sd.base.slots] * ERAS[sd.era].costMul);
 
-  function spawnUnit(def, team) {
+  function spawnUnit(def, team, x = spawnX(team), hpMul = 1) {
+    const hp = def.hp * hpMul * upMul(sideOf(team), 'armor');
     const u = {
-      id: ++S.uid, def, team, x: spawnX(team), hp: def.hp, maxHp: def.hp, armor: def.armor,
+      id: ++S.uid, def, team, x, hp, maxHp: hp, armor: def.armor, kills: 0, rank: 0,
       cd: 0.2, specCd: 1 + Math.random() * 2, ammo: def.normal.map((w) => w.ammo ?? Infinity),
       stunT: 0, shieldT: 0, rallyT: 0, pauseT: 0, chargeT: 0, flash: 0, dots: [],
       walk: Math.random() * 6, swing: 0, swingW: null, weapon: def.normal[0], dead: false, deathT: 0, burst: null,
     };
     S.units.push(u);
-    sideOf(team).trained++;
+    const sd = sideOf(team);
+    sd.trained++;
+    if (def.hero) {
+      sd.heroesTrained++;
+      if (team === 0 && playing() && sd.heroesTrained >= 5) unlock('heroes');
+    }
+    return u;
+  }
+
+  function buyUpgrade(sd, up) {
+    if (S.over) return null;
+    if (sd.up[up.id] >= UP_MAX) return `${up.name} is fully researched`;
+    const c = upCost(sd, up);
+    if (sd.gold < c) return `Not enough gold: ${up.name} costs ${c}`;
+    sd.gold -= c;
+    sd.up[up.id]++;
+    if (up.id === 'walls') {
+      const add = ERAS[sd.era].baseHp * up.per;
+      sd.base.maxHp += add;
+      sd.base.hp += add;
+    }
+    if (sd.team === 0 && playing() && sd.up[up.id] >= UP_MAX) unlock('armorer');
+    return null;
+  }
+
+  function setStance(sd, st) {
+    sd.stance = st;
   }
 
   function recruit(sd, def) {
@@ -313,8 +409,11 @@
     sd.era++;
     const b = sd.base;
     const ratio = b.hp / b.maxHp;
-    b.maxHp = next.baseHp;
-    b.hp = Math.min(b.maxHp, ratio * b.maxHp + 0.2 * b.maxHp);
+    if (isFinite(b.maxHp)) {
+      b.maxHp = next.baseHp * upMul(sd, 'walls');
+      b.hp = Math.min(b.maxHp, ratio * b.maxHp + 0.2 * b.maxHp);
+    }
+    if (sd.team === 0 && playing()) { if (sd.era >= 1) unlock('steel'); if (sd.era >= 4) unlock('modern'); }
     if (sd.team === 0 && S.mode === 'play') {
       showBanner(next.name, next.span);
       Sound.play('evolve');
@@ -331,6 +430,7 @@
     if (sd.gold < tdef.cost) return `Not enough gold: ${tdef.name} costs ${tdef.cost}`;
     sd.gold -= tdef.cost;
     b.turrets[slot] = { def: tdef, era: sd.era, cd: 0.5, angle: 0, dmg: tdef.dmg0 * ERAS[sd.era].dmgMul, flashT: 0 };
+    if (sd.team === 0 && playing() && b.turrets.every(Boolean)) unlock('engineer');
     return null;
   }
   function buySlot(sd) {
@@ -390,7 +490,7 @@
   const REDUCED = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)').matches : false;
   const MAX_PARTS = 700;
   const rnd = (a, b) => a + Math.random() * (b - a);
-  function part(o) { if (S.parts.length < MAX_PARTS) { o.max = o.life; S.parts.push(o); } }
+  function part(o) { if (!S.sim && S.parts.length < MAX_PARTS) { o.max = o.life; S.parts.push(o); } }
   function shake(a) { if (!REDUCED) S.shake = Math.min(7, Math.max(S.shake, a)); }
   function emitSparks(x, y, n, col = '#ffd98a', spd = 130) {
     for (let i = 0; i < n; i++) part({ type: 'spark', x, y, vx: rnd(-1, 1) * spd, vy: rnd(-1.3, 0.2) * spd, g: 380, drag: 0.98, life: rnd(0.12, 0.32), col });
@@ -443,7 +543,7 @@
     S.decals = S.decals.filter((d) => d.t < 25);
     S.shake = Math.max(0, S.shake - dt * 14);
     // Weather for the player's era.
-    if (typeof viewW !== 'number' || !viewW) return;
+    if (S.sim || typeof viewW !== 'number' || !viewW) return;
     const A = ART[S.sides[0].era];
     const x0 = S.cam - 40, x1 = S.cam + viewW + 40;
     const spawn = (rate, fn) => { let n = rate * dt; while (n > 0) { if (Math.random() < n) fn(); n -= 1; } };
@@ -490,34 +590,55 @@
   }
 
   function buffMul(u) {
-    let m = u.rallyT > 0 ? 1.3 : 1;
+    let m = (u.rallyT > 0 ? 1.3 : 1) * upMul(sideOf(u.team), 'blades') * (1 + 0.12 * (u.rank || 0));
     if (!u.def.hero && S.heroes[u.team].some((h) => Math.abs(h.x - u.x) < 130)) m *= 1.15;
     return m;
   }
 
-  function damage(target, amount, team, pierce = 0) {
+  function damage(target, amount, team, pierce = 0, src = null, wname = '') {
     if (!target || amount <= 0) return;
     if (target.isBase) {
       target.hp -= amount;
       target.flash = 0.12;
       const sd = sideOf(team);
-      sd.xp += amount * 0.05 * (sd.ai ? diffOf().xp : 1);
+      if (isFinite(target.maxHp)) sd.xp += amount * 0.05 * (sd.ai ? diffOf().xp : 1);
       sd.dmgDealt += amount;
       Sound.play('base');
-      if (target.hp <= 0 && !S.over) endGame(team);
+      if (target.hp <= 0 && !S.over && isFinite(target.maxHp)) endGame(team);
       return;
     }
     if (target.dead) return;
+    // Battle luck: nimble warriors sometimes slip a blow; every hit varies ±20%.
+    if (pierce < 1 && Math.random() < 0.05 + Math.max(0, target.def.speed - 40) / 250) return;
+    amount *= 0.8 + Math.random() * 0.4;
+    // In one-on-one duels a well-placed blow can end it (the show's "kill shot").
+    if (S.mode !== 'play' && S.mode !== 'attract' && Math.random() < 0.1) amount *= 2.6;
     let d = amount * (1 - target.armor * (1 - pierce));
     if (target.shieldT > 0) d *= 0.45;
     target.hp -= d;
     target.flash = 0.1;
-    if (target.hp <= 0) kill(target, team);
+    if (target.hp <= 0) kill(target, team, src, wname);
   }
 
-  function kill(u, killerTeam) {
+  function promote(src) {
+    if (!src || src.dead || src.isBase || src.rank >= 3) return;
+    src.kills++;
+    if (src.kills < RANKS[src.rank]) return;
+    src.rank++;
+    const add = src.maxHp * 0.12;
+    src.maxHp += add;
+    src.hp = Math.min(src.maxHp, src.hp + add * 1.5);
+    if (S.sim) return;
+    S.texts.push({ x: src.x, y: GROUND - 70, text: RANK_NAMES[src.rank], t: 0, col: '#f2d27a' });
+    S.fx.push({ type: 'ring', x: src.x, y: GROUND - 20, r: 40, t: 0, dur: 0.6, col: '#e6b84e' });
+    if (src.team === 0 && playing() && src.rank >= 3) unlock('legend');
+  }
+
+  function kill(u, killerTeam, src = null, wname = '') {
     u.dead = true;
     u.deathT = 0;
+    promote(src);
+    if (S.sim) { u.hp = 0; S.killLog.push({ team: killerTeam, w: wname }); return; }
     emitDust(u.x, GROUND - 3, 6, 5);
     u.hp = 0;
     const sd = sideOf(killerTeam);
@@ -529,6 +650,9 @@
     if (killerTeam === 0 && S.mode === 'play') {
       S.texts.push({ x: u.x, y: GROUND - 58, text: `+${gold}`, t: 0, col: '#d9a944' });
       Sound.play('coin');
+      REC.kills++;
+      unlock('firstblood');
+      if (LIGHT.nightK > 0.6 && ++S.nightKills >= 50) unlock('nightowl');
     }
     Sound.play('die');
   }
@@ -555,7 +679,7 @@
     S.projs.push({
       team: u.team, kind, sx, sy, tx, ty, target, t: 0, dur: Math.max(0.08, dist / (PROJ_SPEED[kind] || 400)),
       arc: dist * arcK, dmg: o.dmg, pierce: o.pierce || 0, aoe: o.aoe || 0, dot: o.dot || 0, dotT: o.dotT || 0, stun: o.stun || 0,
-      x: sx, y: sy, px: sx, py: sy,
+      x: sx, y: sy, px: sx, py: sy, src: u, wname: o.wname || '',
     });
     Sound.play(kind === 'bullet' ? 'shot' : kind === 'arrow' || kind === 'bolt' ? 'bow' : 'melee');
   }
@@ -566,7 +690,7 @@
     u.swingW = w;
     const m = buffMul(u);
     if (w.ranged) {
-      spawnProj(u, target, { kind: w.proj, dmg: w.dmg * m, pierce: w.pierce });
+      spawnProj(u, target, { kind: w.proj, dmg: w.dmg * m, pierce: w.pierce, wname: w.name });
       if (w.proj === 'bullet') {
         const mx = u.x + DIR[u.team] * 22, my = GROUND - (u.def.mounted ? 52 : 33);
         S.fx.push({ type: 'muzzle', x: mx, y: my, t: 0, dur: 0.08 });
@@ -574,8 +698,8 @@
         if (u.def.era >= 4) part({ type: 'casing', x: u.x, y: my, vx: -DIR[u.team] * rnd(20, 50), vy: rnd(-70, -40), g: 420, life: 0.7, rot: 0, vr: 20, bounce: true });
       }
     } else {
-      damage(target, w.dmg * m, u.team, w.pierce);
-      hitFx(target, w, u.team);
+      damage(target, w.dmg * m, u.team, w.pierce, u, w.name);
+      if (!S.sim) hitFx(target, w, u.team);
       Sound.play('melee');
     }
   }
@@ -590,17 +714,17 @@
         return true;
       case 'stun':
         if (dist > sp.r) return false;
-        if (sp.proj) spawnProj(u, target, { kind: sp.proj, dmg: sp.dmg * m, stun: sp.stun, aoe: sp.aoe || 0 });
-        else { damage(target, sp.dmg * m, u.team, 0.3); stun(target, sp.stun); }
+        if (sp.proj) spawnProj(u, target, { kind: sp.proj, dmg: sp.dmg * m, stun: sp.stun, aoe: sp.aoe || 0, wname: sp.name });
+        else { damage(target, sp.dmg * m, u.team, 0.3, u, sp.name); stun(target, sp.stun); }
         u.swing = 1; u.swingW = sp;
         return true;
       case 'charge':
         if (dist > sp.r || dist < 34) return false;
-        u.chargeT = 0.5; u.chargeDmg = sp.dmg * m;
+        u.chargeT = 0.5; u.chargeDmg = sp.dmg * m; u.chargeName = sp.name;
         return true;
       case 'splash': case 'fire': case 'hornets': case 'poison': case 'snipe':
         if (dist > sp.r || (sp.aoe && dist < 26)) return false;
-        spawnProj(u, target, { kind: sp.proj, dmg: sp.dmg * m, aoe: sp.aoe || 0, dot: sp.dot || 0, dotT: sp.dotT || 0, pierce: sp.pierce || 0 });
+        spawnProj(u, target, { kind: sp.proj, dmg: sp.dmg * m, aoe: sp.aoe || 0, dot: sp.dot || 0, dotT: sp.dotT || 0, pierce: sp.pierce || 0, wname: sp.name });
         u.swing = 1; u.swingW = sp;
         return true;
       case 'volley':
@@ -619,7 +743,7 @@
       case 'fear':
         if (dist > sp.r || !foeIsUnit) return false;
         for (const e of S.teams[1 - u.team]) {
-          if (Math.abs(e.x - u.x) < sp.aoe) { damage(e, sp.dmg * m, u.team, 0.3); stun(e, sp.stun); }
+          if (Math.abs(e.x - u.x) < sp.aoe) { damage(e, sp.dmg * m, u.team, 0.3, u, sp.name); stun(e, sp.stun); }
         }
         S.fx.push({ type: 'ring', x: u.x, y: GROUND - 20, r: sp.aoe, t: 0, dur: 0.6, col: '#c4432f' });
         return true;
@@ -634,7 +758,7 @@
     u.rallyT = Math.max(0, u.rallyT - dt);
     u.swing = Math.max(0, u.swing - dt * 3.2);
     if (u.dots.length) {
-      for (const d of u.dots) { d.t -= dt; damage(u, d.dps * dt, d.team, 1); }
+      for (const d of u.dots) { d.t -= dt; damage(u, d.dps * dt, d.team, 1, d.src, d.wname); }
       u.dots = u.dots.filter((d) => d.t > 0);
       if (u.dead) return;
     }
@@ -652,7 +776,7 @@
       const reach = 22;
       if (dist - step <= reach || u.chargeT <= 0) {
         u.x += dir * Math.max(0, dist - reach);
-        damage(target, u.chargeDmg, u.team, 0.4);
+        damage(target, u.chargeDmg, u.team, 0.4, u, u.chargeName);
         if (!target.isBase && !target.dead) {
           target.x += dir * 26;
           target.x = Math.max(spawnX(0), Math.min(spawnX(1), target.x));
@@ -676,10 +800,10 @@
       if (b.t <= 0) {
         const m = buffMul(u);
         if (b.melee) {
-          if (dist <= b.sp.r + 6) { damage(target, b.sp.dmg * m, u.team, 0.2); hitFx(target, { kind: 'sword' }, u.team); Sound.play('melee'); }
+          if (dist <= b.sp.r + 6) { damage(target, b.sp.dmg * m, u.team, 0.2, u, b.sp.name); if (!S.sim) hitFx(target, { kind: 'sword' }, u.team); Sound.play('melee'); }
           b.t = 0.15;
         } else {
-          spawnProj(u, target, { kind: b.sp.proj, dmg: b.sp.dmg * m, pierce: 0.3 });
+          spawnProj(u, target, { kind: b.sp.proj, dmg: b.sp.dmg * m, pierce: 0.3, wname: b.sp.name });
           b.t = b.sp.proj === 'bullet' ? 0.1 : 0.16;
         }
         u.swing = 1; u.swingW = b.sp;
@@ -709,9 +833,21 @@
     const gap = u.ahead ? Math.abs(u.ahead.x - u.x) : Infinity;
     const space = (def.mounted ? 20 : 11) + (u.ahead && u.ahead.def.mounted ? 20 : 11);
     const wantMove = dist > hold && u.pauseT <= 0;
-    if (wantMove && gap > space) {
+    // Battle orders: hold a line in the field, or fall back to the stronghold.
+    const stance = sideOf(u.team).stance;
+    let room = Infinity;
+    if (stance !== 'advance') {
+      const lineX = stance === 'hold' ? BASE_X[u.team] + dir * HOLD_DIST : spawnX(u.team) + dir * 24;
+      const over = (u.x - lineX) * dir;
+      room = Math.max(0, -over);
+      if (over > 2 && dist > def.reach + 4) {
+        u.x -= dir * Math.min(def.speed * dt, over);
+        u.walk -= dt * def.speed * 0.2;
+      }
+    }
+    if (wantMove && gap > space && room > 0) {
       const sp = def.speed * (u.rallyT > 0 ? 1.3 : 1) * dt;
-      u.x += dir * Math.min(sp, Math.max(0, dist - hold), gap - space);
+      u.x += dir * Math.min(sp, Math.max(0, dist - hold), gap - space, room);
       u.walk += dt * def.speed * 0.2;
     }
     if (best) {
@@ -732,8 +868,9 @@
   function updateTraining(sd, dt) {
     if (!sd.queue.length) { sd.trainT = 0; return; }
     const def = sd.queue[0];
-    sd.trainT = Math.min(def.train, sd.trainT + dt);
-    if (sd.trainT >= def.train) {
+    const trainTime = def.train / upMul(sd, 'drill');
+    sd.trainT = Math.min(trainTime, sd.trainT + dt);
+    if (sd.trainT >= trainTime) {
       const sx = spawnX(sd.team);
       const blocked = S.units.some((u) => !u.dead && u.team === sd.team && Math.abs(u.x - sx) < (def.mounted || u.def.mounted ? 34 : 22));
       if (!blocked) { spawnUnit(def, sd.team); sd.queue.shift(); sd.trainT = 0; }
@@ -752,9 +889,10 @@
       t.flashT = Math.max(0, t.flashT - dt);
       const p = turretPos(sd.team, i);
       let tgt = null, best = Infinity;
+      const range = t.def.r * (1 + sd.up.engineers * 0.06);
       for (const e of foes) {
         const d = Math.abs(e.x - p.x);
-        if (d < t.def.r && d < best) { best = d; tgt = e; }
+        if (d < range && d < best) { best = d; tgt = e; }
       }
       if (!tgt) continue;
       t.angle = Math.atan2(GROUND - 30 - p.y, (tgt.x - p.x) * DIR[sd.team]);
@@ -766,7 +904,7 @@
         S.projs.push({
           team: sd.team, kind, sx: p.x, sy: p.y, tx: tgt.x, ty: GROUND - 30, target: tgt, t: 0,
           dur: Math.max(0.1, dist / (PROJ_SPEED[kind] || 400)), arc: kind === 'bullet' ? 0 : dist * (t.def.aoe ? 0.2 : 0.08),
-          dmg: t.dmg, pierce: t.def.pierce || 0, aoe: t.def.aoe || 0, dot: t.def.dot ? t.dmg * 0.4 : 0, dotT: t.def.dot ? 4 : 0, stun: 0,
+          dmg: t.dmg * upMul(sd, 'engineers'), pierce: t.def.pierce || 0, aoe: t.def.aoe || 0, dot: t.def.dot ? t.dmg * 0.4 : 0, dotT: t.def.dot ? 4 : 0, stun: 0,
           x: p.x, y: p.y, px: p.x, py: p.y,
         });
         Sound.play(kind === 'bullet' ? 'shot' : 'bow');
@@ -778,8 +916,8 @@
     const foes = S.teams[1 - p.team];
     const foeBase = sideOf(1 - p.team).base;
     const hitUnit = (e, scale = 1) => {
-      damage(e, p.dmg * scale, p.team, p.pierce);
-      if (p.dot && !e.dead) e.dots.push({ dps: p.dot, t: p.dotT, team: p.team, kind: p.kind });
+      damage(e, p.dmg * scale, p.team, p.pierce, p.src, p.wname);
+      if (p.dot && !e.dead) e.dots.push({ dps: p.dot, t: p.dotT, team: p.team, kind: p.kind, src: p.src, wname: p.wname });
       if (p.stun && !e.dead) stun(e, p.stun);
     };
     if (p.aoe) {
@@ -858,6 +996,16 @@
       }
     }
 
+    if (Math.random() < 0.18) {
+      const open = UPGRADES.filter((u) => sd.up[u.id] < UP_MAX);
+      const up = open[Math.floor(Math.random() * open.length)];
+      if (up && sd.gold > upCost(sd, up) * 2.2) { buyUpgrade(sd, up); return; }
+    }
+    // Hold the line when outmatched, push when ahead.
+    const mine = S.teams[sd.team].reduce((a, u) => a + u.hp, 0);
+    const theirs = foes.reduce((a, u) => a + u.hp, 0);
+    sd.stance = theirs > 0 && mine < theirs * 0.55 ? 'hold' : 'advance';
+
     if (sd.queue.length >= 3) return;
     const roster = BY_ERA[sd.era];
     const heroOk = !heroActive(sd);
@@ -896,17 +1044,59 @@
     for (const sd of S.sides) {
       const era = ERAS[sd.era];
       const mult = sd.team === 1 && S.mode === 'play' ? diffOf().income : 1;
-      sd.gold += INCOME * era.costMul * dt * mult;
+      sd.gold += INCOME * era.costMul * dt * mult * upMul(sd, 'tribute');
       sd.abilityCd = Math.max(0, sd.abilityCd - dt);
       sd.base.flash = Math.max(0, sd.base.flash - dt);
       updateTraining(sd, dt);
       updateTurrets(sd, dt);
       if (sd.ai) aiThink(sd, dt);
     }
+    if (S.variant === 'survival') updateWaves(dt);
     for (const u of S.units) updateUnit(u, dt);
     S.units = S.units.filter((u) => !(u.dead && u.deathT > 1.6));
+    if (S.mode === 'duel' && !S.duelDone) {
+      const alive = S.units.filter((u) => !u.dead);
+      if (alive.length < 2 || S.t > 60) {
+        S.duelDone = true;
+        const w = alive.length === 1 ? alive[0] : null;
+        showBanner(w ? `${w.def.name} wins` : 'Both warriors stand', w ? 'Duel result' : 'Draw after 60 s');
+        const game = S;
+        setTimeout(() => { if (S === game) openSim(true); }, 2800);
+      }
+    }
     updateProjs(dt);
     updateFx(dt);
+  }
+
+  // Survival: endless waves that grow and advance through the eras.
+  function updateWaves(dt) {
+    const W = S.wave;
+    const e = S.sides[1];
+    W.t -= dt;
+    if (W.t <= 0 && !W.queue.length) {
+      W.n++;
+      const era = Math.min(ERAS.length - 1, Math.floor((W.n - 1) / 4));
+      e.era = era;
+      const sizeK = { recruit: 0.8, warrior: 1, deadliest: 1.25 }[difficulty];
+      const count = Math.round((3 + W.n * 1.3) * sizeK);
+      const roster = BY_ERA[era].filter((d) => !d.hero);
+      for (let i = 0; i < count; i++) W.queue.push(roster[Math.floor(Math.random() * roster.length)]);
+      if (W.n % 5 === 0) { const heroes = BY_ERA[era].filter((d) => d.hero); W.queue.push(heroes[Math.floor(Math.random() * heroes.length)]); }
+      W.hpMul = 1 + 0.08 * ((W.n - 1) % 4) + 0.06 * Math.max(0, W.n - 16);
+      W.t = 24 + Math.min(16, W.n);
+      showBanner(`Wave ${W.n}`, `${count + (W.n % 5 === 0 ? 1 : 0)} warriors of the ${ERAS[era].name}`);
+      if (W.n - 1 >= 10) unlock('wave10');
+      if (W.n - 1 >= 20) unlock('wave20');
+      if (W.n - 1 > REC.bestWave) { REC.bestWave = W.n - 1; saveRec(); }
+    }
+    W.spawnT -= dt;
+    if (W.queue.length && W.spawnT <= 0) {
+      const sx = spawnX(1);
+      if (!S.units.some((u) => !u.dead && u.team === 1 && Math.abs(u.x - sx) < 24)) {
+        spawnUnit(W.queue.shift(), 1, sx, W.hpMul);
+        W.spawnT = 0.65;
+      }
+    }
   }
 
   function updateFx(dt) {
@@ -926,7 +1116,55 @@
     for (let i = 0; i < 4; i++) emitExplosion(loser.x + rnd(-40, 40), GROUND - rnd(10, 90), 70, true);
     Sound.play('boom');
     const game = S;
-    if (S.mode === 'play') setTimeout(() => { if (S === game) showEnd(); }, 1400);
+    if (S.mode === 'play') {
+      if (S.variant === 'skirmish') {
+        if (winnerTeam === 0) {
+          REC.wins[difficulty] = (REC.wins[difficulty] || 0) + 1;
+          unlock('victory');
+          if (difficulty === 'deadliest') unlock('deadliest');
+          const b = S.sides[0].base;
+          if (b.hp / b.maxHp >= 0.9) unlock('fortress');
+        } else REC.losses++;
+      }
+      saveRec();
+      setTimeout(() => { if (S === game) showEnd(); }, 1400);
+    }
+  }
+
+  // ── Deadliest Warrior simulator ─────────────────────────────────────────
+  // Runs one-on-one duels with the real combat engine, both warriors built at
+  // the same era strength, and tallies kills by weapon like the show.
+  const SIM_ERA = 2;
+  function simulate(rawA, rawB, n, onDone) {
+    const A = makeDef(rawA.raw || rawA, SIM_ERA, true), B = makeDef(rawB.raw || rawB, SIM_ERA, true);
+    const res = { a: rawA, b: rawB, wins: [0, 0], draws: 0, weapons: [{}, {}], n };
+    let i = 0;
+    const chunk = () => {
+      const saved = S, snd = Sound.on;
+      Sound.on = false;
+      try {
+        for (let k = 0; k < 50 && i < n; k++, i++) {
+          newGame('sim');
+          const gapX = 160 + Math.random() * 120;
+          const ua = spawnUnit(A, 0, 750 - gapX / 2);
+          const ub = spawnUnit(B, 1, 750 + gapX / 2);
+          for (const u of [ua, ub]) { u.cd = Math.random() * 0.6; u.specCd = Math.random() * 3; }
+          let t = 0;
+          while (t < 60 && !ua.dead && !ub.dead) { update(1 / 20); t += 1 / 20; }
+          if (ua.dead === ub.dead) { res.draws++; continue; }
+          const winner = ua.dead ? 1 : 0;
+          res.wins[winner]++;
+          const log = S.killLog.find((l) => l.team === winner);
+          const wn = (log && log.w) || 'Other';
+          res.weapons[winner][wn] = (res.weapons[winner][wn] || 0) + 1;
+        }
+      } finally {
+        S = saved;
+        Sound.on = snd;
+      }
+      if (i < n) { onDone(null, i / n); setTimeout(chunk, 0); } else onDone(res, 1);
+    };
+    chunk();
   }
 
   // ── Rendering ───────────────────────────────────────────────────────────
@@ -2600,6 +2838,20 @@ void main(){
     c.restore();
   }
 
+  // Marker for the player's battle order.
+  function drawOrderLine() {
+    if (!S || S.mode !== 'play') return;
+    const st = S.sides[0].stance;
+    if (st === 'advance') return;
+    const c = ctx;
+    const x = st === 'hold' ? BASE_X[0] + HOLD_DIST : spawnX(0) + 24;
+    c.strokeStyle = 'rgba(71,179,194,.45)'; c.lineWidth = 1; c.setLineDash([4, 4]);
+    line(c, x, GROUND + 2, x, GROUND - 60); c.setLineDash([]);
+    c.strokeStyle = '#2a2016'; c.lineWidth = 1.5; line(c, x, GROUND, x, GROUND - 34);
+    c.fillStyle = TEAM_COL[0];
+    poly(c, [[x, GROUND - 34], [x + 13, GROUND - 31 + Math.sin(S.t * 4)], [x, GROUND - 26]]);
+  }
+
   function drawShadow(u) {
     const c = ctx;
     const w = u.def.mounted ? 21 : 11;
@@ -2641,6 +2893,13 @@ void main(){
     if (u.def.hero) {
       c.fillStyle = '#e6b84e';
       star(c, u.x, top - 6, 3.6);
+    }
+    if (u.rank) {
+      c.strokeStyle = '#f2d27a'; c.lineWidth = 1.2;
+      for (let i = 0; i < u.rank; i++) {
+        const y = top + 7 + i * 2.4;
+        c.beginPath(); c.moveTo(u.x - 15, y - 1.4); c.lineTo(u.x - 13, y); c.lineTo(u.x - 11, y - 1.4); c.stroke();
+      }
     }
     if (u.stunT > 0) {
       c.fillStyle = '#ffe08a';
@@ -2910,7 +3169,8 @@ void main(){
     for (let t = 0; t < 2; t++) {
       const b = S.sides[t].base;
       const x = t === 0 ? pad : cssW - pad - bw;
-      const k = Math.max(0, b.hp / b.maxHp);
+      const duelU = S.mode === 'duel' ? S.units.find((u) => u.team === t) : null;
+      const k = duelU ? Math.max(0, duelU.hp / duelU.maxHp) : isFinite(b.maxHp) ? Math.max(0, b.hp / b.maxHp) : 1;
       c.fillStyle = 'rgba(14,10,7,.78)'; rr(c, x, pad, bw, 26, 4);
       c.strokeStyle = 'rgba(217,169,68,.35)'; c.lineWidth = 1; c.beginPath(); c.roundRect ? c.roundRect(x + 0.5, pad + 0.5, bw - 1, 25, 4) : c.rect(x + 0.5, pad + 0.5, bw - 1, 25); c.stroke();
       c.fillStyle = 'rgba(255,255,255,.08)'; rr(c, x + 4, pad + 17, bw - 8, 5, 2.5);
@@ -2925,9 +3185,10 @@ void main(){
       c.fillStyle = '#efe4cf';
       c.font = '600 11px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
       c.textAlign = t === 0 ? 'left' : 'right';
-      const label = S.mode === 'attract' ? (t === 0 ? 'Left army' : 'Right army') : (t === 0 ? 'Your stronghold' : 'Enemy stronghold');
-      const hpText = `${Math.max(0, Math.ceil(b.hp))}`;
-      let text = `${label} · ${ERAS[S.sides[t].era].name}`;
+      const label = duelU ? duelU.def.name : S.mode === 'attract' ? (t === 0 ? 'Left army' : 'Right army')
+        : t === 1 && S.variant === 'survival' ? `The horde · Wave ${S.wave.n}` : (t === 0 ? 'Your stronghold' : 'Enemy stronghold');
+      const hpText = duelU ? `${Math.max(0, Math.ceil(duelU.hp))}` : isFinite(b.hp) ? `${Math.max(0, Math.ceil(b.hp))}` : '∞';
+      let text = duelU || (t === 1 && S.variant === 'survival') ? label : `${label} · ${ERAS[S.sides[t].era].name}`;
       if (c.measureText(text).width > bw - 48) text = label;
       if (c.measureText(text).width > bw - 48) text = S.mode === 'attract' ? (t === 0 ? 'Left' : 'Right') : (t === 0 ? 'You' : 'Enemy');
       c.fillText(text, t === 0 ? x + 6 : x + bw - 6, pad + 12);
@@ -2970,7 +3231,7 @@ void main(){
   function render() {
     if (!S) return;
     if (cv.width !== Math.round(cssW * dpr) || !cssW) resize();
-    if (S.mode === 'attract') {
+    if (S.mode === 'attract' || S.mode === 'duel') {
       const fronts = S.units.filter((u) => !u.dead).map((u) => u.x);
       const mid = fronts.length ? (Math.min(...fronts) + Math.max(...fronts)) / 2 : WORLD_W / 2;
       S.cam += (mid - viewW / 2 - S.cam) * 0.02;
@@ -2999,6 +3260,7 @@ void main(){
     ctx = fgCtx;
     drawBase(S.sides[0]);
     drawBase(S.sides[1]);
+    drawOrderLine();
     const dead = S.units.filter((u) => u.dead), alive = S.units.filter((u) => !u.dead);
     for (const u of dead) drawUnit(u);
     alive.sort((a, b) => (a.def.mounted ? 0 : 1) - (b.def.mounted ? 0 : 1));
@@ -3164,6 +3426,20 @@ void main(){
         box.appendChild(card);
         drawPortrait(card.querySelector('canvas'), def);
       });
+    } else if (tab === 'armory') {
+      for (const up of UPGRADES) {
+        const lv = sd.up[up.id];
+        const card = el('div', 'card turret upgrade');
+        card.tabIndex = 0; card.setAttribute('role', 'button');
+        const pips = Array.from({ length: UP_MAX }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('');
+        const cost = lv >= UP_MAX ? 'Max' : upCost(sd, up);
+        card.innerHTML = `<span class="nm">${esc(up.name)}</span><span class="pips" aria-label="Level ${lv} of ${UP_MAX}">${pips}</span><span class="meta">${cost}</span><span class="role">${esc(up.desc)}</span>`;
+        if (lv < UP_MAX) card.dataset.cost = cost;
+        const go = () => { const err = buyUpgrade(sd, up); if (err) toast(err); else Sound.play('ui'); buildCards(); };
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+        box.appendChild(card);
+      }
     } else {
       const era = ERAS[sd.era];
       era.turrets.forEach((t) => {
@@ -3244,6 +3520,7 @@ void main(){
     ab.classList.toggle('ready', sd.abilityCd <= 0);
     ab.disabled = S.mode !== 'play';
     $('btnPause').textContent = S.paused ? 'Resume' : 'Pause';
+    document.querySelectorAll('#stance button').forEach((b) => b.classList.toggle('on', b.dataset.s === sd.stance));
     $('btnSpeed').textContent = `${S.speed}×`;
 
     const heroBusy = heroActive(sd);
@@ -3334,6 +3611,21 @@ void main(){
   }
 
   function showEnd() {
+    if (S.variant === 'survival') {
+      const waves = Math.max(0, S.wave.n - 1);
+      $('endTitle').textContent = `${waves} wave${waves === 1 ? '' : 's'}`;
+      $('endTitle').className = 'result win';
+      $('endText').textContent = `Your stronghold falls to wave ${S.wave.n}. Best so far: ${REC.bestWave} waves survived.`;
+      const p = S.sides[0];
+      const m = Math.floor(S.t / 60), s2 = Math.floor(S.t % 60);
+      $('endStats').innerHTML = [
+        ['Time', `${m}:${String(s2).padStart(2, '0')}`], ['Era reached', `${p.era + 1} of 5`], ['Enemies slain', p.kills],
+        ['Warriors trained', p.trained], ['Best record', `${REC.bestWave} waves`], ['Difficulty', DIFF[difficulty].label],
+      ].map(([k, v]) => `<div><span class="lbl">${k}</span><b>${v}</b></div>`).join('');
+      $('end').hidden = false;
+      renderRecords();
+      return;
+    }
     const win = S.winner === 0;
     $('endTitle').textContent = win ? 'Victory' : 'Defeat';
     $('endTitle').className = 'result ' + (win ? 'win' : 'loss');
@@ -3347,9 +3639,99 @@ void main(){
       ['Warriors trained', p.trained], ['Warriors lost', p.lost], ['Difficulty', DIFF[difficulty].label],
     ].map(([k, v]) => `<div><span class="lbl">${k}</span><b>${v}</b></div>`).join('');
     $('end').hidden = false;
+    renderRecords();
+  }
+
+  // Records line on the start screen and the achievements list.
+  function renderRecords() {
+    const got = ACH.filter((a) => REC.ach[a.id]).length;
+    const wins = Object.values(REC.wins).reduce((a, b) => a + b, 0);
+    $('records').innerHTML = `<span><b>${wins}</b> wins</span><span><b>${REC.bestWave}</b> best wave</span><span><b>${REC.kills}</b> enemies slain</span><span><b>${got}/${ACH.length}</b> achievements</span>`;
+    $('achList').innerHTML = ACH.map((a) => `<div class="ach${REC.ach[a.id] ? ' got' : ''}"><b>${esc(a.name)}</b><span>${esc(a.desc)}</span><em>${REC.ach[a.id] ? 'Unlocked' : 'Locked'}</em></div>`).join('');
+  }
+
+  // Simulator screen
+  let simResult = null;
+  function simOption(d) { return `<option value="${d.id}">${esc(d.name)}</option>`; }
+  function initSim() {
+    const opts = ERAS.map((e, i) => `<optgroup label="${esc(e.name)}">${BY_ERA[i].map(simOption).join('')}</optgroup>`).join('');
+    $('simA').innerHTML = opts;
+    $('simB').innerHTML = opts;
+    $('simA').value = 'spartan';
+    $('simB').value = 'ninja';
+    const sync = () => { drawPortrait($('simCvA'), DEF_BY_ID[$('simA').value], 0); drawPortrait($('simCvB'), DEF_BY_ID[$('simB').value], 1); };
+    $('simA').addEventListener('change', () => {
+      // Load the show's matchup for this warrior when there is one.
+      const d = DEF_BY_ID[$('simA').value];
+      const m = /vs ([^·]+)/.exec(d.show);
+      if (m) {
+        const name = m[1].trim().toLowerCase();
+        const foe = DEFS.find((x) => x.id !== d.id && (x.name.toLowerCase() === name || name.startsWith(x.name.toLowerCase()) || x.name.toLowerCase().startsWith(name.replace(/s$/, ''))));
+        if (foe) $('simB').value = foe.id;
+      }
+      sync();
+    });
+    $('simB').addEventListener('change', sync);
+    sync();
+  }
+  function openSim(keep) {
+    $('start').hidden = true;
+    $('end').hidden = true;
+    $('sim').hidden = false;
+    if (!keep) { newGame('attract'); }
+    else if (S.mode === 'duel') newGame('attract');
+    requestAnimationFrame(() => { drawPortrait($('simCvA'), DEF_BY_ID[$('simA').value], 0); drawPortrait($('simCvB'), DEF_BY_ID[$('simB').value], 1); });
+    renderSim();
+  }
+  function renderSim(progress) {
+    const out = $('simOut');
+    if (progress != null && progress < 1) { out.innerHTML = `<p class="simprog">Simulating… ${Math.round(progress * 100)}%</p>`; return; }
+    if (!simResult) { out.innerHTML = ''; return; }
+    const r = simResult;
+    const [wa, wb] = r.wins;
+    const total = Math.max(1, wa + wb);
+    const pa = Math.round((wa / total) * 100);
+    const winner = wa === wb ? null : wa > wb ? r.a : r.b;
+    const list = (w) => {
+      const rows = Object.entries(w).sort((x, y) => y[1] - x[1]);
+      const max = Math.max(1, ...rows.map((x) => x[1]));
+      return rows.map(([n, v]) => `<div class="wk"><span>${esc(n)}</span><i style="width:${(v / max) * 100}%"></i><b>${v}</b></div>`).join('') || '<p class="wsub">No kills</p>';
+    };
+    out.innerHTML = `
+      <div class="tally"><div><b>${wa}</b><span>${esc(r.a.name)}</span></div><div class="dash">–</div><div><b>${wb}</b><span>${esc(r.b.name)}</span></div></div>
+      <div class="split"><i style="width:${pa}%"></i></div>
+      <p class="verdict">${winner ? `Deadliest warrior: <b>${esc(winner.name)}</b>, winning ${Math.round((Math.max(wa, wb) / total) * 100)}% of ${r.n.toLocaleString()} battles` : `Dead even across ${r.n.toLocaleString()} battles`}${r.draws ? ` · ${r.draws} draws` : ''}.</p>
+      <div class="kills"><div><h3>${esc(r.a.name)} kills by weapon</h3>${list(r.weapons[0])}</div><div><h3>${esc(r.b.name)} kills by weapon</h3>${list(r.weapons[1])}</div></div>`;
+  }
+  function runSim() {
+    const a = DEF_BY_ID[$('simA').value], b = DEF_BY_ID[$('simB').value];
+    if (a.id === b.id) { toast('Pick two different warriors'); return; }
+    $('simRun').disabled = true;
+    simulate(a, b, 1000, (res, prog) => {
+      if (!res) { renderSim(prog); return; }
+      simResult = res;
+      REC.sims++;
+      if (REC.sims >= 10) unlock('analyst');
+      saveRec();
+      $('simRun').disabled = false;
+      renderSim();
+    });
+  }
+  function watchDuel() {
+    const a = DEF_BY_ID[$('simA').value], b = DEF_BY_ID[$('simB').value];
+    if (a.id === b.id) { toast('Pick two different warriors'); return; }
+    $('sim').hidden = true;
+    newGame('duel');
+    S.sides[0].era = S.sides[1].era = a.era;
+    S.tod = 0.4;
+    spawnUnit(makeDef(a.raw, SIM_ERA, true), 0, 640);
+    spawnUnit(makeDef(b.raw, SIM_ERA, true), 1, 860);
+    S.cam = 750 - viewW / 2;
+    showBanner(`${a.name} vs ${b.name}`, 'One duel at equal strength');
   }
 
   function startGame() {
+    if (variant === 'simulator') { openSim(false); return; }
     Sound.init();
     $('start').hidden = true;
     $('end').hidden = true;
@@ -3359,12 +3741,14 @@ void main(){
     tab = 'warriors';
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     buildCards();
-    showBanner(ERAS[0].name, ERAS[0].span);
+    showBanner(S.variant === 'survival' ? 'Survival' : ERAS[0].name, S.variant === 'survival' ? 'Hold out against endless waves' : ERAS[0].span);
   }
 
   function toMenu() {
     $('end').hidden = true;
+    $('sim').hidden = true;
     $('start').hidden = false;
+    renderRecords();
     newGame('attract');
     buildCards();
     refreshHud(true);
@@ -3373,6 +3757,28 @@ void main(){
   // ── Input ───────────────────────────────────────────────────────────────
   $('btnStart').addEventListener('click', startGame);
   $('btnAgain').addEventListener('click', startGame);
+  $('simRun').addEventListener('click', runSim);
+  $('simWatch').addEventListener('click', watchDuel);
+  $('simClose').addEventListener('click', toMenu);
+  $('btnAch').addEventListener('click', () => { renderRecords(); $('ach').hidden = false; });
+  $('achClose').addEventListener('click', () => { $('ach').hidden = true; });
+  document.querySelectorAll('#stance button').forEach((b) => b.addEventListener('click', () => {
+    if (!S || S.mode !== 'play') return;
+    setStance(S.sides[0], b.dataset.s);
+    refreshHud(true);
+  }));
+  const MODE_NOTE = {
+    skirmish: 'Destroy the enemy stronghold before it destroys yours.',
+    survival: 'Endless waves that grow and advance through the eras. How long can you hold?',
+    simulator: 'Pick two warriors and run 1,000 simulated duels, like the show.',
+  };
+  document.querySelectorAll('#modeSeg button').forEach((b) => b.addEventListener('click', () => {
+    variant = b.dataset.m;
+    document.querySelectorAll('#modeSeg button').forEach((x) => x.classList.toggle('on', x === b));
+    $('modeNote').textContent = MODE_NOTE[variant];
+    $('btnStart').textContent = variant === 'simulator' ? 'Open the simulator' : 'To battle';
+    $('diffRow').hidden = variant === 'simulator';
+  }));
   $('btnMenu').addEventListener('click', toMenu);
   $('btnCodex').addEventListener('click', () => openCodex());
   $('btnCodex2').addEventListener('click', () => openCodex(0));
@@ -3412,6 +3818,7 @@ void main(){
     if (e.target.closest && e.target.closest('input, textarea')) return;
     keys[e.key] = true;
     if (e.key === 'Escape' && !$('codex').hidden) { closeCodex(); return; }
+    if (e.key === 'Escape' && !$('ach').hidden) { $('ach').hidden = true; return; }
     if (!S || S.mode !== 'play' || S.over || !$('codex').hidden) return;
     const sd = S.sides[0];
     if (/^[1-9]$/.test(e.key)) {
@@ -3420,6 +3827,9 @@ void main(){
     } else if (e.key === 'q' || e.key === 'Q') { const err = useAbility(sd); if (err) toast(err); }
     else if (e.key === 'e' || e.key === 'E') { const err = evolve(sd); if (err) toast(err); }
     else if (e.key === 'p' || e.key === 'P') { S.paused = !S.paused; refreshHud(true); }
+    else if (e.key === 'c' || e.key === 'C') { setStance(sd, 'advance'); refreshHud(true); }
+    else if (e.key === 'h' || e.key === 'H') { setStance(sd, 'hold'); refreshHud(true); }
+    else if (e.key === 'f' || e.key === 'F') { setStance(sd, 'retreat'); refreshHud(true); }
   });
   window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
@@ -3475,11 +3885,13 @@ void main(){
   $('eraList').innerHTML = ERAS.map((e) => `<span>${esc(e.name)}</span>`).join('');
   const total = DEFS.length;
   const shown = DEFS.filter((d) => !d.show.startsWith('Added')).length;
-  $('lede').textContent = `Command ${total} warriors across five eras: ${shown} from Deadliest Warrior, plus the Aztec, Maya and Inca armies and the soldiers of history's great commanders. Each warrior picks the right weapon for the range, from the show's short, mid, long and special slots. Earn gold and experience from every kill, evolve your stronghold, and tear down the enemy's.`;
+  $('lede').textContent = `Command ${total} warriors across five eras: ${shown} from Deadliest Warrior, plus the Aztec, Maya and Inca armies and the soldiers of history's great commanders. Each warrior picks the right weapon for the range, from the show's short, mid, long and special slots. Research upgrades, raise veterans, give battle orders, survive endless waves, or settle the old arguments in the Deadliest Warrior simulator.`;
 
   newGame('attract');
   resize();
   refreshHud(true);
+  initSim();
+  renderRecords();
 
   let last = performance.now();
   const perf = { t: 0, n: 0, checked: false };
@@ -3511,5 +3923,6 @@ void main(){
   window.__aow = {
     get state() { return S; }, DEFS, drawPortrait, BY_ERA, ERAS, recruit, evolve, useAbility, buyTurret, buySlot, update, newGame, startGame,
     setDifficulty(d) { difficulty = d; },
+    setVariant(v) { variant = v; }, simulate, buyUpgrade, UPGRADES, setStance, REC,
   };
 })();
