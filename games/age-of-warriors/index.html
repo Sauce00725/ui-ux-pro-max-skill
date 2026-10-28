@@ -97,7 +97,7 @@
   .card:hover:not(.off) { border-color: var(--brass); }
   .card.off { opacity: .45; }
   .card.hero { border-color: #7a6227; background: linear-gradient(#3a2e1a, var(--panel-2)); }
-  .card canvas { width: 58px; height: 58px; }
+  .card canvas { width: 58px; height: 58px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); }
   .card .nm { font-weight: 600; font-size: 12.5px; line-height: 1.15; min-height: 2.3em; display: flex; align-items: center; }
   .card .meta { font-family: var(--mono); font-size: 12px; color: var(--brass); font-variant-numeric: tabular-nums; }
   .card .role { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -127,8 +127,18 @@
   .wep .n { font-weight: 600; min-width: 0; }
   .wep .pw { display: flex; gap: 2px; }
   .wep .pw i { width: 7px; height: 10px; background: #3a3024; border-radius: 1px; }
-  .wep .pw i.on { background: var(--brass); }
-  .wep .pw i.hot { background: var(--blood); }
+  .wep .pw i.on { background: var(--muted); }
+  .pw.t-standard i.on { background: var(--bone); }
+  .pw.t-elite i.on { background: var(--brass); }
+  .pw.t-legendary i.on { background: var(--blood); }
+  .tier { font-style: normal; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-left: 4px; color: var(--muted); }
+  .tier.t-standard { color: var(--bone); }
+  .tier.t-elite { color: var(--brass); }
+  .tier.t-legendary { color: #e5664d; }
+  .gem { display: inline-block; width: 7px; height: 7px; transform: rotate(45deg); margin-right: 5px; vertical-align: 1px; background: var(--muted); }
+  .gem.t-standard { background: var(--bone); }
+  .gem.t-elite { background: var(--brass); }
+  .gem.t-legendary { background: #e5664d; }
   .wep .d { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
   .statrow { display: flex; gap: 4px 12px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
   .statrow span { color: var(--muted); font-family: var(--body); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; margin-right: 4px; }
