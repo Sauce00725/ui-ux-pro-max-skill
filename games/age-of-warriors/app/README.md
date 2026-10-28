@@ -1,4 +1,4 @@
-# Age of Warriors: iOS and Android app
+# Dawn of War: iOS and Android app
 
 This folder wraps the game in a native app with [Capacitor](https://capacitorjs.com).
 The game itself lives one folder up (`index.html`, `data.js`, `game.js`). This folder
@@ -36,7 +36,7 @@ npm run ios:open         # opens Xcode
 
 In Xcode:
 
-1. Set your Team and a unique Bundle Identifier (also change `appId` in `capacitor.config.json`, for example `com.yourname.ageofwarriors`).
+1. Set your Team and a unique Bundle Identifier (also change `appId` in `capacitor.config.json`, for example `com.yourname.dawnofwar`).
 2. Under General → Deployment Info, untick Portrait so the game runs in landscape only.
 3. Under Info, add `UIStatusBarHidden` = YES and `UIViewControllerBasedStatusBarAppearance` = NO for a full-screen game.
 4. Run on a real iPhone. Check performance; the game lowers its effects automatically if it drops below 24 fps.
@@ -49,9 +49,10 @@ Android works the same way with `npm run android:add` and Android Studio.
 ## Before you submit: things that will block or risk review
 
 1. **"Deadliest Warrior" is someone else's brand.** It is a Spike TV / Paramount show. The game uses the name, episode matchups and results, and calls a mode the "Deadliest Warrior simulator". App Store Review Guideline 5.2 (intellectual property) will likely reject this without a license. Before submitting, rename the simulator, remove the show name, and drop the "S1 · vs …" episode records, or get written permission from the rights holder.
-2. **Real people.** Historical figures (Napoleon, Genghis Khan, Al Capone) are generally fine. Keep descriptions factual and respectful.
-3. **Fonts load from Google Fonts.** Offline, the app falls back to system fonts. To bundle them, download the Teko and IBM Plex Sans Condensed / Mono files (SIL Open Font License) into `www/fonts` and swap the `<link>` for `@font-face` rules.
-4. **Privacy.** The game stores only records, achievements and the effects setting on the device (`localStorage`). It sends nothing anywhere, so the App Privacy label is "Data Not Collected".
-5. **Age rating.** Expect 12+ for frequent cartoon or fantasy violence.
-6. **Screenshots.** App Store Connect needs at least one set for 6.9" iPhones (2868×1320 in landscape) and iPads if you support them.
-7. **Minimum functionality (Guideline 4.2).** A full offline game qualifies. Keep it free of links that leave the app.
+2. **"Dawn of War" is an existing trademark.** *Warhammer 40,000: Dawn of War* is a well-known strategy game series (Games Workshop, published by SEGA/Relic). An app with the same title is likely to be flagged under Guideline 5.2 and could draw a trademark complaint. Search the USPTO and App Store before committing to the name, or pick a distinct variant.
+3. **Real people.** Historical figures (Napoleon, Genghis Khan, Al Capone) are generally fine. Keep descriptions factual and respectful.
+4. **Fonts load from Google Fonts.** Offline, the app falls back to system fonts. To bundle them, download the Teko and IBM Plex Sans Condensed / Mono files (SIL Open Font License) into `www/fonts` and swap the `<link>` for `@font-face` rules.
+5. **Privacy.** The game stores only records, achievements and the effects setting on the device (`localStorage`). It sends nothing anywhere, so the App Privacy label is "Data Not Collected".
+6. **Age rating.** Expect 12+ for frequent cartoon or fantasy violence.
+7. **Screenshots.** App Store Connect needs at least one set for 6.9" iPhones (2868×1320 in landscape) and iPads if you support them.
+8. **Minimum functionality (Guideline 4.2).** A full offline game qualifies. Keep it free of links that leave the app.

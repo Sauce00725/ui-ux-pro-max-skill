@@ -1,4 +1,4 @@
-// Age of Warriors — engine, AI, rendering and UI.
+// Dawn of War — engine, AI, rendering and UI.
 (() => {
   'use strict';
 

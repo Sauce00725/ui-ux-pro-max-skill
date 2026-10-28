@@ -1,4 +1,4 @@
-// Age of Warriors — warrior roster, weapons and era data.
+// Dawn of War — warrior roster, weapons and era data.
 //
 // Warriors come from Spike TV's "Deadliest Warrior" (2009–2011) plus added
 // Mesoamerican and Andean warriors (Aztec Eagle, Maya, Inca) that never

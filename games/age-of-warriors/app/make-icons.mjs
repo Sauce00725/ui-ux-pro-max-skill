@@ -57,7 +57,7 @@ const shots = await page.evaluate(() => {
     g.drawImage(warrior(grey, 700), 1400, 900, 640, 640);
     g.fillStyle = '#efe4cf'; g.textAlign = 'center';
     g.font = '600 220px Teko, "Arial Narrow", sans-serif';
-    g.fillText('AGE OF WARRIORS', 1366, 1800);
+    g.fillText('DAWN OF WAR', 1366, 1800);
   });
   return Promise.all([rawOf(icon(1024), 1024), rawOf(icon(512), 512), rawOf(icon(180), 180)]).then(([i1024, i512, i180]) => ({ i1024, i512, i180, splash }));
 });

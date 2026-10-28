@@ -45,8 +45,8 @@ for (const f of ['icon-180.png', 'icon-512.png', 'icon-only.png']) {
   if (existsSync(join(res, f))) copyFileSync(join(res, f), join(out, f));
 }
 writeFileSync(join(out, 'manifest.webmanifest'), JSON.stringify({
-  name: 'Age of Warriors',
-  short_name: 'Warriors',
+  name: 'Dawn of War',
+  short_name: 'Dawn of War',
   start_url: './',
   display: 'fullscreen',
   orientation: 'landscape',

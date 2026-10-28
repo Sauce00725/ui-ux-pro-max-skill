@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.ageofwarriors",
-  "appName": "Age of Warriors",
+  "appId": "com.example.dawnofwar",
+  "appName": "Dawn of War",
   "webDir": "www",
   "backgroundColor": "#15110c",
   "ios": {
