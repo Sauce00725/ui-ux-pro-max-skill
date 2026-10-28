@@ -277,6 +277,16 @@
     },
   };
 
+  // Haptics for big moments only. Native haptics in the packaged app.
+  function buzz(kind = 'light') {
+    try {
+      const C = window.Capacitor;
+      const H = C && C.isNativePlatform && C.isNativePlatform() && C.registerPlugin ? (window.__aowHaptics = window.__aowHaptics || C.registerPlugin('Haptics')) : null;
+      if (H) { H.impact({ style: kind === 'heavy' ? 'HEAVY' : kind === 'medium' ? 'MEDIUM' : 'LIGHT' }); return; }
+      if (navigator.vibrate) navigator.vibrate(kind === 'heavy' ? 40 : kind === 'medium' ? 20 : 8);
+    } catch (e) { /* not supported */ }
+  }
+
   // ── Game state ──────────────────────────────────────────────────────────
   let S = null;
   let difficulty = 'warrior';
@@ -331,6 +341,7 @@
     saveRec();
     const a = ACH.find((x) => x.id === id);
     if (a && typeof toast === 'function') toast(`Achievement unlocked: ${a.name}`);
+    buzz('light');
     Sound.play('evolve');
   }
   const playing = () => S && S.mode === 'play' && !S.sim;
@@ -432,6 +443,7 @@
     }
     if (sd.team === 0 && playing()) { if (sd.era >= 1) unlock('steel'); if (sd.era >= 4) unlock('modern'); if (sd.era >= 5) unlock('alien'); }
     if (sd.team === 0 && S.mode === 'play') {
+      buzz('medium');
       showBanner(next.name, next.span);
       Sound.play('evolve');
       buildCards();
@@ -477,6 +489,7 @@
       const p = turretPos(sd.team, i);
       S.fx.push({ type: 'ring', x: p.x, y: GROUND - 20, r: 40, t: 0, dur: 0.5, col: '#ff9a4a' });
       Sound.play('evolve');
+      buzz('light');
     }
     return null;
   }
@@ -533,7 +546,8 @@
 
   // ── Particles ───────────────────────────────────────────────────────────
   const REDUCED = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)').matches : false;
-  const MAX_PARTS = 700;
+  const TOUCH = window.matchMedia ? matchMedia('(pointer: coarse)').matches : false;
+  const MAX_PARTS = TOUCH ? 350 : 700;
   const rnd = (a, b) => a + Math.random() * (b - a);
   function part(o) { if (!S.sim && S.parts.length < MAX_PARTS) { o.max = o.life; S.parts.push(o); } }
   function shake(a) { if (!REDUCED) S.shake = Math.min(7, Math.max(S.shake, a)); }
@@ -1198,6 +1212,7 @@
     Sound.play('boom');
     const game = S;
     if (S.mode === 'play') {
+      buzz('heavy');
       if (S.variant === 'skirmish') {
         if (winnerTeam === 0) {
           REC.wins[difficulty] = (REC.wins[difficulty] || 0) + 1;
@@ -1260,18 +1275,22 @@
   const bgC = mkCanvas(), fgC = mkCanvas(), emC = mkCanvas();
   const bgCtx = bgC.getContext('2d'), fgCtx = fgC.getContext('2d'), emCtx = emC.getContext('2d');
   let ctx = fgCtx, ectx = emCtx;
-  let cssW = 0, cssH = 0, dpr = 1, res = 1, scale = 1, viewW = 0;
+  let cssW = 0, cssH = 0, dpr = 1, res = 1, scale = 1, viewW = 0, camY = 0;
 
   function resize() {
     const r = cv.getBoundingClientRect();
     cssW = Math.max(1, r.width);
     cssH = Math.max(1, r.height);
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    res = Math.min(dpr, cssW * cssH > 900000 ? 1.25 : 1.5);
+    res = Math.min(dpr, TOUCH ? 1.25 : cssW * cssH > 900000 ? 1.25 : 1.5);
     cv.width = Math.round(cssW * dpr);
     cv.height = Math.round(cssH * dpr);
     for (const k of [bgC, fgC, emC, glCanvas]) { k.width = Math.round(cssW * res); k.height = Math.round(cssH * res); }
-    scale = cssH / WORLD_H;
+    // Short screens (phones in landscape) crop the top of the sky so the
+    // warriors stay a readable size.
+    const viewH = cssH < 300 ? 235 : cssH < 420 ? 285 : WORLD_H;
+    camY = WORLD_H - viewH;
+    scale = cssH / viewH;
     if (cssW / scale > WORLD_W) scale = cssW / WORLD_W;
     viewW = cssW / scale;
   }
@@ -3877,7 +3896,7 @@ void main(){
     const sx = sh ? (Math.random() - 0.5) * sh : 0;
     const sy = sh ? (Math.random() - 0.5) * sh : 0;
     const k = res * scale;
-    const T = [k, 0, 0, k, (-S.cam * scale + sx) * res, sy * res];
+    const T = [k, 0, 0, k, (-S.cam * scale + sx) * res, (sy - camY * scale) * res];
     for (const c2 of [bgCtx, fgCtx, emCtx]) {
       c2.setTransform(1, 0, 0, 1, 0, 0);
       c2.globalAlpha = 1;
@@ -3918,7 +3937,7 @@ void main(){
     sctx.clearRect(0, 0, cv.width, cv.height);
     if (useGL) {
       GFX.draw({
-        ldir: [LIGHT.lx, LIGHT.ly], ground: (GROUND * scale + sy) / cssH, time: S.t, camx: S.cam, scale: k, shx: sx * res,
+        ldir: [LIGHT.lx, LIGHT.ly], ground: ((GROUND - camY) * scale + sy) / cssH, time: S.t, camx: S.cam, scale: k, shx: sx * res,
         light: LIGHT.light, rim: LIGHT.rim, fog: LIGHT.fog, tint: A.tint, rimK: LIGHT.rimK, fogK: LIGHT.fogK, wet: LIGHT.wet,
         rain: A.weather === 'rain' ? 1 : 0, bloom: 0.8 + 0.5 * LIGHT.nightK, night: LIGHT.nightK,
       });
@@ -4050,8 +4069,17 @@ void main(){
         info.setAttribute('aria-label', `${def.name} details`);
         info.addEventListener('click', (e) => { e.stopPropagation(); openCodex(def.era, def.id); });
         card.appendChild(info);
-        const go = () => { Sound.init(); const err = recruit(sd, def); if (err) toast(err); else Sound.play('ui'); refreshHud(true); };
+        let pressT = 0, held = false;
+        const go = () => { if (held) { held = false; return; } Sound.init(); const err = recruit(sd, def); if (err) toast(err); else Sound.play('ui'); refreshHud(true); };
         card.addEventListener('click', go);
+        card.addEventListener('pointerdown', (e) => {
+          if (e.pointerType === 'mouse') return;
+          held = false;
+          clearTimeout(pressT);
+          pressT = setTimeout(() => { held = true; buzz('light'); openCodex(def.era, def.id); }, 480);
+        });
+        for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) card.addEventListener(ev, () => clearTimeout(pressT));
+        card.addEventListener('contextmenu', (e) => e.preventDefault());
         card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
         card.addEventListener('mouseenter', () => showTip(card, def));
         card.addEventListener('mouseleave', hideTip);
@@ -4401,11 +4429,13 @@ void main(){
     tab = 'warriors';
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     buildCards();
+    checkRotate();
     showBanner(S.variant === 'survival' ? 'Survival' : ERAS[0].name, S.variant === 'survival' ? 'Hold out against endless waves' : ERAS[0].span);
   }
 
   function toMenu() {
     $('end').hidden = true;
+    $('rotate').hidden = true;
     $('sim').hidden = true;
     $('start').hidden = false;
     renderRecords();
@@ -4421,6 +4451,55 @@ void main(){
   $('simWatch').addEventListener('click', watchDuel);
   $('simClose').addEventListener('click', toMenu);
   $('btnAch').addEventListener('click', () => { renderRecords(); $('ach').hidden = false; });
+  // Mobile menu: pauses the battle and holds the less-used controls.
+  function syncMenu() {
+    $('mSpeed').textContent = `${S.speed}×`;
+    $('mSound').textContent = $('btnSound').textContent;
+    $('mGfx').textContent = $('btnGfx').textContent;
+  }
+  function openMenu() {
+    if (S.mode === 'play' && !S.over) { S.menuPaused = !S.paused; S.paused = true; }
+    syncMenu();
+    $('menu').hidden = false;
+  }
+  function closeMenu() {
+    $('menu').hidden = true;
+    if (S.mode === 'play' && S.menuPaused) { S.paused = false; S.menuPaused = false; }
+    refreshHud(true);
+  }
+  $('btnMenu2').addEventListener('click', openMenu);
+  $('menuClose').addEventListener('click', closeMenu);
+  document.querySelectorAll('#menu [data-proxy]').forEach((b) => b.addEventListener('click', () => {
+    const id = b.dataset.proxy;
+    if (id === 'btnCodex') {
+      $('menu').hidden = true;
+      if (S.menuPaused) S.paused = false;
+      S.menuPaused = false;
+      openCodex();
+      return;
+    }
+    $(id).click();
+    syncMenu();
+  }));
+  $('btnFull').addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else {
+        await document.documentElement.requestFullscreen();
+        try { await screen.orientation.lock('landscape'); } catch (e) { /* not supported */ }
+      }
+    } catch (e) { toast('Full screen is not available here'); }
+  });
+  $('btnQuit').addEventListener('click', () => { $('menu').hidden = true; toMenu(); });
+  // Suggest landscape on phones held upright.
+  let rotateDismissed = false;
+  const portraitQ = window.matchMedia ? matchMedia('(orientation: portrait) and (max-width: 700px)') : null;
+  function checkRotate() {
+    const show = TOUCH && portraitQ && portraitQ.matches && !rotateDismissed && S && S.mode === 'play' && !S.over;
+    $('rotate').hidden = !show;
+  }
+  $('rotateOk').addEventListener('click', () => { rotateDismissed = true; checkRotate(); });
+  if (portraitQ && portraitQ.addEventListener) portraitQ.addEventListener('change', checkRotate);
   $('achClose').addEventListener('click', () => { $('ach').hidden = true; });
   document.querySelectorAll('#stance button').forEach((b) => b.addEventListener('click', () => {
     if (!S || S.mode !== 'play') return;
@@ -4479,6 +4558,7 @@ void main(){
     keys[e.key] = true;
     if (e.key === 'Escape' && !$('codex').hidden) { closeCodex(); return; }
     if (e.key === 'Escape' && !$('ach').hidden) { $('ach').hidden = true; return; }
+    if (e.key === 'Escape' && !$('menu').hidden) { closeMenu(); return; }
     if (!S || S.mode !== 'play' || S.over || !$('codex').hidden) return;
     const sd = S.sides[0];
     if (/^[1-9]$/.test(e.key)) {
@@ -4509,7 +4589,7 @@ void main(){
       return;
     }
     if (S.mode === 'play' && !S.over) {
-      const wx = S.cam + x / scale, wy = y / scale;
+      const wx = S.cam + x / scale, wy = y / scale + camY;
       const b = S.sides[0].base;
       for (let i = 0; i < MAX_SLOTS; i++) {
         if (!b.turrets[i]) continue;

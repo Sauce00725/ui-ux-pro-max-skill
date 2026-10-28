@@ -1,0 +1,14 @@
+{
+  "appId": "com.example.ageofwarriors",
+  "appName": "Age of Warriors",
+  "webDir": "www",
+  "backgroundColor": "#15110c",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#15110c",
+    "scrollEnabled": false
+  },
+  "android": {
+    "backgroundColor": "#15110c"
+  }
+}
