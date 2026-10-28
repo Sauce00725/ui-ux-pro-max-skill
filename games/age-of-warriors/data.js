@@ -31,8 +31,10 @@ window.AOW_DATA = (() => {
       sky: ['#e9a56a', '#f6d8a6'], far: '#b9805a', near: '#8d5b3d', ground: '#a8794b', dirt: '#7f5734',
       ability: { name: 'Arrow Storm', desc: 'A sky of arrows falls on the enemy line.', proj: 'arrow', n: 26, power: 5, cd: 45 },
       turrets: [
-        { id: 'scorpio', name: 'Scorpio Bolt Thrower', power: 7, cd: 1.6, r: 340, proj: 'bolt', pierce: 0.6, cost: 110 },
-        { id: 'onager', name: 'Onager', power: 8, cd: 3.4, r: 380, proj: 'stone', aoe: 50, cost: 160 },
+        { id: 'scorpio', name: 'Scorpio Bolt Thrower', art: 'ballista', culture: 'Roman legions', by: ['centurion'], power: 7, cd: 1.6, r: 340, proj: 'bolt', pierce: 0.6, effect: 'line' },
+        { id: 'onager', name: 'Onager', art: 'catapult', culture: 'Rome and Carthage', by: ['centurion', 'hannibal'], power: 8, cd: 3.4, r: 380, proj: 'stone', aoe: 50 },
+        { id: 'immortalArchers', name: 'Immortal Archer Tower', art: 'archers', culture: 'Achaemenid Persia', by: ['immortal'], power: 4, cd: 2.2, r: 320, proj: 'arrow', n: 4, effect: 'volley' },
+        { id: 'zhugenu', name: 'Repeating Crossbow Nest', art: 'ballista', culture: 'Warring States China', by: ['suntzu'], power: 6, cd: 0.55, r: 290, proj: 'bolt' },
       ],
     },
     {
@@ -41,8 +43,10 @@ window.AOW_DATA = (() => {
       sky: ['#5f6f7a', '#b9c2bd'], far: '#6b7470', near: '#4b5450', ground: '#6f7552', dirt: '#4d5236',
       ability: { name: 'Greek Fire', desc: 'Clay pots of liquid fire burst across the field.', proj: 'fire', n: 14, power: 6, cd: 48, fire: true },
       turrets: [
-        { id: 'springald', name: 'Springald', power: 7, cd: 1.3, r: 350, proj: 'bolt', pierce: 0.5, cost: 240 },
-        { id: 'trebuchet', name: 'Trebuchet', power: 9, cd: 3.6, r: 400, proj: 'stone', aoe: 62, cost: 340 },
+        { id: 'springald', name: 'Springald', art: 'ballista', culture: 'Norman and French castles', by: ['knight', 'conqueror'], power: 7, cd: 1.3, r: 350, proj: 'bolt', pierce: 0.5, effect: 'line' },
+        { id: 'trebuchet', name: 'Trebuchet', art: 'catapult', culture: 'Siege engineers of Europe', by: ['conqueror', 'joan', 'wallace'], power: 9, cd: 3.6, r: 400, proj: 'stone', aoe: 62 },
+        { id: 'firearrows', name: 'Fire-Arrow Launcher', art: 'rack', culture: 'Ming China', by: ['ming'], power: 4, cd: 3.2, r: 340, proj: 'rocket', n: 6, effect: 'volley', burn: true },
+        { id: 'yagura', name: 'Yagura Archer Tower', art: 'archers', culture: 'Feudal Japan', by: ['samurai', 'ninja'], power: 6, cd: 1.1, r: 400, proj: 'arrow', target: 'strongest' },
       ],
     },
     {
@@ -51,8 +55,10 @@ window.AOW_DATA = (() => {
       sky: ['#2f8a7c', '#e9c46a'], far: '#3f6e4a', near: '#2c5236', ground: '#7a6a3a', dirt: '#56492a',
       ability: { name: 'Atlatl Barrage', desc: 'Hundreds of atlatl darts rain down.', proj: 'dart', n: 30, power: 6, cd: 48 },
       turrets: [
-        { id: 'slingers', name: 'Huaraca Sling Tower', power: 6, cd: 0.9, r: 330, proj: 'stone', cost: 480 },
-        { id: 'hornets', name: 'Hornet-Nest Catapult', power: 8, cd: 3.2, r: 380, proj: 'nest', aoe: 60, dot: true, cost: 700 },
+        { id: 'slingers', name: 'Huaraca Sling Tower', art: 'archers', culture: 'Inca Empire', by: ['inca', 'pachacuti'], power: 6, cd: 0.9, r: 330, proj: 'stone' },
+        { id: 'hornets', name: 'Hornet-Nest Catapult', art: 'catapult', culture: 'Maya city-states', by: ['holkan', 'nacom'], power: 8, cd: 3.2, r: 380, proj: 'nest', aoe: 60, burn: true },
+        { id: 'atlatl', name: 'Atlatl Dart Platform', art: 'archers', culture: 'Aztec Empire', by: ['jaguar', 'eagle', 'cuauhtemoc'], power: 7, cd: 1.5, r: 330, proj: 'dart', pierce: 0.4, effect: 'line' },
+        { id: 'firelodge', name: 'Fire-Arrow Lodge', art: 'archers', culture: 'Apache and Comanche', by: ['apache', 'comanche', 'crazyhorse'], power: 5, cd: 1.4, r: 340, proj: 'arrow', burn: true },
       ],
     },
     {
@@ -61,8 +67,10 @@ window.AOW_DATA = (() => {
       sky: ['#7c6a5a', '#d8c3a0'], far: '#7d6b58', near: '#5a4c3f', ground: '#6e5b45', dirt: '#4c3e30',
       ability: { name: 'Cannon Barrage', desc: 'A battery of field guns shells the enemy.', proj: 'shell', n: 10, power: 9, cd: 50, aoe: 60 },
       turrets: [
-        { id: 'swivel', name: 'Swivel Gun', power: 6, cd: 0.9, r: 330, proj: 'bullet', cost: 950 },
-        { id: 'cannon', name: 'Field Cannon', power: 9, cd: 3.2, r: 420, proj: 'shell', aoe: 70, cost: 1350 },
+        { id: 'swivel', name: 'Swivel Gun', art: 'gun', culture: 'Caribbean pirates', by: ['pirate'], power: 6, cd: 0.9, r: 330, proj: 'bullet' },
+        { id: 'cannon', name: 'Field Cannon', art: 'cannon', culture: 'Grande Armée and Continental artillery', by: ['napoleon', 'washington', 'grenadier'], power: 9, cd: 3.2, r: 420, proj: 'shell', aoe: 70 },
+        { id: 'longrifle', name: 'Long Rifle Nest', art: 'rifle', culture: 'Continental Army sharpshooters', by: ['continental', 'washington'], power: 9, cd: 2.6, r: 480, proj: 'bullet', pierce: 0.5, target: 'strongest' },
+        { id: 'streltsyGallery', name: 'Streltsy Volley Gallery', art: 'gun', culture: 'Tsardom of Russia', by: ['streltsy', 'ivan'], power: 5, cd: 2.8, r: 340, proj: 'bullet', n: 4, effect: 'volley' },
       ],
     },
     {
@@ -71,8 +79,10 @@ window.AOW_DATA = (() => {
       sky: ['#1d2b3a', '#56708a'], far: '#2d3b48', near: '#1f2a34', ground: '#4a4f4a', dirt: '#33372f',
       ability: { name: 'Airstrike', desc: 'Jets drop bombs along the enemy front.', proj: 'bomb', n: 12, power: 10, cd: 55, aoe: 70 },
       turrets: [
-        { id: 'm2', name: 'M2 Browning .50', power: 5, cd: 0.28, r: 360, proj: 'bullet', cost: 1800 },
-        { id: 'mortar', name: 'M252 Mortar', power: 9, cd: 3, r: 440, proj: 'shell', aoe: 80, cost: 2600 },
+        { id: 'm2', name: 'M2 Browning .50', art: 'gun', culture: 'U.S. Army', by: ['ranger', 'greenberet'], power: 5, cd: 0.28, r: 360, proj: 'bullet' },
+        { id: 'mortar', name: 'M252 Mortar', art: 'cannon', culture: 'Infantry support', by: ['greenberet', 'legion', 'gurkha'], power: 9, cd: 3, r: 440, proj: 'shell', aoe: 80 },
+        { id: 'sniper', name: 'Sniper Nest', art: 'rifle', culture: 'Navy SEALs and GSG-9', by: ['seal', 'gsg9', 'idf'], power: 10, cd: 3, r: 520, proj: 'bullet', pierce: 0.7, target: 'strongest' },
+        { id: 'rpg', name: 'RPG Nest', art: 'rpg', culture: 'Spetsnaz and the Korean People’s Army', by: ['spetsnaz', 'nkso'], power: 9, cd: 3.2, r: 380, proj: 'rocket', aoe: 70 },
       ],
     },
     {
@@ -80,8 +90,10 @@ window.AOW_DATA = (() => {
       xp: 38000, baseHp: 10500, hpMul: 12.5, dmgMul: 12.5, costMul: 30,
       ability: { name: 'Orbital Lance', desc: 'The mothership burns the field with ion fire.', proj: 'ion', n: 9, power: 11, cd: 55, aoe: 80 },
       turrets: [
-        { id: 'plasma', name: 'Plasma Turret', power: 6, cd: 0.55, r: 380, proj: 'plasma' },
-        { id: 'ion', name: 'Ion Cannon', power: 9, cd: 3, r: 460, proj: 'ion', aoe: 90 },
+        { id: 'plasma', name: 'Plasma Turret', art: 'plasma', culture: 'Invasion infantry', by: ['trooper'], power: 6, cd: 0.55, r: 380, proj: 'plasma' },
+        { id: 'ion', name: 'Ion Cannon', art: 'ion', culture: 'The Overmind’s fleet', by: ['overmind'], power: 9, cd: 3, r: 460, proj: 'ion', aoe: 90 },
+        { id: 'gravity', name: 'Gravity Well Pylon', art: 'pylon', culture: 'Hive siege caste', by: ['brute', 'queen'], power: 4, cd: 2.4, r: 340, proj: 'ion', aoe: 80, effect: 'slow' },
+        { id: 'psispire', name: 'Psionic Spire', art: 'spire', culture: 'Zeta Greys', by: ['grey', 'overmind'], power: 6, cd: 2.8, r: 360, proj: 'plasma', effect: 'stun' },
       ],
     },
   ];

@@ -14,7 +14,9 @@
   const spawnX = (team) => BASE_X[team] + DIR[team] * (BASE_HALF + 8);
   const MAX_QUEUE = 5;
   const INCOME = 2.6;           // passive gold per second, scaled by era
-  const SLOT_COST = [0, 140, 380];
+  const SLOT_COST = [0, 140, 380, 800];
+  const MAX_SLOTS = 4;
+  const TOWER_MAX_LV = 3;
   const TEAM_COL = ['#47b3c2', '#d4533a'];
 
   const ROLE = {
@@ -201,12 +203,26 @@
   const DEFS = DATA.warriors.map((raw) => makeDef(raw));
   // Turrets: priced like weapons, damage scaled so fast guns hit lighter.
   const TURRET_BASE = [110, 240, 480, 950, 1800, 3400];
+  // Towers are priced on their damage output and what their effect adds.
   ERAS.forEach((era, i) => era.turrets.forEach((t) => {
-    t.cost = Math.round(TURRET_BASE[i] * Math.pow(t.power / 7, 2.5) * (t.aoe ? 1.1 : 1));
     t.dmg0 = effPower(t.power) * 3.2 * Math.pow(t.cd / 1.6, 0.75);
+    const value = (t.dmg0 * (t.n || 1) / t.cd) * (t.aoe ? 1.8 : 1) * (t.effect === 'line' ? 1.6 : 1)
+      * (t.effect === 'slow' || t.effect === 'stun' ? 1.3 : 1) * (t.burn ? 1.25 : 1) * (t.target === 'strongest' ? 1.1 : 1);
+    t.cost = Math.round((TURRET_BASE[i] * Math.pow(value / 22, 1.1)) / 5) * 5;
     t.tier = tierOf(t.power, false);
+    t.era = i;
   }));
   const DEF_BY_ID = Object.fromEntries(DEFS.map((d) => [d.id, d]));
+  ERAS.forEach((era) => era.turrets.forEach((t) => { t.byNames = (t.by || []).map((id) => DEF_BY_ID[id].name); }));
+  const TOWER_EFFECT = (t) => [
+    t.effect === 'line' ? 'Pierces up to three enemies' : null,
+    t.effect === 'volley' ? `Volleys of ${t.n}` : null,
+    t.aoe ? 'Blast damage' : null,
+    t.effect === 'slow' ? 'Slows enemies' : null,
+    t.effect === 'stun' ? 'Stuns enemies' : null,
+    t.burn ? 'Sets enemies burning' : null,
+    t.target === 'strongest' ? 'Targets the strongest enemy' : null,
+  ].filter(Boolean).join(' · ') || 'Single target';
   const BY_ERA = ERAS.map((_, i) => DEFS.filter((d) => d.era === i));
 
   // ── Sound ───────────────────────────────────────────────────────────────
@@ -296,7 +312,7 @@
     { id: 'fortress', name: 'Untouchable', desc: 'Win with your stronghold above 90% health' },
     { id: 'legend', name: 'Living Legend', desc: 'Raise a warrior to Legend rank' },
     { id: 'armorer', name: 'Master Armorer', desc: 'Max out an armory upgrade' },
-    { id: 'engineer', name: 'Siege Engineer', desc: 'Man all three turret slots' },
+    { id: 'engineer', name: 'Siege Engineer', desc: 'Man all four tower slots' },
     { id: 'heroes', name: 'Hall of Heroes', desc: 'Field five heroes in one battle' },
     { id: 'wave10', name: 'Hold the Line', desc: 'Survive 10 waves' },
     { id: 'wave20', name: 'Last Stand', desc: 'Survive 20 waves' },
@@ -320,7 +336,7 @@
   const playing = () => S && S.mode === 'play' && !S.sim;
 
   function newBase(team) {
-    return { isBase: true, team, x: BASE_X[team], hp: ERAS[0].baseHp, maxHp: ERAS[0].baseHp, slots: 1, turrets: [null, null, null], flash: 0 };
+    return { isBase: true, team, x: BASE_X[team], hp: ERAS[0].baseHp, maxHp: ERAS[0].baseHp, slots: 1, turrets: [null, null, null, null], flash: 0 };
   }
   function newSide(team, ai) {
     return {
@@ -423,36 +439,64 @@
     return null;
   }
 
-  function buyTurret(sd, tdef) {
+  function buyTurret(sd, tdef, at = -1) {
+    if (S.over) return null;
     const b = sd.base;
-    let slot = -1;
-    for (let i = 0; i < b.slots; i++) if (!b.turrets[i]) { slot = i; break; }
-    if (slot < 0) return b.slots < 3 ? 'No empty slot. Build another turret slot first' : 'All three turret slots are full. Sell one first';
+    let slot = at;
+    if (slot < 0) for (let i = 0; i < b.slots; i++) if (!b.turrets[i]) { slot = i; break; }
+    if (slot < 0 || slot >= b.slots || b.turrets[slot]) return b.slots < MAX_SLOTS ? 'No empty slot. Build another tower slot first' : 'All four tower slots are full. Sell a tower first';
     if (sd.gold < tdef.cost) return `Not enough gold: ${tdef.name} costs ${tdef.cost}`;
     sd.gold -= tdef.cost;
-    b.turrets[slot] = { def: tdef, era: sd.era, cd: 0.5, angle: 0, dmg: tdef.dmg0 * ERAS[sd.era].dmgMul, flashT: 0 };
+    b.turrets[slot] = { def: tdef, era: sd.era, cd: 0.5, angle: 0, dmg: tdef.dmg0 * ERAS[sd.era].dmgMul, flashT: 0, level: 1, spent: tdef.cost, odT: 0, odCd: 0, syn: false };
     if (sd.team === 0 && playing() && b.turrets.every(Boolean)) unlock('engineer');
+    return null;
+  }
+  const upgradeCost = (t) => Math.round((t.def.cost * 0.6 * t.level) / 5) * 5;
+  function upgradeTurret(sd, i) {
+    if (S.over) return null;
+    const t = sd.base.turrets[i];
+    if (!t) return 'No tower in that slot';
+    if (t.level >= TOWER_MAX_LV) return `${t.def.name} is fully upgraded`;
+    const c = upgradeCost(t);
+    if (sd.gold < c) return `Not enough gold: the upgrade costs ${c}`;
+    sd.gold -= c;
+    t.spent += c;
+    t.level++;
+    return null;
+  }
+  // Overdrive: the tower fires 2.5× faster and hits 25% harder for 6 s.
+  const OD_TIME = 6, OD_COOLDOWN = 30;
+  function overdrive(sd, i) {
+    if (S.over) return null;
+    const t = sd.base.turrets[i];
+    if (!t) return 'No tower in that slot';
+    if (t.odCd > 0) return `${t.def.name} can overdrive again in ${Math.ceil(t.odCd)} s`;
+    t.odT = OD_TIME;
+    t.odCd = OD_COOLDOWN;
+    if (sd.team === 0 && S.mode === 'play') {
+      const p = turretPos(sd.team, i);
+      S.fx.push({ type: 'ring', x: p.x, y: GROUND - 20, r: 40, t: 0, dur: 0.5, col: '#ff9a4a' });
+      Sound.play('evolve');
+    }
     return null;
   }
   function buySlot(sd) {
     const b = sd.base;
-    if (b.slots >= 3) return 'The stronghold already has three turret slots';
+    if (b.slots >= MAX_SLOTS) return 'The stronghold already has four tower slots';
     const c = slotCost(sd);
     if (sd.gold < c) return `Not enough gold: a new slot costs ${c}`;
     sd.gold -= c;
     b.slots++;
     return null;
   }
-  function sellTurret(sd) {
+  function sellTurret(sd, at = -1) {
     const b = sd.base;
-    for (let i = 2; i >= 0; i--) {
-      if (b.turrets[i]) {
-        sd.gold += Math.round(b.turrets[i].def.cost * 0.5);
-        b.turrets[i] = null;
-        return null;
-      }
-    }
-    return 'No turret to sell';
+    let i = at;
+    if (i < 0) for (let k = MAX_SLOTS - 1; k >= 0; k--) if (b.turrets[k]) { i = k; break; }
+    if (i < 0 || !b.turrets[i]) return 'No tower to sell';
+    sd.gold += Math.round(b.turrets[i].spent * 0.5);
+    b.turrets[i] = null;
+    return null;
   }
 
   function useAbility(sd) {
@@ -757,6 +801,7 @@
     u.flash = Math.max(0, u.flash - dt);
     u.shieldT = Math.max(0, u.shieldT - dt);
     u.rallyT = Math.max(0, u.rallyT - dt);
+    u.slowT = Math.max(0, (u.slowT || 0) - dt);
     u.swing = Math.max(0, u.swing - dt * 3.2);
     if (u.dots.length) {
       for (const d of u.dots) { d.t -= dt; damage(u, d.dps * dt, d.team, 1, d.src, d.wname); }
@@ -847,7 +892,7 @@
       }
     }
     if (wantMove && gap > space && room > 0) {
-      const sp = def.speed * (u.rallyT > 0 ? 1.3 : 1) * dt;
+      const sp = def.speed * (u.rallyT > 0 ? 1.3 : 1) * (u.slowT > 0 ? 0.45 : 1) * dt;
       u.x += dir * Math.min(sp, Math.max(0, dist - hold), gap - space, room);
       u.walk += dt * def.speed * 0.2;
     }
@@ -878,38 +923,59 @@
     }
   }
 
-  const turretPos = (team, i) => ({ x: BASE_X[team] + DIR[team] * 26, y: GROUND - 112 + i * 27 });
+  const turretPos = (team, i) => ({ x: BASE_X[team] + DIR[team] * 26, y: GROUND - 118 + i * 24 });
+
+  // A tower's live stats: level, engineers research, overdrive, and a +25%
+  // bonus while one of the warriors it belongs to is on the field.
+  function towerStats(sd, t) {
+    const lv = t.level - 1;
+    const od = t.odT > 0;
+    const syn = !!(t.def.by && S.teams[sd.team].some((u) => t.def.by.includes(u.def.id)));
+    return {
+      dmg: t.dmg * upMul(sd, 'engineers') * (1 + 0.3 * lv) * (syn ? 1.25 : 1) * (od ? 1.25 : 1),
+      range: t.def.r * (1 + sd.up.engineers * 0.06) * (1 + 0.1 * lv),
+      cd: t.def.cd * (1 - 0.1 * lv) * (od ? 0.4 : 1),
+      syn, od,
+    };
+  }
 
   function updateTurrets(sd, dt) {
     const b = sd.base;
     const foes = S.teams[1 - sd.team];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < MAX_SLOTS; i++) {
       const t = b.turrets[i];
       if (!t) continue;
       t.cd -= dt;
       t.flashT = Math.max(0, t.flashT - dt);
+      t.odT = Math.max(0, t.odT - dt);
+      t.odCd = Math.max(0, t.odCd - dt);
+      const st = towerStats(sd, t);
+      t.syn = st.syn;
       const p = turretPos(sd.team, i);
-      let tgt = null, best = Infinity;
-      const range = t.def.r * (1 + sd.up.engineers * 0.06);
-      for (const e of foes) {
-        const d = Math.abs(e.x - p.x);
-        if (d < range && d < best) { best = d; tgt = e; }
-      }
-      if (!tgt) continue;
+      const inRange = foes.filter((e) => Math.abs(e.x - p.x) < st.range).sort((a, c) => Math.abs(a.x - p.x) - Math.abs(c.x - p.x));
+      if (!inRange.length) continue;
+      const tgt = t.def.target === 'strongest'
+        ? inRange.reduce((a, e) => ((e.def.hero ? 1e9 : 0) + e.hp > (a.def.hero ? 1e9 : 0) + a.hp ? e : a), inRange[0])
+        : inRange[0];
       t.angle = Math.atan2(GROUND - 30 - p.y, (tgt.x - p.x) * DIR[sd.team]);
-      if (t.cd <= 0) {
-        t.cd = t.def.cd;
-        t.flashT = 0.1;
-        const kind = t.def.proj;
-        const dist = Math.abs(tgt.x - p.x);
+      if (t.cd > 0) continue;
+      t.cd = st.cd;
+      t.flashT = 0.1;
+      const def = t.def;
+      const kind = def.proj;
+      const n = def.n || 1;
+      for (let k = 0; k < n; k++) {
+        const e = n > 1 ? inRange[k % inRange.length] : tgt;
+        const dist = Math.abs(e.x - p.x);
         S.projs.push({
-          team: sd.team, kind, sx: p.x, sy: p.y, tx: tgt.x, ty: GROUND - 30, target: tgt, t: 0,
-          dur: Math.max(0.1, dist / (PROJ_SPEED[kind] || 400)), arc: kind === 'bullet' ? 0 : dist * (t.def.aoe ? 0.2 : 0.08),
-          dmg: t.dmg * upMul(sd, 'engineers'), pierce: t.def.pierce || 0, aoe: t.def.aoe || 0, dot: t.def.dot ? t.dmg * 0.4 : 0, dotT: t.def.dot ? 4 : 0, stun: 0,
-          x: p.x, y: p.y, px: p.x, py: p.y,
+          team: sd.team, kind, sx: p.x, sy: p.y, tx: e.x, ty: GROUND - 30, target: e, t: -k * 0.07,
+          dur: Math.max(0.1, dist / (PROJ_SPEED[kind] || 400)), arc: kind === 'bullet' || kind === 'plasma' ? 0 : dist * (def.aoe ? 0.2 : 0.08),
+          dmg: st.dmg, pierce: def.pierce || 0, aoe: def.aoe || 0, dot: def.burn ? st.dmg * 0.4 : 0, dotT: def.burn ? 3 : 0,
+          stun: def.effect === 'stun' ? 1.2 : 0, slow: def.effect === 'slow' ? 2.5 : 0, line: def.effect === 'line', burn: !!def.burn,
+          x: p.x, y: p.y, px: p.x, py: p.y, src: null, wname: def.name,
         });
-        Sound.play(kind === 'bullet' ? 'shot' : 'bow');
       }
+      Sound.play(kind === 'bullet' ? 'shot' : 'bow');
     }
   }
 
@@ -918,7 +984,8 @@
     const foeBase = sideOf(1 - p.team).base;
     const hitUnit = (e, scale = 1) => {
       damage(e, p.dmg * scale, p.team, p.pierce, p.src, p.wname);
-      if (p.dot && !e.dead) e.dots.push({ dps: p.dot, t: p.dotT, team: p.team, kind: p.kind, src: p.src, wname: p.wname });
+      if (p.dot && !e.dead) e.dots.push({ dps: p.dot, t: p.dotT, team: p.team, kind: p.burn ? 'fire' : p.kind, src: p.src, wname: p.wname });
+      if (p.slow && !e.dead) e.slowT = Math.max(e.slowT || 0, p.slow);
       if (p.stun && !e.dead) stun(e, p.stun);
     };
     if (p.aoe) {
@@ -945,6 +1012,12 @@
     if (tgt.isBase) { damage(tgt, p.dmg, p.team, p.pierce); hitFx(tgt, {}, p.team); }
     else {
       hitUnit(tgt);
+      if (p.line) {
+        // The bolt carries on through the next two enemies in line.
+        const dir = DIR[p.team];
+        foes.filter((e) => e !== tgt && (e.x - tgt.x) * dir > 0 && (e.x - tgt.x) * dir < 70)
+          .sort((a, c) => (a.x - c.x) * dir).slice(0, 2).forEach((e) => hitUnit(e, 0.7));
+      }
       if (p.kind === 'bullet') emitSparks(tgt.x, GROUND - 30, 2, '#ffe9b0', 90);
       else emitDust(tgt.x, GROUND - 28, 2, 2.5, '200,180,150');
     }
@@ -986,14 +1059,21 @@
     const b = sd.base;
     const era = ERAS[sd.era];
     const emptySlot = b.turrets.slice(0, b.slots).some((t) => !t);
-    if (Math.random() < 0.3) {
+    b.turrets.forEach((t, i) => {
+      if (t && t.odCd <= 0 && foes.filter((u) => Math.abs(u.x - BASE_X[sd.team]) < t.def.r).length >= 3) overdrive(sd, i);
+    });
+    const towersBuilt = b.turrets.filter(Boolean).length;
+    if (Math.random() < (towersBuilt ? 0.35 : 0.6)) {
       if (emptySlot) {
-        const t = era.turrets[Math.random() < 0.5 ? 0 : 1];
-        if (sd.gold > t.cost * 1.7) { buyTurret(sd, t); return; }
-      } else if (b.slots < 3 && sd.gold > slotCost(sd) * 3) { buySlot(sd); return; }
-      else if (!emptySlot) {
+        const t = era.turrets[Math.floor(Math.random() * era.turrets.length)];
+        if (sd.gold > t.cost * (towersBuilt ? 1.5 : 1.15)) { buyTurret(sd, t); return; }
+      } else if (b.slots < MAX_SLOTS && sd.gold > slotCost(sd) * 3) { buySlot(sd); return; }
+      else {
         const old = b.turrets.findIndex((t) => t && t.era < sd.era);
-        if (old >= 0 && sd.gold > era.turrets[1].cost * 2) { b.turrets[old] = null; return; }
+        const pick = era.turrets[Math.floor(Math.random() * era.turrets.length)];
+        if (old >= 0 && sd.gold + b.turrets[old].spent * 0.5 > pick.cost * 1.3) { sellTurret(sd, old); buyTurret(sd, pick, old); return; }
+        const up = b.turrets.findIndex((t) => t && t.level < TOWER_MAX_LV);
+        if (up >= 0 && sd.gold > upgradeCost(b.turrets[up]) * 2.5) { upgradeTurret(sd, up); return; }
       }
     }
 
@@ -2247,55 +2327,124 @@ void main(){
     c.restore();
     b.top = GROUND + top;
 
-    for (let i = 0; i < 3; i++) if (b.turrets[i]) drawTurret(sd.team, i, b.turrets[i]);
+    for (let i = 0; i < MAX_SLOTS; i++) if (b.turrets[i]) drawTurret(sd.team, i, b.turrets[i]);
   }
 
   function drawTurret(team, i, t) {
     const c = ctx;
     const p = turretPos(team, i);
     const dir = DIR[team];
+    const art = t.def.art;
+    const metal = '#2a2c30', wood = '#6a4a2a';
     c.save();
     c.translate(p.x, p.y);
     c.scale(dir, 1);
-    c.fillStyle = '#3a2e22'; rr(c, -10, -3, 20, 7, 2);
-    c.fillStyle = '#5a4632'; c.fillRect(-10, -3, 20, 1.5);
-    c.rotate(Math.max(-0.6, Math.min(1.1, t.angle)));
-    const id = t.def.id;
-    const metal = '#2a2c30', wood = '#6a4a2a';
-    if (id === 'onager' || id === 'trebuchet' || id === 'hornets') {
-      c.fillStyle = wood; c.fillRect(-11, -7, 22, 5);
-      const arm = Math.max(0, Math.min(1, t.cd / t.def.cd));
-      c.save(); c.translate(-4, -5); c.rotate(-0.4 - arm * 1.1);
-      c.fillStyle = '#8a6a3a'; c.fillRect(0, -1.2, 18, 2.4);
-      c.fillStyle = id === 'hornets' ? '#9a8a5a' : '#7a7a74'; circle(c, 18, 0, 3.2);
-      c.restore();
-    } else if (id === 'cannon' || id === 'mortar') {
-      c.fillStyle = wood; circle(c, -3, 3, 4.5);
-      c.fillStyle = '#5a3a20'; circle(c, -3, 3, 1.5);
-      const g = c.createLinearGradient(0, -6, 0, 2);
-      g.addColorStop(0, '#5a5c60'); g.addColorStop(1, '#1e2024');
-      c.fillStyle = g; rr(c, -6, -6, id === 'mortar' ? 14 : 24, 7, 3);
-    } else if (id === 'plasma' || id === 'ion') {
-      c.fillStyle = '#2a2236'; ell(c, 0, -3, 8, 5);
-      c.fillStyle = '#3a3050'; rr(c, 0, -5, id === 'ion' ? 26 : 18, 4.4, 2);
-      onEmit(c, (e) => { e.fillStyle = id === 'ion' ? 'rgba(150,190,255,.9)' : 'rgba(120,255,220,.9)'; circle(e, 0, -3, 2.6); e.fillRect(4, -3.6, id === 'ion' ? 20 : 12, 1.2); });
-    } else if (id === 'swivel' || id === 'm2') {
-      c.fillStyle = metal; c.fillRect(-6, -5, 9, 7); c.fillRect(2, -3.5, 20, 3);
-      c.fillStyle = '#4a4c50'; c.fillRect(2, -3.5, 20, 1);
-      if (id === 'm2') { c.fillStyle = '#5a5a3a'; c.fillRect(-4, 2, 6, 4); }
+    c.fillStyle = '#3a2e22'; rr(c, -11, -3, 22, 7, 2);
+    c.fillStyle = '#5a4632'; c.fillRect(-11, -3, 22, 1.5);
+    // Level pips on the mount
+    c.fillStyle = '#d9b45a';
+    for (let k = 0; k < t.level; k++) c.fillRect(-9 + k * 4, 1.5, 3, 1.5);
+    if (art === 'archers') {
+      // A fighting platform with its crew
+      c.fillStyle = wood; c.fillRect(-11, -10, 22, 7);
+      c.fillStyle = '#4a321e'; for (let k = -10; k < 11; k += 4) c.fillRect(k, -12, 2, 3);
+      const crew = t.def.n ? 3 : 2;
+      for (let k = 0; k < crew; k++) {
+        const x = -6 + k * 6;
+        c.fillStyle = '#c99067'; circle(c, x, -15, 2.2);
+        c.fillStyle = TEAM_COL[team]; c.fillRect(x - 1.8, -13, 3.6, 3);
+        c.strokeStyle = '#5a3a20'; c.lineWidth = 0.9;
+        c.beginPath(); c.arc(x + 3, -14, 3.6, -1.2 + t.angle * 0.3, 1.2 + t.angle * 0.3); c.stroke();
+      }
     } else {
-      c.fillStyle = wood; c.fillRect(-5, -3, 22, 3.5);
-      c.strokeStyle = '#3a2a1a'; c.lineWidth = 1.8;
-      c.beginPath(); c.arc(12, -1.2, 9, -1.3, 1.3); c.stroke();
-      c.strokeStyle = '#e8e0cc'; c.lineWidth = 0.5;
-      line(c, 12 + Math.cos(1.3) * 9, -1.2 - Math.sin(1.3) * 9, 4, -1.2); line(c, 4, -1.2, 12 + Math.cos(1.3) * 9, -1.2 + Math.sin(1.3) * 9);
+      c.rotate(Math.max(-0.6, Math.min(1.1, t.angle)));
+      switch (art) {
+        case 'catapult': {
+          c.fillStyle = wood; c.fillRect(-11, -7, 22, 5);
+          const arm = Math.max(0, Math.min(1, t.cd / t.def.cd));
+          c.save(); c.translate(-4, -5); c.rotate(-0.4 - arm * 1.1);
+          c.fillStyle = '#8a6a3a'; c.fillRect(0, -1.2, 18, 2.4);
+          c.fillStyle = t.def.proj === 'nest' ? '#9a8a5a' : '#7a7a74'; circle(c, 18, 0, 3.2);
+          c.restore();
+          break;
+        }
+        case 'cannon': {
+          c.fillStyle = wood; circle(c, -3, 3, 4.5);
+          c.fillStyle = '#5a3a20'; circle(c, -3, 3, 1.5);
+          const g = c.createLinearGradient(0, -6, 0, 2);
+          g.addColorStop(0, '#5a5c60'); g.addColorStop(1, '#1e2024');
+          c.fillStyle = g; rr(c, -6, -6, t.def.id === 'mortar' ? 14 : 24, 7, 3);
+          break;
+        }
+        case 'gun':
+          c.fillStyle = metal; c.fillRect(-6, -5, 9, 7);
+          for (let k = 0; k < (t.def.n || 1); k++) { c.fillStyle = metal; c.fillRect(2, -3.5 - k * 2.4 + (t.def.n ? 3 : 0), 20, 2.2); }
+          c.fillStyle = '#4a4c50'; c.fillRect(2, -3.5, 20, 0.8);
+          break;
+        case 'rifle':
+          c.fillStyle = '#8f8a6a'; for (let k = 0; k < 3; k++) ell(c, -6 + k * 6, 0, 4, 2.6);
+          c.fillStyle = wood; c.fillRect(-4, -5, 10, 3);
+          c.fillStyle = metal; c.fillRect(4, -4.6, 22, 1.8);
+          c.fillStyle = '#111'; c.fillRect(2, -7.6, 7, 2);
+          break;
+        case 'rpg':
+          c.fillStyle = '#8f8a6a'; for (let k = 0; k < 3; k++) ell(c, -6 + k * 6, 0, 4, 2.6);
+          c.fillStyle = '#4a5a3a'; rr(c, -6, -7, 26, 4.6, 2);
+          c.fillStyle = '#3a3a2a'; poly(c, [[20, -9], [27, -4.7], [20, -0.4]]);
+          break;
+        case 'rack':
+          c.fillStyle = wood; c.fillRect(-10, -4, 14, 4);
+          c.fillStyle = '#4a321e'; rr(c, -4, -14, 18, 11, 1.5);
+          c.fillStyle = '#1a1210'; for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) circle(c, 14, -12 + r * 3.4, 0.9 + k * 0);
+          c.fillStyle = '#a8322a'; c.fillRect(-4, -14, 18, 1.4);
+          break;
+        case 'plasma': case 'ion': {
+          const ion = art === 'ion';
+          c.fillStyle = '#2a2236'; ell(c, 0, -3, 8, 5);
+          c.fillStyle = '#3a3050'; rr(c, 0, -5, ion ? 26 : 18, 4.4, 2);
+          onEmit(c, (e) => { e.fillStyle = ion ? 'rgba(150,190,255,.9)' : 'rgba(120,255,220,.9)'; circle(e, 0, -3, 2.6); e.fillRect(4, -3.6, ion ? 20 : 12, 1.2); });
+          break;
+        }
+        case 'pylon':
+          c.fillStyle = '#3a2a5a'; poly(c, [[-5, 0], [0, -22], [5, 0]]);
+          onEmit(c, (e) => {
+            e.strokeStyle = `rgba(190,140,255,${0.6 + 0.3 * Math.sin(S.t * 5)})`; e.lineWidth = 1;
+            for (let k = 0; k < 3; k++) { e.beginPath(); e.ellipse(0, -10 + k * 3, 9 - k, 2.4, S.t * (k + 1), 0, Math.PI * 2); e.stroke(); }
+          });
+          break;
+        case 'spire':
+          c.fillStyle = '#4a3a5a'; poly(c, [[-4, 0], [0, -26], [4, 0]]);
+          onEmit(c, (e) => {
+            const g = e.createRadialGradient(0, -24, 0, 0, -24, 9);
+            g.addColorStop(0, 'rgba(255,140,240,.95)'); g.addColorStop(1, 'rgba(255,140,240,0)');
+            e.fillStyle = g; circle(e, 0, -24, 9);
+          });
+          break;
+        default: { // ballista
+          c.fillStyle = wood; c.fillRect(-5, -3, 22, 3.5);
+          c.strokeStyle = '#3a2a1a'; c.lineWidth = 1.8;
+          c.beginPath(); c.arc(12, -1.2, 9, -1.3, 1.3); c.stroke();
+          c.strokeStyle = '#e8e0cc'; c.lineWidth = 0.5;
+          line(c, 12 + Math.cos(1.3) * 9, -1.2 - Math.sin(1.3) * 9, 4, -1.2); line(c, 4, -1.2, 12 + Math.cos(1.3) * 9, -1.2 + Math.sin(1.3) * 9);
+          if (t.def.id === 'zhugenu') { c.fillStyle = '#4a321e'; c.fillRect(2, -7, 8, 4); }
+        }
+      }
+      if (t.flashT > 0) onEmit(c, (e) => {
+        const g = e.createRadialGradient(24, -1, 0, 24, -1, 12);
+        g.addColorStop(0, 'rgba(255,230,160,.95)'); g.addColorStop(1, 'rgba(255,150,60,0)');
+        e.fillStyle = g; circle(e, 24, -1, 12);
+      });
     }
-    if (t.flashT > 0) onEmit(c, (e) => {
-      const g = e.createRadialGradient(24, -1, 0, 24, -1, 12);
-      g.addColorStop(0, 'rgba(255,230,160,.95)'); g.addColorStop(1, 'rgba(255,150,60,0)');
-      e.fillStyle = g; circle(e, 24, -1, 12);
-    });
     c.restore();
+    // Overdrive heat and the character bonus star
+    if (t.odT > 0) {
+      ectx.save(); ectx.globalCompositeOperation = 'lighter';
+      const g = ectx.createRadialGradient(p.x, p.y - 4, 0, p.x, p.y - 4, 18);
+      g.addColorStop(0, `rgba(255,140,50,${0.45 + 0.2 * Math.sin(S.t * 14)})`); g.addColorStop(1, 'rgba(255,140,50,0)');
+      ectx.fillStyle = g; circle(ectx, p.x, p.y - 4, 18);
+      ectx.restore();
+    }
+    if (t.syn) { c.fillStyle = '#f2d27a'; star(c, p.x - dir * 14, p.y - 12, 2.6); }
   }
 
   // ── Warriors ────────────────────────────────────────────────────────────
@@ -3370,6 +3519,10 @@ void main(){
       c.fillStyle = '#ffe08a';
       for (let i = 0; i < 3; i++) { const a = S.t * 6 + i * 2.1; star(c, u.x + Math.cos(a) * 8, top - 3 + Math.sin(a) * 2, 1.8); }
     }
+    if (u.slowT > 0) {
+      c.strokeStyle = 'rgba(190,140,255,.8)'; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(u.x, GROUND - 22, 9, 3, S.t * 3, 0, Math.PI * 2); c.stroke();
+    }
     if (u.rallyT > 0) {
       c.strokeStyle = 'rgba(230,184,78,.7)'; c.lineWidth = 1;
       c.beginPath(); c.ellipse(u.x, GROUND - 1, 12, 2.8, 0, 0, Math.PI * 2); c.stroke();
@@ -3923,30 +4076,55 @@ void main(){
       }
     } else {
       const era = ERAS[sd.era];
+      const b = sd.base;
+      // Slots: build, upgrade, overdrive, sell
+      for (let i = 0; i < MAX_SLOTS; i++) {
+        const t = b.turrets[i];
+        const card = el('div', 'card turret slotcard' + (t ? ' built' : ''));
+        if (i >= b.slots) {
+          if (i === b.slots) {
+            card.innerHTML = `<span class="nm">Slot ${i + 1} · locked</span><span class="meta">${slotCost(sd)}</span><span class="role">Build a new tower slot on the stronghold</span><div class="acts"><button class="mini" data-act="slot">Build slot</button></div>`;
+            card.dataset.cost = slotCost(sd);
+          } else card.innerHTML = `<span class="nm">Slot ${i + 1} · locked</span><span class="role">Build slot ${i} first</span>`;
+        } else if (!t) {
+          card.innerHTML = `<span class="nm">Slot ${i + 1} · empty</span><span class="role">Pick a tower on the right to build it here</span>`;
+        } else {
+          const st = towerStats(sd, t);
+          const pips = Array.from({ length: TOWER_MAX_LV }, (_, k) => `<i class="${k < t.level ? 'on' : ''}"></i>`).join('');
+          const upc = t.level < TOWER_MAX_LV ? upgradeCost(t) : null;
+          card.innerHTML = `<span class="nm">${esc(t.def.name)}</span><span class="pips">${pips}</span>
+            <span class="role">${Math.round(st.dmg)} dmg · every ${st.cd.toFixed(2)} s · range ${Math.round(st.range)}${t.syn ? ' · <b class="syn">bonus active</b>' : ''}</span>
+            <div class="acts">
+              <button class="mini" data-act="up" ${upc == null ? 'disabled' : ''} ${upc != null ? `data-cost="${upc}"` : ''}>${upc == null ? 'Max level' : `Upgrade ${upc}`}</button>
+              <button class="mini od" data-act="od" data-slot="${i}">Overdrive</button>
+              <button class="mini" data-act="sell">Sell +${Math.round(t.spent * 0.5)}</button>
+            </div>`;
+        }
+        card.querySelectorAll('button[data-act]').forEach((btn) => btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.act;
+          const err = act === 'slot' ? buySlot(sd) : act === 'up' ? upgradeTurret(sd, i) : act === 'od' ? overdrive(sd, i) : sellTurret(sd, i);
+          if (err) toast(err); else Sound.play(act === 'sell' ? 'coin' : 'ui');
+          buildCards();
+        }));
+        box.appendChild(card);
+      }
+      box.appendChild(el('div', 'cardsep', 'Build'));
+      // Tower shop for this era
       era.turrets.forEach((t) => {
-        const card = el('div', 'card turret');
+        const card = el('div', 'card turret tower');
         card.tabIndex = 0; card.setAttribute('role', 'button');
         const dmg = Math.round(t.dmg0 * era.dmgMul);
-        card.innerHTML = `<span class="nm">${esc(t.name)}</span><span class="meta">${t.cost}</span><span class="role">${dmg} dmg every ${t.cd} s · range ${t.r}${t.aoe ? ' · blast' : ''}${t.dot ? ' · stings' : ''}</span>`;
-        const go = () => { const err = buyTurret(sd, t); if (err) toast(err); else Sound.play('ui'); refreshHud(true); };
+        card.innerHTML = `<span class="nm">${esc(t.name)}</span><span class="meta">${t.cost}</span>
+          <span class="role">${esc(t.culture)} · ${dmg} dmg${t.n ? ` × ${t.n}` : ''} every ${t.cd} s · range ${t.r}</span>
+          <span class="role fx">${esc(TOWER_EFFECT(t))}</span>
+          <span class="role by">+25% while ${esc(t.byNames.join(', '))} ${t.byNames.length > 1 ? 'fight' : 'fights'}</span>`;
+        const go = () => { const err = buyTurret(sd, t); if (err) toast(err); else Sound.play('ui'); buildCards(); };
         card.addEventListener('click', go);
         card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
         card.dataset.cost = t.cost;
         box.appendChild(card);
       });
-      const slot = el('div', 'card turret');
-      slot.tabIndex = 0; slot.setAttribute('role', 'button'); slot.id = 'slotCard';
-      const goSlot = () => { const err = buySlot(sd); if (err) toast(err); else Sound.play('ui'); buildCards(); refreshHud(true); };
-      slot.addEventListener('click', goSlot);
-      slot.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlot(); } });
-      box.appendChild(slot);
-      const sell = el('div', 'card turret');
-      sell.tabIndex = 0; sell.setAttribute('role', 'button');
-      sell.innerHTML = `<span class="nm">Sell a turret</span><span class="meta">+50%</span><span class="role">Removes the top turret and refunds half its cost</span>`;
-      const goSell = () => { const err = sellTurret(sd); if (err) toast(err); else Sound.play('coin'); refreshHud(true); };
-      sell.addEventListener('click', goSell);
-      sell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSell(); } });
-      box.appendChild(sell);
     }
     refreshHud(true);
   }
@@ -4010,11 +4188,12 @@ void main(){
       card.classList.toggle('off', sd.gold < def.cost || sd.queue.length >= MAX_QUEUE || (def.hero && heroBusy));
     }
     for (const card of document.querySelectorAll('#cards .card[data-cost]')) card.classList.toggle('off', sd.gold < +card.dataset.cost);
-    const slot = $('slotCard');
-    if (slot) {
-      if (sd.base.slots >= 3) slot.innerHTML = '<span class="nm">Turret slots</span><span class="meta">3 / 3</span><span class="role">Every slot is built</span>';
-      else slot.innerHTML = `<span class="nm">Add turret slot</span><span class="meta">${slotCost(sd)}</span><span class="role">Slots: ${sd.base.slots} / 3 · turrets: ${sd.base.turrets.filter(Boolean).length}</span>`;
-      slot.classList.toggle('off', sd.base.slots >= 3 || sd.gold < slotCost(sd));
+    for (const btn of document.querySelectorAll('#cards button.mini[data-cost]')) btn.disabled = sd.gold < +btn.dataset.cost;
+    for (const btn of document.querySelectorAll('#cards button.od')) {
+      const t = sd.base.turrets[+btn.dataset.slot];
+      if (!t) continue;
+      btn.disabled = t.odCd > 0;
+      btn.textContent = t.odT > 0 ? `Overdrive ${Math.ceil(t.odT)} s` : t.odCd > 0 ? `Ready in ${Math.ceil(t.odCd)} s` : 'Overdrive';
     }
 
     const q = $('queue');
@@ -4081,7 +4260,7 @@ void main(){
     }
     body.appendChild(grid);
     const arm = el('div', 'armory');
-    arm.innerHTML = E.turrets.map((t) => `<div><b>${esc(t.name)}</b><br>Turret · ${t.cost} gold · ${Math.round(t.dmg0 * E.dmgMul)} dmg every ${t.cd} s · range ${t.r}${t.aoe ? ' · blast' : ''}</div>`).join('') +
+    arm.innerHTML = E.turrets.map((t) => `<div><b>${esc(t.name)}</b><br>Tower · ${esc(t.culture)} · ${t.cost} gold · ${Math.round(t.dmg0 * E.dmgMul)} dmg${t.n ? ` × ${t.n}` : ''} every ${t.cd} s · range ${t.r}<br>${esc(TOWER_EFFECT(t))}<br>+25% while ${esc(t.byNames.join(', '))} on the field</div>`).join('') +
       `<div><b>${esc(E.ability.name)}</b><br>Era attack · ${esc(E.ability.desc)} Recharges in ${E.ability.cd} s.</div>`;
     body.appendChild(arm);
     body.appendChild(el('p', 'note', 'Matchups come from Spike TV’s Deadliest Warrior (2009–2011). A win or loss is shown only where the episode result was confirmed against published episode guides. Loadouts follow the show where sources confirm them; the rest use each warrior’s historically documented weapons. Warriors marked “Added” never appeared on the show. Power ratings are game balance numbers based on each weapon’s reputation, not the show’s simulated kill counts. Episodes featuring terrorist groups, death squads and the Nazi SS are left out.'));
@@ -4308,6 +4487,12 @@ void main(){
     } else if (e.key === 'q' || e.key === 'Q') { const err = useAbility(sd); if (err) toast(err); }
     else if (e.key === 'e' || e.key === 'E') { const err = evolve(sd); if (err) toast(err); }
     else if (e.key === 'p' || e.key === 'P') { S.paused = !S.paused; refreshHud(true); }
+    else if (e.key === 't' || e.key === 'T') {
+      let n = 0;
+      sd.base.turrets.forEach((t, i) => { if (t && t.odCd <= 0) { overdrive(sd, i); n++; } });
+      if (!n) toast('No tower is ready to overdrive');
+      if (tab === 'turrets') buildCards();
+    }
     else if (e.key === 'c' || e.key === 'C') { setStance(sd, 'advance'); refreshHud(true); }
     else if (e.key === 'h' || e.key === 'H') { setStance(sd, 'hold'); refreshHud(true); }
     else if (e.key === 'f' || e.key === 'F') { setStance(sd, 'retreat'); refreshHud(true); }
@@ -4322,6 +4507,20 @@ void main(){
       S.cam = (x - S.mini.x) / S.mini.w * WORLD_W - viewW / 2;
       clampCam();
       return;
+    }
+    if (S.mode === 'play' && !S.over) {
+      const wx = S.cam + x / scale, wy = y / scale;
+      const b = S.sides[0].base;
+      for (let i = 0; i < MAX_SLOTS; i++) {
+        if (!b.turrets[i]) continue;
+        const p = turretPos(0, i);
+        if (Math.abs(wx - p.x) < 16 && Math.abs(wy - (p.y - 4)) < 13) {
+          const err = overdrive(S.sides[0], i);
+          if (err) toast(err);
+          if (tab === 'turrets') buildCards();
+          return;
+        }
+      }
     }
     drag = { x: e.clientX, cam: S.cam };
     cv.setPointerCapture(e.pointerId);
@@ -4404,6 +4603,6 @@ void main(){
   window.__aow = {
     get state() { return S; }, DEFS, drawPortrait, BY_ERA, ERAS, recruit, evolve, useAbility, buyTurret, buySlot, update, newGame, startGame,
     setDifficulty(d) { difficulty = d; },
-    setVariant(v) { variant = v; }, simulate, buyUpgrade, UPGRADES, setStance, REC,
+    setVariant(v) { variant = v; }, simulate, buyUpgrade, UPGRADES, setStance, REC, upgradeTurret, overdrive, sellTurret, towerStats,
   };
 })();
