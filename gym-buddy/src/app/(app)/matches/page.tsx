@@ -15,7 +15,7 @@ export default async function MatchesPage() {
 
   const { data: matches } = await supabase
     .from('matches')
-    .select(`id, mode, created_at, last_message_at,
+    .select(`id, mode, created_at, last_message_at, last_sender_id, last_message_preview,
              a:profiles!matches_user_a_fkey(${PROFILE_COLS}),
              b:profiles!matches_user_b_fkey(${PROFILE_COLS})`)
     .is('unmatched_at', null)
@@ -39,5 +39,5 @@ export default async function MatchesPage() {
   const urls = await signPhotoUrls(supabase, (photos ?? []).map((p) => p.storage_path))
   const avatars = Object.fromEntries((photos ?? []).map((p) => [p.user_id, urls.get(p.storage_path)]))
 
-  return <MatchesView rows={rows} avatars={avatars} />
+  return <MatchesView rows={rows} avatars={avatars} currentUserId={me} />
 }

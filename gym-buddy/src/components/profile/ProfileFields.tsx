@@ -12,6 +12,8 @@ import {
   GENDER_LABELS,
   GOALS,
   GOAL_LABELS,
+  INTENTS,
+  INTENT_LABELS,
   MAX_GOALS,
   LOCATION_PROMPTS,
   MAX_PROMPTS,
@@ -65,6 +67,7 @@ export const defaultMode = (enabled: boolean): ModePrefs => ({
   maxAge: 99,
   maxDistanceMi: 25,
   interestedIn: [],
+  intent: null,
 })
 
 export const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item])
@@ -407,6 +410,37 @@ export function ModeCard({
             </div>
             {err('interestedIn') && <p role="alert" className="mt-2 text-sm text-danger">{err('interestedIn')}</p>}
           </fieldset>
+
+          {mode === 'dating' && (
+            <fieldset>
+              <legend className="mb-1 text-sm font-medium text-muted-fg">Looking for</legend>
+              <p className="mb-3 text-xs text-muted-fg">
+                Shown on your card. People who want something similar see it highlighted and show up a little earlier.
+              </p>
+              {/* One choice, so real radios (arrow keys move between them), styled like the chips above. */}
+              <div className="flex flex-wrap gap-2">
+                {[...INTENTS, null].map((intent) => (
+                  <label
+                    key={intent ?? 'none'}
+                    className={cn(
+                      'inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm font-medium transition-colors duration-150',
+                      'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary',
+                      prefs.intent === intent ? 'border-primary bg-primary text-on-primary' : 'bg-surface text-fg hover:border-muted-fg',
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={id('intent')}
+                      className="sr-only"
+                      checked={prefs.intent === intent}
+                      onChange={() => onChange({ intent })}
+                    />
+                    {intent ? INTENT_LABELS[intent] : 'Prefer not to say'}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           <div>
             <label htmlFor={id('distance')} className="flex justify-between text-sm font-medium text-muted-fg">

@@ -6,7 +6,7 @@ import { LogoMark } from '@/components/Logo'
 import { Slam } from '@/components/Slam'
 import { Button } from '@/components/ui/Button'
 import type { AppMode, DiscoveryCard } from '@/lib/types'
-import { GOAL_LABELS } from '@/lib/validation'
+import { GOAL_LABELS, INTENT_FAMILY, INTENT_TOGETHER } from '@/lib/validation'
 
 // Light that bursts from the collision, as [angle, reach]. Uneven on purpose.
 const SHARDS: [number, number][] = [
@@ -120,7 +120,9 @@ export function MatchDialog({
         </h2>
         <p className="rise mt-3 text-muted-fg" style={{ '--rise-delay': '900ms' } as React.CSSProperties}>
           You and {card.name} {mode === 'dating' ? 'liked each other.' : 'both want to train together.'}
-          {card.sharedGoals[0]
+          {mode === 'dating' && card.intentAligned && card.intent
+            ? ` ${INTENT_TOGETHER[INTENT_FAMILY[card.intent]]}`
+            : card.sharedGoals[0]
             ? ` You’re both working to ${GOAL_LABELS[card.sharedGoals[0] as keyof typeof GOAL_LABELS]?.toLowerCase() ?? 'reach your goals'}.`
             : card.sharedActivities[0] && ` You both do ${card.sharedActivities[0].toLowerCase()}.`}
         </p>

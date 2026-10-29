@@ -1,3 +1,5 @@
+import type { Intent } from './validation'
+
 export type AppMode = 'dating' | 'buddy'
 
 export type ActionResult<T = undefined> =
@@ -26,6 +28,10 @@ export interface DiscoveryCard {
   photoIds: string[]
   prompts: ProfilePrompt[]
   superLikedMe: boolean
+  /** Dating only: what they're looking for (null when they haven't said). */
+  intent: Intent | null
+  /** Their intent fits yours (same family; see INTENT_FAMILY). */
+  intentAligned: boolean
 }
 
 export interface ProfilePrompt {

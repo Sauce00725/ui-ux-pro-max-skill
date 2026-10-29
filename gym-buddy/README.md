@@ -8,13 +8,15 @@ Visual direction: "Volt": graphite and electric lime, condensed italic type, spe
 
 1. **Create a Supabase project** at supabase.com.
 2. **Apply the schema.** Either paste the files in `supabase/migrations/` into the SQL editor
-   in order (`0001_init.sql` → `0007_translation_quota.sql`), or with the Supabase CLI:
+   in order (`0001_init.sql` → `0008_dating_intent_and_chat_state.sql`), or with the Supabase CLI:
    `supabase link --project-ref <ref> && supabase db push`.
 3. **Auth settings** (Authentication → URL Configuration): set Site URL to `http://localhost:3000`
    and add `http://localhost:3000/auth/callback` to Redirect URLs.
 4. **Env vars:** `cp .env.example .env.local` and fill in the Supabase URL and anon/publishable key, plus
    `ANTHROPIC_API_KEY` for translation (server-side only).
 5. `npm install && npm run dev` and open http://localhost:3000.
+
+Checks: `npm run typecheck`, `npm run lint` (TypeScript, React hooks, Next, accessibility) and `npm run build`.
 
 Just want to click around? `npm run prototype` builds a single HTML file with the real screens and motion on
 invented people: no Supabase needed (see `prototype/README.md`).
@@ -55,6 +57,9 @@ other, turn on the same mode, and like each other.
 | Daily Selection deck | `src/components/deck/` (see below) |
 | Design tokens + component styles | `src/styles/tokens.css`, `src/styles/components.css` |
 | Clickable prototype (real screens on demo data, one HTML file) | `prototype/` (`npm run prototype`) |
+| Dating intentions ("Looking for"), aligned-intent ranking | `supabase/migrations/0008_dating_intent_and_chat_state.sql`, `src/lib/validation.ts` (`INTENTS`), `src/components/profile/ProfileFields.tsx` |
+| Openers, Plan a date, first-date safety | `src/lib/conversation.ts`, `src/components/chat/PlanSheet.tsx`, `src/components/chat/ChatWindow.tsx` |
+| Chats: last line + "Your turn" | `matches.last_sender_id` / `last_message_preview` (0008), `src/components/matches/MatchesView.tsx` |
 | Motion (all choreography, reduced-motion safe) | `src/styles/motion.css`, `src/components/Slam.tsx`, `src/app/(app)/template.tsx` |
 | Design system rationale | `design-system/gym-buddy/MASTER.md` |
 | Chat (real-time) | `src/components/chat/useChat.ts`, `src/components/chat/ChatWindow.tsx` |

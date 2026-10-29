@@ -13,6 +13,7 @@ import type {
   SwipeQuota,
   SwipeResult,
 } from '@/lib/types'
+import { intentsAlign } from '@/lib/validation'
 import { bus } from '../bus'
 import { photo } from './art'
 import { ACTIVITIES, seedEvents } from './events'
@@ -195,6 +196,8 @@ function toCard(p: Person): DiscoveryCard {
     photoIds: p.art.map((_, i) => `${p.id}-ph${i}`),
     prompts: p.prompts.map((x, i) => ({ id: `${p.id}-pr${i}`, key: x.key, answer: x.answer })),
     superLikedMe: !!p.superLikedMe,
+    intent: p.intent ?? null,
+    intentAligned: intentsAlign(p.intent, ME.intent),
   }
 }
 
@@ -296,13 +299,19 @@ function createMatch(mode: AppMode, person: Person, input: SwipeInput, admirer?:
 
 export function matchRows(): MatchRow[] {
   return s.matches
-    .map((m) => ({
-      id: m.id,
-      mode: m.mode,
-      last_message_at: m.lastMessageAt ? new Date(m.lastMessageAt).toISOString() : null,
-      other: { id: m.person.id, display_name: m.person.name },
-      sort: m.lastMessageAt ?? Infinity, // new matches (no messages yet) first, like the real query
-    }))
+    .map((m) => {
+      // What touch_match() keeps on the match: the latest message's sender and its first 140 characters.
+      const last = [...(s.messages.get(m.id) ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+      return {
+        id: m.id,
+        mode: m.mode,
+        last_message_at: m.lastMessageAt ? new Date(m.lastMessageAt).toISOString() : null,
+        last_sender_id: last?.sender_id ?? null,
+        last_message_preview: last?.body.trim().slice(0, 140) || null,
+        other: { id: m.person.id, display_name: m.person.name },
+        sort: m.lastMessageAt ?? Infinity, // new matches (no messages yet) first, like the real query
+      }
+    })
     .sort((a, b) => b.sort - a.sort)
     .map(({ sort: _sort, ...row }) => row)
 }
@@ -317,10 +326,19 @@ export function chat(matchId: string) {
   const contextPhotos: Record<string, string> = {}
   ME.art.forEach((_, i) => (contextPhotos[`me-ph${i}`] = myPhoto(i)))
   m.person.art.forEach((_, i) => (contextPhotos[`${m.person.id}-ph${i}`] = personPhoto(m.person, i)))
+  const shared = m.person.activities.filter((a) => ME.activities.includes(a)).sort()
+  const upcoming = events({ when: 'week', radius: 25, activity: null, beginner: false })
+  const fitting = upcoming.filter((e) => e.activityName && shared.includes(e.activityName))
   return {
     matchId: m.id,
     mode: m.mode,
-    other: { name: m.person.name, avatarUrl: personPhoto(m.person, 0) },
+    other: {
+      name: m.person.name,
+      avatarUrl: personPhoto(m.person, 0),
+      prompts: m.person.prompts.map((p) => ({ key: p.key, answer: p.answer })),
+      sharedActivities: shared,
+    },
+    events: (fitting.length ? fitting : upcoming.filter((e) => e.beginnerFriendly)).slice(0, 3),
     messages: [...(s.messages.get(m.id) ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)),
     contextPhotos,
   }

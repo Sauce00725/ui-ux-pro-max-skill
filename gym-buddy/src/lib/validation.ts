@@ -51,6 +51,38 @@ export const GOAL_LABELS: Record<(typeof GOALS)[number], string> = {
 }
 export const MAX_GOALS = 3
 
+/** What someone wants from dating ("Looking for"). Dating mode only; leaving it empty is fine. */
+export const INTENTS = ['life_partner', 'long_term', 'long_open', 'short_open', 'short_term', 'figuring_out'] as const
+export type Intent = (typeof INTENTS)[number]
+export const INTENT_LABELS: Record<Intent, string> = {
+  life_partner: 'A life partner',
+  long_term: 'Something long-term',
+  long_open: 'Long-term, open to short',
+  short_open: 'Short-term, open to long',
+  short_term: 'Something short-term',
+  figuring_out: 'Still figuring it out',
+}
+/**
+ * Intentions that fit together. Mirrors intent_family() in migration 0008, which
+ * ranks aligned people higher; keep the two in sync.
+ */
+export const INTENT_FAMILY: Record<Intent, 'long' | 'open' | 'short'> = {
+  life_partner: 'long',
+  long_term: 'long',
+  long_open: 'open',
+  short_open: 'open',
+  figuring_out: 'open',
+  short_term: 'short',
+}
+/** What two aligned people share, in a sentence (the match scene). */
+export const INTENT_TOGETHER: Record<'long' | 'open' | 'short', string> = {
+  long: 'You both want something long-term.',
+  open: 'You’re both open to seeing where it goes.',
+  short: 'You’re both after something short-term.',
+}
+export const intentsAlign = (a: Intent | null | undefined, b: Intent | null | undefined) =>
+  !!a && !!b && INTENT_FAMILY[a] === INTENT_FAMILY[b]
+
 /**
  * Hinge-style prompts, grouped for the picker. Keys mirror the CHECK in
  * migration 0006; add a key there whenever you add one here.
@@ -207,6 +239,7 @@ const modePrefsSchema = z
     maxAge: z.number().int().min(18).max(99),
     maxDistanceMi: z.number().int().min(1).max(100),
     interestedIn: z.array(z.enum(GENDERS)),
+    intent: z.enum(INTENTS).nullable(),
   })
   .refine((m) => m.minAge <= m.maxAge, { path: ['maxAge'], message: 'Max age must be at least min age' })
 

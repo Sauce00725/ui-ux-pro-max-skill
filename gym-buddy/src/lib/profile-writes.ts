@@ -61,6 +61,7 @@ export async function writeModes(db: Db, userId: string, modes: { buddy: ModePre
         max_age: m.maxAge,
         max_distance_mi: m.maxDistanceMi,
         interested_in: m.interestedIn,
+        intent: mode === 'dating' ? m.intent : null,
       }
     }),
     { onConflict: 'user_id,mode' },

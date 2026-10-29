@@ -1,6 +1,7 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AppMode, DiscoveryCard, LikeReceived, ProfilePrompt, Selection, SuperQuota, SwipeQuota } from './types'
+import type { Intent } from './validation'
 
 /** Columns shared by get_discovery and get_likes_received. */
 interface CardRow {
@@ -24,6 +25,8 @@ interface CardRow {
   shared_goals: string[]
   helps_beginners: boolean
   super_liked_me?: boolean
+  intent: Intent | null
+  intent_aligned: boolean
 }
 
 interface LikeRow extends CardRow {
@@ -66,6 +69,8 @@ function toCard(r: CardRow, urls: Map<string, string>): DiscoveryCard {
     sharedGoals: r.shared_goals,
     helpsBeginners: r.helps_beginners,
     superLikedMe: r.super_liked_me ?? false,
+    intent: r.intent ?? null,
+    intentAligned: r.intent_aligned ?? false,
   }
 }
 

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { BadgeCheck, ChevronUp, Clock, Dumbbell, HeartHandshake, MapPin, MessageCircleHeart, Navigation, Sparkles, Sprout, Star, Target } from 'lucide-react'
-import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, PROMPTS, TRAINING_TIME_LABELS } from '@/lib/validation'
+import { BadgeCheck, ChevronUp, Clock, Dumbbell, Heart, HeartHandshake, MapPin, MessageCircleHeart, Navigation, Sparkles, Sprout, Star, Target } from 'lucide-react'
+import { BEGINNER_MAX_LEVEL, FITNESS_LEVELS, GOAL_LABELS, INTENT_LABELS, PROMPTS, TRAINING_TIME_LABELS } from '@/lib/validation'
 import { TranslateToggle } from '@/components/translate/TranslateToggle'
 import { useFitStretch } from '@/components/useFitStretch'
 import { useTranslation } from '@/components/translate/useTranslation'
@@ -56,6 +56,7 @@ export function ProfileCard({
   ]
   const level = card.fitnessLevel ? FITNESS_LEVELS[card.fitnessLevel - 1] : null
   const startingOut = card.fitnessLevel !== null && card.fitnessLevel <= BEGINNER_MAX_LEVEL
+  const intent = mode === 'dating' ? card.intent : null
   const goalLabel = (g: string) => GOAL_LABELS[g as keyof typeof GOAL_LABELS] ?? g
   const [firstPrompt, ...morePrompts] = card.prompts
 
@@ -185,11 +186,20 @@ export function ProfileCard({
               </button>
             </div>
 
-            {(card.superLikedMe || card.helpsBeginners || startingOut) && (
+            {(card.superLikedMe || card.helpsBeginners || startingOut || intent) && (
               <div className="flex flex-wrap gap-(--space-chip-gap)">
                 {card.superLikedMe && (
                   <span className="chip border-[color:var(--color-super)] text-[color:var(--color-super)] shadow-[0_0_14px_-4px_var(--color-super)]">
                     <Star className="size-3.5" fill="currentColor" aria-hidden /> Super liked you
+                  </span>
+                )}
+                {/* What they're looking for. Volt (the "you share this" colour) when it fits what you want. */}
+                {intent && (
+                  <span className={card.intentAligned ? 'chip chip--shared' : 'chip'}>
+                    <Heart className="size-3.5" fill={card.intentAligned ? 'currentColor' : 'none'} aria-hidden />
+                    <span className="sr-only">Looking for: </span>
+                    {INTENT_LABELS[intent]}
+                    {card.intentAligned && <span className="sr-only"> (fits what you want)</span>}
                   </span>
                 )}
                 {card.helpsBeginners && (

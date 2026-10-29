@@ -76,8 +76,8 @@ function settingsFor() {
       helpsBeginners: true,
     },
     modes: {
-      buddy: { enabled: true, headline: 'Saturday long-run crew, all paces', minAge: 21, maxAge: 55, maxDistanceMi: 25, interestedIn: [...everyone] },
-      dating: { enabled: true, headline: 'Trail miles, then tacos', minAge: 25, maxAge: 40, maxDistanceMi: 25, interestedIn: [...everyone] },
+      buddy: { enabled: true, headline: 'Saturday long-run crew, all paces', minAge: 21, maxAge: 55, maxDistanceMi: 25, interestedIn: [...everyone], intent: null },
+      dating: { enabled: true, headline: 'Trail miles, then tacos', minAge: 25, maxAge: 40, maxDistanceMi: 25, interestedIn: [...everyone], intent: ME.intent },
     },
     prompts: ME.prompts.map((p) => ({ key: p.key as PromptKey, answer: p.answer })),
     photos: ME.art.map((_, i) => ({ path: `${world.MY_ID}/${i}.jpg`, previewUrl: myPhoto(i) })),
@@ -143,7 +143,7 @@ export function Screen() {
     const event = world.event(id)
     screen = event ? <EventDetailView key={id} event={event} attendees={world.attendees(id)} /> : <Missing what="That event" />
   } else if (path === '/matches') {
-    screen = <MatchesView rows={world.matchRows()} avatars={world.avatars()} />
+    screen = <MatchesView rows={world.matchRows()} avatars={world.avatars()} currentUserId={world.MY_ID} />
   } else if (path.startsWith('/matches/')) {
     const id = path.split('/')[2]
     const c = world.chat(id)
@@ -157,6 +157,7 @@ export function Screen() {
         initialMessages={c.messages}
         initialHasMore={false}
         contextPhotos={c.contextPhotos}
+        events={c.events}
       />
     ) : (
       <Missing what="That chat" />

@@ -38,6 +38,7 @@ export default async function SettingsPage() {
           maxAge: m.max_age,
           maxDistanceMi: m.max_distance_mi,
           interestedIn: m.interested_in,
+          intent: m.intent ?? null,
         }
       : defaultMode(false)
   }

@@ -27,6 +27,9 @@ export function BottomNav() {
   // The chat screen is full-height and has its own header.
   const hidden = /^\/matches\/.+/.test(pathname)
   const activeIndex = TABS.findIndex((t) => t.isActive(pathname, mode))
+  // Likes opens on the side you're on: from Training Partners, its likes.
+  const inPartners = (pathname === '/discover' && mode !== 'dating') || (pathname.startsWith('/likes') && mode === 'buddy')
+  const tabs = TABS.map((t) => (t.label === 'Likes' && inPartners ? { ...t, href: '/likes?mode=buddy' } : t))
 
   // The bead's slide is a CSS transition on --dock-index; the stretch is a one-off
   // on top of it (scale composes with the transform), longer for longer trips.
@@ -53,7 +56,7 @@ export function BottomNav() {
       >
         <span ref={beadRef} className="dock-bead" data-hidden={activeIndex < 0 || undefined} aria-hidden />
         <ul className="relative grid h-full grid-cols-5">
-          {TABS.map(({ href, label, icon: Icon }, i) => {
+          {tabs.map(({ href, label, icon: Icon }, i) => {
             const active = i === activeIndex
             return (
               <li key={label}>

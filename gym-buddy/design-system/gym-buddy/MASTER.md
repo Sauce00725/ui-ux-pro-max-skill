@@ -77,6 +77,24 @@ color palette) and these ui-ux-pro-max database matches:
 - **No invented metrics:** readouts show real data (distance, shared activities x/y, picks left,
   refill clock). No fake "compatibility %".
 
+## Dating
+
+- **Intentions** ("Looking for", Dating only, optional): A life partner, Something long-term,
+  Long-term open to short, Short-term open to long, Something short-term, Still figuring it out.
+  Shown as a chip on the card. When theirs fits yours (same family: long / open / short) the chip
+  is volt, the "you share this" colour, and the match scene says so ("You both want something
+  long-term."). Aligned people also rank a little higher; nobody is hidden for wanting something
+  different.
+- **Momentum after a match:** a new chat offers three openers (one from their prompt, one from what
+  you both do, one easy one) and a calendar button that plans a date: local events this week that
+  fit you both, active ideas, and always a low-key "Just a coffee first" (a workout is never
+  required). Every suggestion fills the message box; nothing is sent for you.
+- **Your turn:** Chats shows each conversation's last line ("You: …" when it was you) and a volt
+  YOUR TURN tag with a ringed avatar when you owe a reply. No timers, no expiring matches: slow
+  dating stays slow.
+- **Safety copy** sits wherever a date gets planned: meet in public, tell a friend, get yourself
+  there and back, keep chatting in the app until you're ready, block or report any time.
+
 ## Motion: "Spot → Lock → Launch"
 
 All choreography lives in **`src/styles/motion.css`**. `tokens.css` and `components.css` describe

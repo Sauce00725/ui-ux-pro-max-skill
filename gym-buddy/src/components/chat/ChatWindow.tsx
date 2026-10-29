@@ -3,15 +3,17 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
-import { AlertCircle, ArrowLeft, Ban, EllipsisVertical, Flag, Heart, MessageCircleHeart, SendHorizontal, Star, UserMinus, Users } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Ban, CalendarHeart, EllipsisVertical, Flag, Heart, MessageCircleHeart, SendHorizontal, Star, UserMinus, Users } from 'lucide-react'
 import { Avatar } from '@/components/Avatar'
 import { Button } from '@/components/ui/Button'
 import { blockUser, reportUser, unmatch } from '@/app/(app)/matches/actions'
+import { openersFor } from '@/lib/conversation'
 import { PROMPTS, REPORT_REASONS } from '@/lib/validation'
-import type { AppMode, ChatMessage } from '@/lib/types'
+import type { AppMode, ChatMessage, EventItem } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { TranslateToggle } from '@/components/translate/TranslateToggle'
 import { useTranslation } from '@/components/translate/useTranslation'
+import { PlanSheet } from './PlanSheet'
 import { useChat } from './useChat'
 
 const MAX_LEN = 2000
@@ -21,14 +23,32 @@ interface Props {
   matchId: string
   mode: AppMode
   currentUserId: string
-  other: { name: string; avatarUrl?: string }
+  other: {
+    name: string
+    avatarUrl?: string
+    /** Their prompts, for openers that pick up on what they wrote. */
+    prompts?: { key: string; answer: string }[]
+    /** What you both do, for openers and date ideas. */
+    sharedActivities?: string[]
+  }
   initialMessages: Omit<ChatMessage, 'status'>[]
   initialHasMore: boolean
   /** Signed URLs for photos referenced by "liked your photo" openers, by photo id. */
   contextPhotos?: Record<string, string>
+  /** Upcoming local events that fit you both, for planning something together. */
+  events?: EventItem[]
 }
 
-export function ChatWindow({ matchId, mode, currentUserId, other, initialMessages, initialHasMore, contextPhotos = {} }: Props) {
+export function ChatWindow({
+  matchId,
+  mode,
+  currentUserId,
+  other,
+  initialMessages,
+  initialHasMore,
+  contextPhotos = {},
+  events = [],
+}: Props) {
   const { messages, send, retry, notifyTyping, otherTyping, connected, hasMore, loadOlder } = useChat({
     matchId,
     currentUserId,
@@ -40,9 +60,25 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
   // Only messages newer than what was on screen when the chat opened spring in; opening a
   // long chat, or loading earlier messages, shouldn't animate the history.
   const [openedAt] = useState(() => initialMessages.reduce((t, m) => Math.max(t, Date.parse(m.created_at) || 0), 0))
+  const [planning, setPlanning] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const stickToBottom = useRef(true)
+
+  // Until someone has written a real message, offer openers (like comments don't count).
+  const started = messages.some((m) => m.kind === 'text')
+  const openers = started ? [] : openersFor({ mode, prompts: other.prompts, sharedActivities: other.sharedActivities })
+
+  /** A suggestion goes into the message box, ready to edit; nothing is sent for you. */
+  function fill(text: string) {
+    setDraft(text)
+    requestAnimationFrame(() => {
+      const el = inputRef.current
+      if (!el) return
+      el.focus()
+      el.setSelectionRange(text.length, text.length)
+    })
+  }
 
   // Keep pinned to the newest message unless the user scrolled up to read history.
   useLayoutEffect(() => {
@@ -118,7 +154,9 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           <div className="mx-auto mt-16 max-w-xs text-center text-muted-fg">
             <p className="font-display text-2xl font-bold uppercase text-fg">Say hi to {other.name}</p>
             <p className="mt-2 text-sm">
-              {mode === 'buddy' ? 'Try: “What’s your split this week? Want to train together Saturday?”' : 'Ask about their favorite workout or next race.'}
+              Start with an opener below, or tap the calendar{' '}
+              <CalendarHeart className="inline size-4 align-[-0.2em] text-primary" aria-hidden /> to plan{' '}
+              {mode === 'dating' ? 'a date' : 'a session'}.
             </p>
           </div>
         )}
@@ -177,7 +215,33 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
         }}
         className="border-t border-[color:var(--glass-stroke)] bg-bg/60 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl"
       >
+        {openers.length > 0 && (
+          <div className="mb-3">
+            <p className="hud-label mb-1.5 px-1" id="openers-label">// Need an opener? Tap one to edit it</p>
+            <ul aria-labelledby="openers-label" className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1">
+              {openers.map((o) => (
+                <li key={o} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => fill(o)}
+                    className="w-[15rem] rounded-2xl border border-[color:var(--glass-stroke-strong)] bg-(--glass-fill) px-3 py-2 text-left text-sm leading-snug transition-colors duration-200 hover:bg-(--glass-fill-hover)"
+                  >
+                    {o}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <button
+            type="button"
+            onClick={() => setPlanning(true)}
+            aria-label={mode === 'dating' ? 'Plan a date' : 'Plan a session'}
+            className="glass glass-flat grid size-12 shrink-0 place-items-center rounded-full text-primary transition-colors duration-200 hover:bg-(--glass-fill-hover)"
+          >
+            <CalendarHeart className="size-5" aria-hidden />
+          </button>
           <label htmlFor="message" className="sr-only">Message {other.name}</label>
           <textarea
             id="message"
@@ -212,6 +276,17 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           <p className="mt-1 text-right text-xs text-muted-fg">{draft.length}/{MAX_LEN}</p>
         )}
       </form>
+
+      {planning && (
+        <PlanSheet
+          mode={mode}
+          name={other.name}
+          events={events}
+          sharedActivities={other.sharedActivities ?? []}
+          onPick={fill}
+          onClose={() => setPlanning(false)}
+        />
+      )}
     </main>
   )
 }

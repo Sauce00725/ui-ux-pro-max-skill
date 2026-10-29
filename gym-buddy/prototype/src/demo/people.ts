@@ -1,4 +1,4 @@
-import type { PromptKey } from '@/lib/validation'
+import type { Intent, PromptKey } from '@/lib/validation'
 import type { Motif } from './art'
 
 /*
@@ -31,6 +31,8 @@ export interface Person {
   /** Shown as "Super liked you" on their card. */
   superLikedMe?: boolean
   spanish?: boolean
+  /** Dating only: what they're looking for. */
+  intent?: Intent
 }
 
 /** Someone who liked you before you saw them (the Likes tab). */
@@ -49,6 +51,7 @@ export const ME = {
   email: 'alex@demo.gymbuddy',
   activities: ['Running', 'Weightlifting', 'Hiking', 'Pickleball'],
   goals: ['build_strength', 'stay_consistent'],
+  intent: 'long_term' as Intent,
   art: [
     { seed: 101, motif: 'run' as Motif, mood: 3 },
     { seed: 102, motif: 'lift' as Motif, mood: 0 },
@@ -62,7 +65,7 @@ export const ME = {
 
 export const DATING: Person[] = [
   {
-    id: 'd-jordan', name: 'Jordan', age: 29, city: 'Austin', state: 'TX', distance: 3, level: 4, verified: true,
+    id: 'd-jordan', intent: 'long_term', name: 'Jordan', age: 29, city: 'Austin', state: 'TX', distance: 3, level: 4, verified: true,
     headline: 'Need a Saturday long-run partner',
     times: ['early_morning', 'weekends'], activities: ['Running', 'HYROX', 'Weightlifting'], goals: ['build_endurance', 'train_for_event'],
     prompts: [
@@ -73,7 +76,7 @@ export const DATING: Person[] = [
     likesMe: true,
   },
   {
-    id: 'd-maya', name: 'Maya', age: 27, city: 'Austin', state: 'TX', distance: 4, level: 3,
+    id: 'd-maya', intent: 'long_open', name: 'Maya', age: 27, city: 'Austin', state: 'TX', distance: 4, level: 3,
     headline: 'Pickleball addict, brunch enabler',
     times: ['morning', 'weekends'], activities: ['Pickleball', 'Yoga'], goals: ['stay_consistent', 'feel_better'],
     prompts: [
@@ -83,7 +86,7 @@ export const DATING: Person[] = [
     art: [{ seed: 3, motif: 'court', mood: 3 }, { seed: 4, motif: 'yoga', mood: 5 }],
   },
   {
-    id: 'd-priya', name: 'Priya', age: 31, city: 'Round Rock', state: 'TX', distance: 11, level: 3, verified: true,
+    id: 'd-priya', intent: 'life_partner', name: 'Priya', age: 31, city: 'Round Rock', state: 'TX', distance: 11, level: 3, verified: true,
     headline: 'Trail runner. Slow on purpose.',
     times: ['early_morning'], activities: ['Running', 'Hiking'], goals: ['build_endurance', 'feel_better'],
     prompts: [
@@ -93,7 +96,7 @@ export const DATING: Person[] = [
     art: [{ seed: 5, motif: 'run', mood: 3 }],
   },
   {
-    id: 'd-dev', name: 'Dev', age: 30, city: 'Austin', state: 'TX', distance: 6, level: 4,
+    id: 'd-dev', intent: 'figuring_out', name: 'Dev', age: 30, city: 'Austin', state: 'TX', distance: 6, level: 4,
     headline: 'Lifting, then lingering at the smoothie bar',
     times: ['evening'], activities: ['Weightlifting', 'CrossFit'], goals: ['build_strength'],
     prompts: [
@@ -103,7 +106,7 @@ export const DATING: Person[] = [
     art: [{ seed: 6, motif: 'lift', mood: 5 }, { seed: 7, motif: 'lift', mood: 2 }],
   },
   {
-    id: 'd-theo', name: 'Theo', age: 33, city: 'Cedar Park', state: 'TX', distance: 14, level: 3,
+    id: 'd-theo', intent: 'long_term', name: 'Theo', age: 33, city: 'Cedar Park', state: 'TX', distance: 14, level: 3,
     headline: 'Cyclist, cat dad, terrible at parallel parking',
     times: ['early_morning', 'weekends'], activities: ['Cycling', 'Running'], goals: ['build_endurance', 'stay_consistent'],
     prompts: [
@@ -113,7 +116,7 @@ export const DATING: Person[] = [
     art: [{ seed: 8, motif: 'bike', mood: 4 }],
   },
   {
-    id: 'd-noor', name: 'Noor', age: 26, city: 'Austin', state: 'TX', distance: 2, level: 3, verified: true,
+    id: 'd-noor', intent: 'short_open', name: 'Noor', age: 26, city: 'Austin', state: 'TX', distance: 2, level: 3, verified: true,
     headline: 'Climbing gym regular. Chalk on everything.',
     times: ['evening', 'weekends'], activities: ['Climbing', 'Yoga', 'Hiking'], goals: ['build_strength', 'feel_better'],
     prompts: [
@@ -133,7 +136,7 @@ export const DATING: Person[] = [
     art: [{ seed: 11, motif: 'bike', mood: 1 }],
   },
   {
-    id: 'd-kai', name: 'Kai', age: 29, city: 'Pflugerville', state: 'TX', distance: 13, level: 4,
+    id: 'd-kai', intent: 'long_term', name: 'Kai', age: 29, city: 'Pflugerville', state: 'TX', distance: 13, level: 4,
     headline: 'Swim at six, coffee at seven',
     times: ['early_morning'], activities: ['Swimming', 'Running', 'Triathlon'], goals: ['train_for_event', 'build_endurance'],
     prompts: [
@@ -143,7 +146,7 @@ export const DATING: Person[] = [
     art: [{ seed: 12, motif: 'swim', mood: 1 }],
   },
   {
-    id: 'd-remy', name: 'Remy', age: 32, city: 'Austin', state: 'TX', distance: 7, level: 4, verified: true,
+    id: 'd-remy', intent: 'short_term', name: 'Remy', age: 32, city: 'Austin', state: 'TX', distance: 7, level: 4, verified: true,
     headline: 'Dance cardio instructor. Yes, I’ll make you do it.',
     times: ['evening'], activities: ['Dance fitness', 'Yoga'], goals: ['stay_consistent', 'feel_better'],
     prompts: [
@@ -153,7 +156,7 @@ export const DATING: Person[] = [
     art: [{ seed: 13, motif: 'yoga', mood: 2 }, { seed: 14, motif: 'yoga', mood: 5 }],
   },
   {
-    id: 'd-sasha', name: 'Sasha', age: 25, city: 'Austin', state: 'TX', distance: 3, level: 1,
+    id: 'd-sasha', intent: 'figuring_out', name: 'Sasha', age: 25, city: 'Austin', state: 'TX', distance: 3, level: 1,
     headline: 'New to the gym. No judgment, please.',
     times: ['midday'], activities: ['Learning the gym', 'Walking'], goals: ['get_in_shape', 'stay_consistent'],
     prompts: [
@@ -163,7 +166,7 @@ export const DATING: Person[] = [
     art: [{ seed: 15, motif: 'lift', mood: 3 }],
   },
   {
-    id: 'd-wren', name: 'Wren', age: 34, city: 'Lakeway', state: 'TX', distance: 17, level: 3,
+    id: 'd-wren', intent: 'life_partner', name: 'Wren', age: 34, city: 'Lakeway', state: 'TX', distance: 17, level: 3,
     headline: 'Rower and reader',
     times: ['early_morning', 'weekends'], activities: ['Hiking', 'Swimming'], goals: ['feel_better', 'stay_consistent'],
     prompts: [
@@ -279,7 +282,7 @@ export const BUDDIES: Person[] = [
 export const ADMIRERS: Record<'dating' | 'buddy', Admirer[]> = {
   dating: [
     {
-      id: 'ld-camila', name: 'Camila', age: 28, city: 'Austin', state: 'TX', distance: 3, level: 4, verified: true, spanish: true,
+      id: 'ld-camila', intent: 'long_term', name: 'Camila', age: 28, city: 'Austin', state: 'TX', distance: 3, level: 4, verified: true, spanish: true,
       headline: 'Corredora y fan del tamal de los domingos',
       times: ['early_morning'], activities: ['Running', 'Yoga'], goals: ['train_for_event', 'feel_better'],
       prompts: [{ key: 'weekend_find_me', answer: 'En el sendero antes de las siete, con café en el termo.' }],
@@ -288,7 +291,7 @@ export const ADMIRERS: Record<'dating' | 'buddy', Admirer[]> = {
       liked: { kind: 'photo', index: 0 }, likedAgoMin: 40,
     },
     {
-      id: 'ld-ari', name: 'Ari', age: 30, city: 'Austin', state: 'TX', distance: 5, level: 3,
+      id: 'ld-ari', intent: 'long_open', name: 'Ari', age: 30, city: 'Austin', state: 'TX', distance: 5, level: 3,
       headline: 'Lifts heavy, laughs louder',
       times: ['evening'], activities: ['Weightlifting', 'Hiking'], goals: ['build_strength', 'stay_consistent'],
       prompts: [{ key: 'gym_pet_peeve', answer: 'Curling in the squat rack. Come on.' }],

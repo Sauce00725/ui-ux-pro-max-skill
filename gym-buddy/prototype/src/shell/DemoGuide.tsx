@@ -20,7 +20,7 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: 'Get a match',
-    body: 'In Match, swipe the first card right, or tap ♥, or press →. Jordan likes you back, so the match scene plays.',
+    body: 'In Match, swipe the first card right, or tap ♥, or press →. Jordan likes you back, so the match scene plays. The volt “Something long-term” chip means Jordan wants what you want.',
   },
   {
     title: 'Try every way to swipe',
@@ -35,8 +35,12 @@ const STEPS: { title: string; body: string }[] = [
     body: 'The dock’s bead stretches to the new tab and the screen slides the way you travelled. Alexandria super-liked you here.',
   },
   {
+    title: 'Start the conversation',
+    body: 'From the match, tap Send a message. Tap an opener, or the calendar to plan a date from nearby events and ideas you’d both like. It fills your message; you send it.',
+  },
+  {
     title: 'Likes, then chat',
-    body: 'Likes shows who liked you first; liking back is free. In Chats, open Marisol, tap Translate on her Spanish, then send a message and wait for the reply.',
+    body: 'Likes shows who liked you first; liking back is free. Chats marks whose turn it is. Open Marisol, tap Translate on her Spanish, then send a message and wait for the reply.',
   },
   {
     title: 'Events and profile',
