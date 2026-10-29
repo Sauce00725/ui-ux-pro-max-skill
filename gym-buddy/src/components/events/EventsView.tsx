@@ -67,7 +67,7 @@ export function EventsView({
               {EVENT_WHEN[w]}
             </Link>
           ))}
-          <Link href={href({ beginner: !filters.beginner })} className={chip(filters.beginner)} aria-pressed={filters.beginner}>
+          <Link href={href({ beginner: !filters.beginner })} className={chip(filters.beginner)} aria-current={filters.beginner ? 'true' : undefined}>
             <Sprout className="size-3.5" aria-hidden /> Beginner-friendly
           </Link>
         </div>

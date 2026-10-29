@@ -16,3 +16,8 @@ export function fitStretch(text: string, charsAtNormal: number, max = 75): strin
   const pct = Math.round((100 * charsAtNormal) / Math.max(text.length, 1))
   return `${Math.max(50, Math.min(max, pct))}%`
 }
+
+/** Whether the ISO time `iso` is more than `ms` ago. */
+export function olderThan(iso: string, ms: number) {
+  return Date.now() - Date.parse(iso) > ms
+}

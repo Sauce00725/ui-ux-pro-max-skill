@@ -1,23 +1,42 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
+
+/*
+ * One 1-second clock for every countdown on the page. While anything is
+ * listening it ticks; when the last countdown unmounts it stops.
+ */
+let now = Date.now()
+let timer = 0
+const listeners = new Set<() => void>()
+
+function subscribeClock(onTick: () => void) {
+  listeners.add(onTick)
+  if (listeners.size === 1) {
+    now = Date.now() // fresh as soon as the first countdown appears
+    timer = window.setInterval(() => {
+      now = Date.now()
+      listeners.forEach((l) => l())
+    }, 1000)
+  }
+  return () => {
+    listeners.delete(onTick)
+    if (listeners.size === 0) window.clearInterval(timer)
+  }
+}
+const noClock = () => () => {}
+const readClock = () => now
+const readServerClock = () => null // the server renders a placeholder; the browser fills in the time
 
 /**
  * Milliseconds until `target` (ISO string), ticking every second.
- * Returns null until mounted so server and client markup match.
+ * Returns null on the server and during hydration so both markups match.
  */
 export function useCountdown(target: string | null, onElapsed?: () => void) {
-  const [now, setNow] = useState<number | null>(null)
+  const clock = useSyncExternalStore<number | null>(target ? subscribeClock : noClock, readClock, readServerClock)
   const fired = useRef<string | null>(null)
 
-  useEffect(() => {
-    setNow(Date.now())
-    if (!target) return
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [target])
-
-  const ms = target && now !== null ? Math.max(0, Date.parse(target) - now) : null
+  const ms = target && clock !== null ? Math.max(0, Date.parse(target) - clock) : null
 
   useEffect(() => {
     if (target && ms === 0 && fired.current !== target) {

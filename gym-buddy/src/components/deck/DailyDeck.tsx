@@ -40,7 +40,7 @@ export function DailyDeck({
 }) {
   const deck = useDailyDeck({ mode, initialCards, initialQuota, initialSuperQuota, api })
   const { view, state } = deck
-  const stageRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLElement>(null)
   const pendingExtras = useRef<LikeExtras>({})
   const [composer, setComposer] = useState<{ card: DiscoveryCard; target: LikeTarget } | null>(null)
 

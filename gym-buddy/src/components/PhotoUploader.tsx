@@ -97,9 +97,9 @@ export function PhotoUploader({
 
           if (photo) {
             return (
-              <li key={photo.path} className="relative aspect-[3/4] overflow-hidden rounded-xl bg-card">
+              <li key={photo.path} aria-label={i === 0 ? 'Photo 1, your main photo' : `Photo ${i + 1}`} className="relative aspect-[3/4] overflow-hidden rounded-xl bg-card">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.previewUrl} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+                <img src={photo.previewUrl} alt="" className="size-full object-cover" />
                 {i === 0 ? (
                   <span className="absolute bottom-2 left-2 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-on-primary">
                     Main

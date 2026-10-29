@@ -28,12 +28,14 @@ export function LikeComposer({
   onClose: () => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
+  const commentRef = useRef<HTMLTextAreaElement>(null)
   const [comment, setComment] = useState('')
   const superMs = useCountdown(superQuota.remaining > 0 ? null : superQuota.resetsAt)
   const canSuper = superQuota.remaining > 0
 
   useEffect(() => {
     ref.current?.showModal()
+    commentRef.current?.focus() // start where people type, not on the close button
   }, [])
 
   const send = (asSuper: boolean) => {
@@ -69,7 +71,7 @@ export function LikeComposer({
       <div className="mt-4">
         {target.kind === 'photo' ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={target.url} alt={`${card.name}’s photo`} className="h-40 w-full rounded-panel object-cover" />
+          <img src={target.url} alt="" className="h-40 w-full rounded-panel object-cover" />
         ) : (
           <div className="rounded-panel border border-[color:var(--glass-stroke)] bg-[color:var(--glass-fill)] p-4">
             <p className="hud-label">{PROMPTS[target.key as keyof typeof PROMPTS] ?? target.key}</p>
@@ -83,10 +85,10 @@ export function LikeComposer({
       </label>
       <textarea
         id="like-comment"
+        ref={commentRef}
         value={comment}
         maxLength={LIKE_COMMENT_MAX}
         rows={3}
-        autoFocus
         onChange={(e) => setComment(e.target.value)}
         placeholder={target.kind === 'prompt' ? 'Respond to their answer…' : 'Say something about this photo…'}
         className="mt-1.5 w-full resize-none rounded-panel border bg-surface px-4 py-3 text-base focus:border-primary focus:outline-none"

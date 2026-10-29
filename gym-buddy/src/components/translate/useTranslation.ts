@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { detectLanguage, type Lang } from '@/lib/language'
 import type { TranslatedText } from '@/lib/types'
 import { useTranslator } from './TranslatorContext'
@@ -24,10 +24,11 @@ export function useTranslation(texts: string[]) {
   const translate = useTranslator()
   const [target] = useMyLanguage()
   const key = texts.join('\u0001')
-  const [state, setState] = useState<State>({ status: 'idle' })
-
-  // New texts or a new target language: start over.
-  useEffect(() => setState({ status: 'idle' }), [key, target])
+  // State belongs to one set of texts in one language; new texts or a new target start over.
+  const scope = `${target}\u0002${key}`
+  const [saved, setSaved] = useState<{ scope: string; state: State }>({ scope, state: { status: 'idle' } })
+  const state: State = saved.scope === scope ? saved.state : { status: 'idle' }
+  const setState = (next: State) => setSaved({ scope, state: next })
 
   const offer = useMemo(
     () => target !== null && texts.some((t) => {

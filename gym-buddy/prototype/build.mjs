@@ -6,6 +6,7 @@
  *
  *   npm run prototype            → prototype/dist/index.html (open it in a browser)
  *   npm run prototype -- --fonts → also embeds Saira and JetBrains Mono (needs a prior `next build`)
+ *   npm run prototype -- --dev   → React's development build, unminified: shows React's warnings
  *
  * How the real code runs without its backend: esbuild swaps the modules that
  * talk to Next or Supabase (next/link, next/navigation, the server actions and
@@ -54,7 +55,7 @@ const stubs = {
   },
 }
 
-async function script() {
+async function script({ dev = false } = {}) {
   const out = await build({
     entryPoints: [path.join(HERE, 'src', 'main.tsx')],
     tsconfig: path.join(HERE, 'tsconfig.json'),
@@ -64,9 +65,9 @@ async function script() {
     platform: 'browser',
     target: 'es2022',
     jsx: 'automatic',
-    minify: true,
+    minify: !dev,
     legalComments: 'none',
-    define: { 'process.env.NODE_ENV': '"production"' },
+    define: { 'process.env.NODE_ENV': dev ? '"development"' : '"production"' },
     plugins: [stubs],
     logLevel: 'error', // 'use client' directives are noise here
   })
@@ -97,20 +98,21 @@ async function embeddedFonts() {
       faces.push(rule.replace(/url\([^)]+\)/, `url(data:font/woff2;base64,${data})`).replace(/unicode-range:[^;}]+/, ''))
     }
   }
-  if (!faces.length) throw new Error('No fonts found: run `next build` first, or leave out --fonts.')
+  if (!faces.length) throw new Error('No fonts found: run `next build` first (`next dev` replaces those files), or leave out --fonts.')
   return faces.join('\n')
 }
 
 const GOOGLE_FONTS =
   'https://fonts.googleapis.com/css2?family=Saira:ital,wdth,wght@0,50..125,100..900;1,50..125,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 
-export async function buildParts({ fonts = false } = {}) {
-  const [js, css, fontFaces] = await Promise.all([script(), styles(), fonts ? embeddedFonts() : Promise.resolve('')])
+export async function buildParts({ fonts = false, dev = false } = {}) {
+  const [js, css, fontFaces] = await Promise.all([script({ dev }), styles(), fonts ? embeddedFonts() : Promise.resolve('')])
   return { js, css: fontFaces + css, fontLink: fonts ? null : GOOGLE_FONTS }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { js, css, fontLink } = await buildParts({ fonts: process.argv.includes('--fonts') })
+  const dev = process.argv.includes('--dev')
+  const { js, css, fontLink } = await buildParts({ fonts: process.argv.includes('--fonts'), dev })
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -128,7 +130,7 @@ ${fontLink ? `<link rel="stylesheet" href="${fontLink}">` : ''}
 </html>
 `
   await mkdir(path.join(HERE, 'dist'), { recursive: true })
-  const file = path.join(HERE, 'dist', 'index.html')
+  const file = path.join(HERE, 'dist', dev ? 'dev.html' : 'index.html')
   await writeFile(file, html)
-  console.log(`prototype/dist/index.html  ${(html.length / 1024).toFixed(0)} KB  (js ${(js.length / 1024).toFixed(0)} KB, css ${(css.length / 1024).toFixed(0)} KB)`)
+  console.log(`prototype/dist/${dev ? 'dev' : 'index'}.html  ${(html.length / 1024).toFixed(0)} KB  (js ${(js.length / 1024).toFixed(0)} KB, css ${(css.length / 1024).toFixed(0)} KB)`)
 }

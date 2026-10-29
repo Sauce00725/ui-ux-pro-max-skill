@@ -42,7 +42,7 @@ export function useChat({
   initialMessages: MessageRow[]
   initialHasMore: boolean
 }) {
-  const supabase = useRef(createClient()).current
+  const [supabase] = useState(createClient)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const typingTimer = useRef<number | undefined>(undefined)
   const lastTypingSent = useRef(0)

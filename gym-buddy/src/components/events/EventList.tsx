@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { Clock, MapPin, Sprout, Users } from 'lucide-react'
 import type { EventItem } from '@/lib/types'
+import { useMounted } from '@/components/useMounted'
 import { cn } from '@/lib/utils'
 import { dateBlock, dayKey, dayLabel, formatCost, timeRange } from './format'
 import { RsvpButton } from './RsvpButton'
@@ -13,8 +13,7 @@ import { RsvpButton } from './RsvpButton'
  * the viewer's timezone without a server/client mismatch.
  */
 export function EventList({ events }: { events: EventItem[] }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const mounted = useMounted()
 
   if (!mounted) {
     return (

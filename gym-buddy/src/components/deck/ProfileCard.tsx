@@ -235,8 +235,14 @@ export function ProfileCard({
               </div>
             )}
 
-            <div className="deck-details" data-open={open || undefined}>
-              <div data-no-drag className="deck-details-scroll space-y-(--space-panel-gap) overflow-y-auto overscroll-contain pt-1">
+            <div className="deck-details" data-open={open || undefined} inert={!open}>
+              <div
+                data-no-drag
+                role="region"
+                aria-label={`More about ${card.name}`}
+                tabIndex={open ? 0 : -1}
+                className="deck-details-scroll space-y-(--space-panel-gap) overflow-y-auto overscroll-contain pt-1"
+              >
                 {chips.length > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="hud-label">Shared</span>

@@ -33,7 +33,7 @@ export function SwipeControls({
           <X className="size-7" strokeWidth={2.5} aria-hidden />
         </button>
         <button type="button" className="ctl ctl--super" disabled={superDisabled} onClick={onSuper}
-          aria-label={`Super Like${name ? ` ${name}` : ''} (${superLeft} left today)`}>
+          aria-label={`Super Like${name ? ` ${name}` : ''}, ${superLeft} left today`}>
           <Star className="size-6" strokeWidth={2.25} fill={superDisabled ? 'none' : 'currentColor'} aria-hidden />
           <span className="ctl-badge" aria-hidden>{superLeft}</span>
         </button>

@@ -47,13 +47,13 @@ const STEPS: { title: string; body: string }[] = [
 export function DemoGuide() {
   const { path } = useAppRouter()
   const [open, setOpen] = useState(false)
-  const [hint, setHint] = useState(false)
+  const [hint, setHint] = useState<'waiting' | 'shown' | 'done'>('waiting')
 
   // Once the landing intro has played, point at the guide for anyone who hasn't found it.
   useEffect(() => {
-    if (path !== '/' || open) return setHint(false)
-    const show = window.setTimeout(() => setHint(true), 3200)
-    const hide = window.setTimeout(() => setHint(false), 12_000)
+    if (path !== '/' || open) return
+    const show = window.setTimeout(() => setHint((h) => (h === 'waiting' ? 'shown' : h)), 3200)
+    const hide = window.setTimeout(() => setHint('done'), 12_000)
     return () => {
       window.clearTimeout(show)
       window.clearTimeout(hide)
@@ -66,11 +66,19 @@ export function DemoGuide() {
   return (
     <>
       <div className="demo-pill-rail" data-early={early || undefined}>
-        <button type="button" className="demo-pill glass glass-flat hud-label text-fg" onClick={() => setOpen(true)} aria-haspopup="dialog">
+        <button
+          type="button"
+          className="demo-pill glass glass-flat hud-label text-fg"
+          onClick={() => {
+            setOpen(true)
+            setHint('done')
+          }}
+          aria-haspopup="dialog"
+        >
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" aria-hidden />
           Prototype
         </button>
-        {hint && (
+        {hint === 'shown' && path === '/' && !open && (
           <p className="demo-hint rise glass glass-flat" role="note">
             New here? Open the guide.
           </p>
@@ -91,7 +99,7 @@ function Guide({ onClose }: { onClose: () => void }) {
 
   const close = () => ref.current?.close()
   /** Run a tool, close the guide, and land where the effect shows. */
-  const run = (go: string | null, tool: () => void) => () => {
+  const run = (go: string | null, tool: () => void) => {
     tool()
     if (go) bus.navigate(go)
     close()
@@ -139,11 +147,11 @@ function Guide({ onClose }: { onClose: () => void }) {
 
         <h3 className="hud-label mt-6 text-primary">// Shortcuts</h3>
         <div className="mt-2 grid gap-2">
-          <ToolButton icon={<Zap className="size-4" aria-hidden />} onClick={run('/discover?mode=dating', () => tools.picksLeft(1))}>
+          <ToolButton icon={<Zap className="size-4" aria-hidden />} onClick={() => run('/discover?mode=dating', () => tools.picksLeft(1))}>
             Picks left: 1
             <span className="text-muted-fg">then swipe once to see the quota screen and refill clock</span>
           </ToolButton>
-          <ToolButton icon={<Rewind className="size-4" aria-hidden />} onClick={run('/discover?mode=dating', () => tools.skipWait())}>
+          <ToolButton icon={<Rewind className="size-4" aria-hidden />} onClick={() => run('/discover?mode=dating', () => tools.skipWait())}>
             Skip the 6-hour wait
             <span className="text-muted-fg">fresh picks and a fresh Super Like</span>
           </ToolButton>
@@ -159,10 +167,10 @@ function Guide({ onClose }: { onClose: () => void }) {
             Every like is a match
             <span className="text-muted-fg">{nextMatches ? 'on: the next like you send matches' : 'off: only people who like you back match'}</span>
           </ToolButton>
-          <ToolButton icon={<Rewind className="size-4" aria-hidden />} onClick={run('/', () => bus.remount())}>
+          <ToolButton icon={<Rewind className="size-4" aria-hidden />} onClick={() => run('/', () => bus.remount())}>
             Replay the landing intro
           </ToolButton>
-          <ToolButton icon={<RotateCcw className="size-4" aria-hidden />} onClick={run('/', () => tools.reset())}>
+          <ToolButton icon={<RotateCcw className="size-4" aria-hidden />} onClick={() => run('/', () => tools.reset())}>
             Reset the demo
             <span className="text-muted-fg">matches, messages, RSVPs and picks go back to the start</span>
           </ToolButton>

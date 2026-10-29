@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
 import { AlertCircle, ArrowLeft, Ban, EllipsisVertical, Flag, Heart, MessageCircleHeart, SendHorizontal, Star, UserMinus, Users } from 'lucide-react'
 import { Avatar } from '@/components/Avatar'
@@ -80,7 +81,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
   const lastOwnSent = [...messages].reverse().find((m) => m.sender_id === currentUserId && m.status === 'sent')
 
   return (
-    <div className="mx-auto flex h-dvh max-w-2xl flex-col">
+    <main className="mx-auto flex h-dvh max-w-2xl flex-col">
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-[color:var(--glass-stroke)] bg-bg/60 px-2 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <Link href="/matches" aria-label="Back to chats" className="grid size-11 place-items-center rounded-full transition-colors duration-200 hover:bg-(--glass-fill-hover)">
@@ -88,7 +89,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
         </Link>
         <Avatar url={other.avatarUrl} name={other.name} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{other.name}</p>
+          <h1 className="truncate font-semibold">{other.name}</h1>
           <p className="flex items-center gap-1 text-xs text-muted-fg">
             {mode === 'dating' ? <Heart className="size-3" aria-hidden /> : <Users className="size-3" aria-hidden />}
             {mode === 'dating' ? 'Dating match' : 'Training partner'}
@@ -211,7 +212,7 @@ export function ChatWindow({ matchId, mode, currentUserId, other, initialMessage
           <p className="mt-1 text-right text-xs text-muted-fg">{draft.length}/{MAX_LEN}</p>
         )}
       </form>
-    </div>
+    </main>
   )
 }
 
@@ -245,7 +246,7 @@ function LikeOpener({
         <div className={cn('glass glass-flat max-w-[75%] overflow-hidden rounded-panel', ctx.super && 'border-[color:var(--color-super)]/50 shadow-[0_0_24px_-10px_var(--color-super)]')}>
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoUrl} alt={`${mine ? otherName : 'Your'} photo`} className="h-36 w-28 object-cover" />
+            <img src={photoUrl} alt="" className="h-36 w-28 object-cover" />
           ) : (
             <div className="p-3">
               <p className="hud-label">{question}</p>
@@ -414,6 +415,7 @@ function ConfirmDialog({
 }
 
 function ReportDialog({ matchId, name, onClose }: { matchId: string; name: string; onClose: () => void }) {
+  const router = useRouter()
   const modal = useModal(onClose)
   const [reason, setReason] = useState<keyof typeof REPORT_REASONS | ''>('')
   const [details, setDetails] = useState('')
@@ -423,7 +425,8 @@ function ReportDialog({ matchId, name, onClose }: { matchId: string; name: strin
 
   if (done) {
     return (
-      <dialog {...modal} onClose={() => (window.location.href = '/matches')}>
+      // Reporting also blocks them, so this chat is gone: go back to the list.
+      <dialog {...modal} onClose={() => router.replace('/matches')}>
         <h2 className="font-display text-2xl font-bold uppercase">Thanks for telling us</h2>
         <p className="mt-2 text-muted-fg">
           Our team reviews every report. You won’t see {name} again. If you’re in danger, call 911.

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { olderThan } from '@/lib/utils'
 import { BottomNav } from '@/components/BottomNav'
 import { TopBar } from '@/components/TopBar'
 
@@ -24,7 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (profile.status === 'banned') redirect('/login?error=account_suspended')
 
   // Feeds rank recently active people higher; refresh at most hourly.
-  if (Date.now() - new Date(profile.last_active_at).getTime() > ACTIVE_PING_MS) {
+  if (olderThan(profile.last_active_at, ACTIVE_PING_MS)) {
     await supabase.from('profiles').update({ last_active_at: new Date().toISOString() }).eq('id', user.id)
   }
 

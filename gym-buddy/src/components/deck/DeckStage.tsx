@@ -13,13 +13,13 @@ export function DeckStage({
   className,
   children,
 }: {
-  ref?: React.Ref<HTMLDivElement>
+  ref?: React.Ref<HTMLElement>
   style?: React.CSSProperties
   className?: string
   children: React.ReactNode
 }) {
   return (
-    <div ref={ref} style={style} className={cn('deck-stage', className)}>
+    <main ref={ref} style={style} className={cn('deck-stage', className)}>
       <div aria-hidden className="deck-orbs">
         <div className="deck-orb deck-orb--rose" />
         <div className="deck-orb deck-orb--ember" />
@@ -28,6 +28,6 @@ export function DeckStage({
         <div className="deck-grid" />
       </div>
       {children}
-    </div>
+    </main>
   )
 }

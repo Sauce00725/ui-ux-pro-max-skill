@@ -27,7 +27,7 @@ export function TranslationPreference() {
             <label
               key={l}
               className={cn(
-                'flex min-h-12 cursor-pointer items-center justify-center rounded-panel border font-semibold transition-colors',
+                'flex min-h-12 cursor-pointer items-center justify-center rounded-panel border font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary',
                 lang === l ? 'border-primary bg-primary/10 text-primary' : 'border-[color:var(--glass-stroke)] hover:border-[color:var(--glass-stroke-strong)]',
               )}
             >

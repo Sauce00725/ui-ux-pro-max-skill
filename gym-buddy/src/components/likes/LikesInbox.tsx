@@ -87,7 +87,7 @@ function likedWhat(like: LikeReceived) {
 function LikedThumb({ like }: { like: LikeReceived }) {
   if (like.likedPhotoUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={like.likedPhotoUrl} alt="Your liked photo" className="h-16 w-12 shrink-0 rounded-chip object-cover" />
+    return <img src={like.likedPhotoUrl} alt="" className="h-16 w-12 shrink-0 rounded-chip object-cover" />
   }
   return null
 }

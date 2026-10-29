@@ -57,8 +57,11 @@ type Sample = { x: number; y: number; t: number }
 
 export function useSwipeGesture({ stageRef, cardKey, enabled, canSuper, onCommit, onExited }: Options) {
   const cardRef = useRef<HTMLElement | null>(null)
+  // Handlers read the latest props through this ref (updated after each render, before paint).
   const callbacks = useRef({ onCommit, onExited, enabled, canSuper })
-  callbacks.current = { onCommit, onExited, enabled, canSuper }
+  useLayoutEffect(() => {
+    callbacks.current = { onCommit, onExited, enabled, canSuper }
+  })
 
   const g = useRef({
     pointerId: -1,
