@@ -81,6 +81,22 @@
     border: 1px solid var(--blood); padding: 6px 12px; border-radius: 4px; font-weight: 500; opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   #toast.show { opacity: 1; }
+  /* New-era unlock panel: the warriors and towers the new age brings. */
+  #unlock {
+    position: absolute; left: 50%; bottom: 10px; transform: translate(-50%, 8px); width: min(640px, calc(100% - 24px));
+    background: rgba(21,17,12,.94); border: 1px solid var(--brass); border-radius: 6px; padding: 8px 12px 10px;
+    opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; cursor: pointer;
+  }
+  #unlock.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  #unlock .uh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  #unlock .uh b { font-family: var(--display); font-size: 22px; font-weight: 500; color: var(--brass); letter-spacing: .02em; }
+  #unlock .uh span { font-size: 12px; color: var(--bone); opacity: .75; }
+  #unlock .ur { display: flex; gap: 6px; overflow-x: auto; margin-top: 6px; padding-bottom: 2px; }
+  #unlock .uw { flex: 0 0 auto; width: 64px; text-align: center; font-size: 11px; line-height: 1.15; }
+  #unlock .uw canvas { width: 52px; height: 52px; display: block; margin: 0 auto 3px; border-radius: 4px; border: 1px solid var(--line); }
+  #unlock .uw.hero canvas { border-color: var(--brass); }
+  #unlock .ut { margin-top: 6px; font-size: 12px; color: var(--bone); opacity: .85; }
+  #unlock .ut em { font-style: normal; color: var(--brass); }
 
   /* ── Recruit dock ── */
   .dock {
@@ -306,6 +322,11 @@
     .card.upgrade { width: 150px; }
     .info { width: 30px; height: 30px; line-height: 28px; font-size: 12px; right: 1px; top: 1px; }
     #banner { top: 30%; font-size: clamp(26px, 5vw, 44px); }
+    #unlock { padding: 5px 8px 6px; bottom: 6px; }
+    #unlock .uh b { font-size: 18px; }
+    #unlock .uw { width: 52px; font-size: 10px; }
+    #unlock .uw canvas { width: 40px; height: 40px; }
+    #unlock .ut { display: none; }
     .sheet { padding: 16px 18px; }
     .title { font-size: clamp(40px, 9vw, 64px); }
     .lede { font-size: 13.5px; margin-top: 8px; }
@@ -341,7 +362,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .rotico { animation: none; transform: rotate(-90deg); }
-    .xpbar i, #banner, #toast { transition: none; }
+    .xpbar i, #banner, #toast, #unlock { transition: none; }
   }
 </style>
 
@@ -368,6 +389,7 @@
     <canvas id="cv" aria-label="Battlefield"></canvas>
     <div id="banner"></div>
     <div id="toast" role="status"></div>
+    <div id="unlock" role="status" aria-live="polite" title="Tap to close"></div>
   </main>
 
   <footer class="dock">
@@ -418,7 +440,7 @@
 <div class="overlay" id="start">
   <div class="sheet">
     <div class="title">Dawn of <em>War</em></div>
-    <p class="lede" id="lede">Train the fighters of Deadliest Warrior, plus the Aztec, Maya and Inca armies, across six eras. Each warrior uses the right weapon for the range, just like the show's short, mid, long and special slots. Earn gold and experience from every kill, evolve your stronghold, and tear down the enemy's.</p>
+    <p class="lede" id="lede">Train the fighters of Deadliest Warrior, plus the Aztec, Maya and Inca armies, across eight ages, from the Stone Age and Egypt to an alien invasion. Each warrior uses the right weapon for the range, just like the show's short, mid, long and special slots. Earn gold and experience from every kill, evolve your stronghold, and tear down the enemy's.</p>
     <div class="eras" id="eraList"></div>
     <div class="row">
       <span class="lbl">Mode</span>
