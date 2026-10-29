@@ -11,6 +11,7 @@
   const WORLD_W = 1500, WORLD_H = 350, GROUND = 296;
   const BASE_X = [70, WORLD_W - 70];
   const DIR = [1, -1];
+  const SAFE = { l: 0, r: 0 }; // screen-edge safe-area insets in CSS px, set by readSafe()
   const BASE_HALF = 44;
   const baseEdge = (team) => BASE_X[team] + DIR[team] * BASE_HALF;
   const spawnX = (team) => BASE_X[team] + DIR[team] * (BASE_HALF + 8);
@@ -372,6 +373,7 @@
       units: [], projs: [], fx: [], texts: [], teams: [[], []], parts: [], decals: [], shake: 0, heroes: [[], []],
       cam: mode === 'attract' ? WORLD_W / 2 : 0, endT: 0, uid: 0, tod: mode === 'attract' ? Math.random() : 0.3,
       variant: mode === 'play' ? variant : mode, nightKills: 0, killLog: [], sim: mode === 'sim',
+      blood: [], streak: 0, streakT: -9, hurtT: 0,
     };
     if (mode === 'sim' || mode === 'duel') {
       for (const sd of S.sides) { sd.ai = false; sd.base.hp = sd.base.maxHp = Infinity; }
@@ -602,6 +604,25 @@
     S.decals.push({ x, r: r * 0.7, t: 0 });
     if (S.decals.length > 40) S.decals.shift();
   }
+  // Blood: droplets fly from a wound and leave splats where they land; the
+  // fallen leave a pool. Aliens bleed glowing ichor. Off in the settings.
+  let BLOOD = true;
+  try { BLOOD = localStorage.getItem('aow-blood') !== 'off'; } catch (e) { /* storage blocked */ }
+  const bloodCol = (u) => (u.def.look.alien ? u.def.look.glow || '#9effb0' : '#7a0d10');
+  function emitBlood(u, n, dir, spd = 120) {
+    if (!BLOOD || S.sim || u.isBase) return;
+    const col = bloodCol(u), glow = !!u.def.look.alien;
+    const y = GROUND - (u.def.mounted ? 44 : 30);
+    for (let i = 0; i < n; i++) {
+      part({ type: 'blood', x: u.x + rnd(-3, 3), y: y + rnd(-7, 7), vx: dir * rnd(0.3, 1.25) * spd + rnd(-25, 25), vy: rnd(-1.15, -0.1) * spd, g: 560, drag: 0.985, life: 1.6, size: rnd(0.8, 1.9), col, glow });
+    }
+  }
+  function bloodPool(u, killerTeam) {
+    if (!BLOOD || S.sim) return;
+    S.blood.push({ x: u.x + DIR[killerTeam] * 9, r: rnd(9, 15) * (u.def.mounted ? 1.4 : 1), t: 0, grow: 1.4, col: bloodCol(u), glow: !!u.def.look.alien, dy: rnd(0, 2) });
+    if (S.blood.length > 160) S.blood.shift();
+  }
+
   const EDGED = new Set(['sword', 'knife', 'axe', 'spear']);
   function hitFx(target, w, team) {
     if (target.isBase) { emitDebris(baseEdge(target.team), GROUND - 40 - Math.random() * 40, 4, ART[sideOf(target.team).era].stone, 90); return; }
@@ -609,7 +630,8 @@
     if (EDGED.has(w.kind)) {
       emitSparks(target.x, y, 5);
       S.fx.push({ type: 'slash', x: target.x - DIR[team] * 4, y, dir: DIR[team], t: 0, dur: 0.16 });
-    } else emitDust(target.x, y, 3, 3, '200,180,150');
+      emitBlood(target, 7, DIR[team]);
+    } else { emitDust(target.x, y, 3, 3, '200,180,150'); emitBlood(target, 3, DIR[team], 80); }
   }
 
   function updateParts(dt) {
@@ -622,11 +644,18 @@
       if (p.vr) p.rot += p.vr * dt;
       if (p.type === 'firefly' || p.type === 'spore') { p.vx += Math.sin(S.t * 2 + p.seed) * 6 * dt; p.vy += Math.cos(S.t * 1.7 + p.seed) * 6 * dt; }
       if (p.bounce && p.y > GROUND + 3) { p.y = GROUND + 3; p.vy *= -0.35; p.vx *= 0.6; p.vr *= 0.5; }
+      if (p.type === 'blood' && p.y > GROUND + 1) {
+        p.life = 0;
+        if (S.blood.length < 130) S.blood.push({ x: p.x, r: p.size * 2.2, t: 0, grow: 0, col: p.col, glow: p.glow, dy: rnd(0, 6) });
+      }
       if ((p.type === 'leaf' || p.type === 'rain' || p.type === 'ash') && p.y > GROUND + 2) p.life = Math.min(p.life, 0.05);
     }
     S.parts = S.parts.filter((p) => p.life > 0);
     for (const d of S.decals) d.t += dt;
     S.decals = S.decals.filter((d) => d.t < 25);
+    for (const d of S.blood) d.t += dt;
+    if (S.blood.length && S.blood[0].t > 40) S.blood = S.blood.filter((d) => d.t < 40);
+    S.hurtT = Math.max(0, S.hurtT - dt);
     S.shake = Math.max(0, S.shake - dt * 14);
     // Weather for the player's era.
     if (S.sim || typeof viewW !== 'number' || !viewW) return;
@@ -686,6 +715,7 @@
     if (target.isBase) {
       target.hp -= amount;
       target.flash = 0.12;
+      if (target.team === 0 && S.mode === 'play') S.hurtT = 0.5;
       const sd = sideOf(team);
       if (isFinite(target.maxHp)) sd.xp += amount * 0.05 * (sd.ai ? diffOf().xp : 1);
       sd.dmgDealt += amount;
@@ -699,10 +729,17 @@
     amount *= 0.8 + Math.random() * 0.4;
     // In one-on-one duels a well-placed blow can end it (the show's "kill shot").
     if (S.mode !== 'play' && S.mode !== 'attract' && Math.random() < 0.1) amount *= 2.6;
+    // In battle, one blow in fourteen lands as a critical hit.
+    const crit = (S.mode === 'play' || S.mode === 'attract') && Math.random() < 0.07;
+    if (crit) amount *= 1.75;
     let d = amount * (1 - target.armor * (1 - pierce));
     if (target.shieldT > 0) d *= 0.45;
     target.hp -= d;
     target.flash = 0.1;
+    if (crit && S.mode === 'play' && team === 0) {
+      S.texts.push({ x: target.x + rnd(-6, 6), y: GROUND - 64, text: `${Math.round(d)}!`, t: 0, col: '#4ad8ff', big: true });
+      emitBlood(target, 6, DIR[team], 150);
+    }
     if (target.hp <= 0) kill(target, team, src, wname);
   }
 
@@ -727,6 +764,10 @@
     if (S.sim) { u.hp = 0; S.killLog.push({ team: killerTeam, w: wname }); return; }
     emitDust(u.x, GROUND - 3, 6, 5);
     u.hp = 0;
+    u.deathVx = DIR[killerTeam] * rnd(18, 50);
+    emitBlood(u, 12, DIR[killerTeam], 140);
+    bloodPool(u, killerTeam);
+    if (u.def.hero && S.mode === 'play') slowMo(0.9);
     const sd = sideOf(killerTeam);
     const gold = Math.round(u.def.cost * 0.95);
     sd.gold += gold;
@@ -739,9 +780,19 @@
       REC.kills++;
       unlock('firstblood');
       if (LIGHT.nightK > 0.6 && ++S.nightKills >= 50) unlock('nightowl');
+      // Kill streaks: kills less than 2.5 s apart.
+      S.streak = S.t - S.streakT < 2.5 ? S.streak + 1 : 1;
+      S.streakT = S.t;
+      const call = STREAKS[S.streak];
+      if (call) { announce(call); buzz(S.streak >= 5 ? 'heavy' : 'medium'); }
     }
     Sound.play('die');
   }
+
+  const STREAKS = { 2: 'Double kill', 3: 'Triple kill', 5: 'Rampage', 8: 'Massacre', 12: 'Unstoppable', 20: 'Godlike' };
+  // Cinematic slow motion for big moments, in real seconds.
+  let slowT = 0;
+  function slowMo(t) { if (!REDUCED) slowT = Math.max(slowT, t); }
 
   function stun(u, t) {
     if (u.isBase || u.dead) return;
@@ -853,7 +904,11 @@
   }
 
   function updateUnit(u, dt) {
-    if (u.dead) { u.deathT += dt; return; }
+    if (u.dead) {
+      u.deathT += dt;
+      if (u.deathVx) { u.x = Math.max(0, Math.min(WORLD_W, u.x + u.deathVx * dt)); u.deathVx *= Math.pow(0.02, dt); }
+      return;
+    }
     u.flash = Math.max(0, u.flash - dt);
     u.shieldT = Math.max(0, u.shieldT - dt);
     u.rallyT = Math.max(0, u.rallyT - dt);
@@ -1056,6 +1111,7 @@
     const foeBase = sideOf(1 - p.team).base;
     const hitUnit = (e, scale = 1) => {
       damage(e, p.dmg * scale, p.team, p.pierce, p.src, p.wname);
+      emitBlood(e, p.aoe ? 3 : p.kind === 'bullet' ? 5 : 4, DIR[p.team], p.kind === 'bullet' ? 170 : 110);
       if (p.dot && !e.dead) e.dots.push({ dps: p.dot, t: p.dotT, team: p.team, kind: p.burn ? 'fire' : p.kind, src: p.src, wname: p.wname });
       if (p.slow && !e.dead) e.slowT = Math.max(e.slowT || 0, p.slow);
       if (p.stun && !e.dead) stun(e, p.stun);
@@ -1269,6 +1325,7 @@
     S.fx.push({ type: 'boom', x: loser.x, y: GROUND - 50, r: 110, t: 0, dur: 1.2 });
     for (let i = 0; i < 4; i++) emitExplosion(loser.x + rnd(-40, 40), GROUND - rnd(10, 90), 70, true);
     Sound.play('boom');
+    if (S.mode === 'play') slowMo(1.3);
     const game = S;
     if (S.mode === 'play') {
       buzz('heavy');
@@ -2260,6 +2317,14 @@ void main(){
     for (const d of S.decals) {
       c.fillStyle = `rgba(20,14,10,${0.35 * (1 - d.t / 25)})`;
       ell(c, d.x, GROUND + 3, d.r, d.r * 0.16);
+    }
+    for (const d of S.blood) {
+      const fade = d.t < 30 ? 1 : 1 - (d.t - 30) / 10;
+      const r = d.grow ? d.r * Math.min(1, 0.2 + d.t / d.grow) : d.r;
+      c.fillStyle = rgba(d.col, 0.7 * fade);
+      ell(c, d.x, GROUND + 2 + d.dy, r, r * 0.22);
+      if (d.grow) { c.fillStyle = `rgba(255,255,255,${0.12 * fade})`; ell(c, d.x - r * 0.3, GROUND + 1.5 + d.dy, r * 0.3, r * 0.05); }
+      if (d.glow) glowDot(d.x, GROUND + 2 + d.dy, r * 1.2, rgbOf(d.col).join(','), 0.18 * fade);
     }
     // Stones and texture
     const i0 = Math.max(0, Math.floor(left / 23)), i1 = Math.ceil(right / 23);
@@ -4301,6 +4366,15 @@ void main(){
           c.strokeStyle = 'rgba(170,195,220,.35)'; c.lineWidth = 0.8;
           line(c, p.x, p.y, p.x - p.vx * 0.03, p.y - p.vy * 0.03);
           break;
+        case 'blood': {
+          // A droplet stretched along its flight.
+          const sp = Math.hypot(p.vx, p.vy) || 1;
+          c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(p.vy, p.vx));
+          c.fillStyle = p.col; ell(c, 0, 0, p.size * (1 + Math.min(1.6, sp / 160)), p.size * 0.75);
+          c.restore();
+          if (p.glow) { e.fillStyle = rgba(p.col, 0.5); circle(e, p.x, p.y, p.size * 1.8); }
+          break;
+        }
         case 'bubble':
           c.strokeStyle = `rgba(150,230,120,${0.8 * (1 - k)})`; c.lineWidth = 0.7;
           c.beginPath(); c.arc(p.x, p.y, p.size, 0, Math.PI * 2); c.stroke();
@@ -4316,14 +4390,16 @@ void main(){
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (fallback) drawVignette();
     const pad = 10;
-    const bw = Math.min(230, cssW * 0.32);
+    // Keep clear of the notch or Dynamic Island in landscape.
+    const padL = Math.max(pad, SAFE.l), padR = Math.max(pad, SAFE.r);
+    const bw = Math.min(230, (cssW - padL - padR) * 0.32);
     for (let t = 0; t < 2; t++) {
       const b = S.sides[t].base;
-      const x = t === 0 ? pad : cssW - pad - bw;
+      const x = t === 0 ? padL : cssW - padR - bw;
       const duelU = S.mode === 'duel' ? S.units.find((u) => u.team === t) : null;
       const k = duelU ? Math.max(0, duelU.hp / duelU.maxHp) : isFinite(b.maxHp) ? Math.max(0, b.hp / b.maxHp) : 1;
-      c.fillStyle = 'rgba(14,10,7,.78)'; rr(c, x, pad, bw, 26, 4);
-      c.strokeStyle = 'rgba(217,169,68,.35)'; c.lineWidth = 1; c.beginPath(); c.roundRect ? c.roundRect(x + 0.5, pad + 0.5, bw - 1, 25, 4) : c.rect(x + 0.5, pad + 0.5, bw - 1, 25); c.stroke();
+      c.fillStyle = 'rgba(6,12,22,.8)'; rr(c, x, pad, bw, 26, 4);
+      c.strokeStyle = 'rgba(74,216,255,.38)'; c.lineWidth = 1; c.beginPath(); c.roundRect ? c.roundRect(x + 0.5, pad + 0.5, bw - 1, 25, 4) : c.rect(x + 0.5, pad + 0.5, bw - 1, 25); c.stroke();
       c.fillStyle = 'rgba(255,255,255,.08)'; rr(c, x + 4, pad + 17, bw - 8, 5, 2.5);
       const g = c.createLinearGradient(x, 0, x + bw, 0);
       const low = k < 0.3;
@@ -4333,7 +4409,7 @@ void main(){
       if (t === 0) rr(c, x + 4, pad + 17, bwid, 5, 2.5);
       else rr(c, x + 4 + (bw - 8) - bwid, pad + 17, bwid, 5, 2.5);
       if (low && Math.sin(S.t * 8) > 0) { c.fillStyle = 'rgba(255,90,60,.25)'; rr(c, x, pad, bw, 26, 4); }
-      c.fillStyle = '#efe4cf';
+      c.fillStyle = '#e4f1ff';
       c.font = '600 11px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
       c.textAlign = t === 0 ? 'left' : 'right';
       const label = duelU ? duelU.def.name : S.mode === 'attract' ? (t === 0 ? 'Left army' : 'Right army')
@@ -4345,15 +4421,16 @@ void main(){
       c.fillText(text, t === 0 ? x + 6 : x + bw - 6, pad + 12);
       c.font = '500 10px "IBM Plex Mono", monospace';
       c.textAlign = t === 0 ? 'right' : 'left';
-      c.fillStyle = '#c9b996';
+      c.fillStyle = '#9fc4e0';
       c.fillText(hpText, t === 0 ? x + bw - 6 : x + 6, pad + 12);
     }
     // Minimap
-    let mw = Math.min(260, cssW - 2 * bw - 4 * pad);
+    let mw = Math.min(260, cssW - 2 * bw - padL - padR - 2 * pad);
     let my = pad + 6;
-    if (mw < 120) { mw = Math.min(260, cssW - 2 * pad); my = pad + 32; }
-    const mx = (cssW - mw) / 2, mh = 12;
-    c.fillStyle = 'rgba(14,10,7,.78)'; rr(c, mx, my, mw, mh, 3);
+    if (mw < 120) { mw = Math.min(260, cssW - padL - padR); my = pad + 32; }
+    const mx = padL + (cssW - padL - padR - mw) / 2, mh = 12;
+    c.fillStyle = 'rgba(6,12,22,.8)'; rr(c, mx, my, mw, mh, 3);
+    c.strokeStyle = 'rgba(74,216,255,.3)'; c.lineWidth = 1; c.strokeRect(mx + 0.5, my + 0.5, mw - 1, mh - 1);
     const k = mw / WORLD_W;
     c.fillStyle = TEAM_COL[0]; c.fillRect(mx + BASE_X[0] * k - 2, my + 2, 4, mh - 4);
     c.fillStyle = TEAM_COL[1]; c.fillRect(mx + BASE_X[1] * k - 2, my + 2, 4, mh - 4);
@@ -4366,13 +4443,13 @@ void main(){
     c.strokeRect(mx + S.cam * k + 0.5, my + 0.5, viewW * k - 1, mh - 1);
     S.mini = { x: mx, y: my, w: mw, h: mh };
     // Time of day
-    const space = cssW - pad - bw - (mx + mw);
+    const space = cssW - padR - bw - (mx + mw);
     const tx = space > 74 ? mx + mw + 12 : cssW / 2 - 22;
     const ty = space > 74 ? my + mh / 2 : my + mh + 12;
     const sun = LIGHT.label !== 'Night';
     c.fillStyle = sun ? (LIGHT.label === 'Day' ? '#f5d77a' : '#f0a05a') : '#cfdcef';
     circle(c, tx + 5, ty, 4.5);
-    if (!sun) { c.fillStyle = 'rgba(14,10,7,.95)'; circle(c, tx + 7.2, ty - 1.6, 3.8); }
+    if (!sun) { c.fillStyle = 'rgba(6,12,22,.95)'; circle(c, tx + 7.2, ty - 1.6, 3.8); }
     c.font = '600 11px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
     c.textAlign = 'left';
     c.fillStyle = 'rgba(0,0,0,.55)'; c.fillText(LIGHT.label, tx + 14.5, ty + 4.5);
@@ -4425,7 +4502,12 @@ void main(){
     for (const x of S.texts) {
       emCtx.globalAlpha = 1 - x.t / 1.1;
       emCtx.fillStyle = x.col;
-      emCtx.fillText(x.text, x.x, x.y);
+      if (x.big) {
+        const pop = 1 + Math.max(0, 0.25 - x.t) * 2;
+        emCtx.font = `700 ${Math.round(14 * pop)}px Orbitron, "IBM Plex Mono", monospace`;
+        emCtx.fillText(x.text, x.x, x.y);
+        emCtx.font = '600 11px "IBM Plex Mono", monospace';
+      } else emCtx.fillText(x.text, x.x, x.y);
     }
     emCtx.globalAlpha = 1;
 
@@ -4511,9 +4593,21 @@ void main(){
     u.querySelectorAll('canvas').forEach((cv, i) => drawPortrait(cv, BY_ERA[era][i]));
     u.classList.add('show');
     clearTimeout(unlockTimer);
-    unlockTimer = setTimeout(hideUnlock, 6500);
+    unlockTimer = setTimeout(hideUnlock, innerHeight < 520 ? 4200 : 6500);
   }
   function hideUnlock() { clearTimeout(unlockTimer); const u = $('unlock'); if (u) u.classList.remove('show'); }
+
+  // Kill-streak call-outs in the HUD style.
+  let streakTimer = 0;
+  function announce(text) {
+    const el2 = $('streak');
+    if (!el2) return;
+    el2.textContent = text;
+    el2.classList.remove('show'); void el2.offsetWidth; el2.classList.add('show');
+    Sound.play('evolve');
+    clearTimeout(streakTimer);
+    streakTimer = setTimeout(() => el2.classList.remove('show'), 1500);
+  }
 
   let toastTimer = 0;
   function toast(msg) {
@@ -4948,6 +5042,11 @@ void main(){
     checkRotate();
     showBanner(S.variant === 'survival' ? 'Survival' : ERAS[0].name, S.variant === 'survival' ? 'Hold out against endless waves' : ERAS[0].span);
     showUnlock(0, 'Your first warriors');
+    if (TOUCH) {
+      let seen = false;
+      try { seen = localStorage.getItem('aow-tip-hold') === '1'; localStorage.setItem('aow-tip-hold', '1'); } catch (e) { /* storage blocked */ }
+      if (!seen) setTimeout(() => toast('Tap a warrior to train · press and hold to read its weapons'), 4600);
+    }
   }
 
   function toMenu() {
@@ -5010,6 +5109,16 @@ void main(){
     } catch (e) { toast('Full screen is not available here'); }
   });
   $('btnQuit').addEventListener('click', () => { $('menu').hidden = true; toMenu(); });
+  const bloodLabel = () => { const t = `Blood: ${BLOOD ? 'on' : 'off'}`; $('btnBlood').textContent = t; $('mBlood').textContent = t; };
+  $('btnBlood').addEventListener('click', () => {
+    BLOOD = !BLOOD;
+    if (!BLOOD) { S.blood = []; S.parts = S.parts.filter((q) => q.type !== 'blood'); }
+    try { localStorage.setItem('aow-blood', BLOOD ? 'on' : 'off'); } catch (e) { /* storage blocked */ }
+    bloodLabel();
+  });
+  bloodLabel();
+  // iPhone Safari has no full-screen API: hide the button there.
+  if (!document.documentElement.requestFullscreen) $('btnFull').hidden = true;
   // Suggest landscape on phones held upright.
   let rotateDismissed = false;
   const portraitQ = window.matchMedia ? matchMedia('(orientation: portrait) and (max-width: 700px)') : null;
@@ -5174,6 +5283,19 @@ void main(){
 
   let last = performance.now();
   const perf = { t: 0, n: 0, checked: false };
+  const hurtEl = $('hurt');
+  // Safe-area insets (notch, Dynamic Island, home indicator) read from CSS.
+  const safeProbe = document.createElement('div');
+  safeProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)';
+  document.body.appendChild(safeProbe);
+  function readSafe() {
+    const cs = getComputedStyle(safeProbe);
+    SAFE.l = parseFloat(cs.paddingLeft) || 0;
+    SAFE.r = parseFloat(cs.paddingRight) || 0;
+  }
+  readSafe();
+  window.addEventListener('resize', readSafe);
+  window.addEventListener('orientationchange', () => setTimeout(readSafe, 300));
   function frame(now) {
     const ft = (now - last) / 1000;
     if (GFX.ok && GFX.on && !perf.checked && S.mode === 'play' && !S.paused && document.visibilityState === 'visible') {
@@ -5191,9 +5313,13 @@ void main(){
     last = now;
     panInput(raw);
     const steps = S.mode === 'play' ? S.speed : 1;
-    for (let i = 0; i < steps; i++) update(raw);
+    const ts = slowT > 0 && S.mode === 'play' ? 0.3 : 1;
+    slowT = Math.max(0, slowT - raw);
+    for (let i = 0; i < steps; i++) update(raw * ts);
     render();
     if (S.mode === 'play') refreshHud(false);
+    const hurt = S.mode === 'play' ? Math.min(1, S.hurtT * 2).toFixed(2) : '0';
+    if (hurtEl.style.opacity !== hurt) hurtEl.style.opacity = hurt;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

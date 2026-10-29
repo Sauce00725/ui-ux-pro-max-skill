@@ -53,6 +53,6 @@ Android works the same way with `npm run android:add` and Android Studio.
 3. **Real people.** Historical figures (Napoleon, Genghis Khan, Al Capone) are generally fine. Keep descriptions factual and respectful.
 4. **Fonts load from Google Fonts.** Offline, the app falls back to system fonts. To bundle them, download the Teko, Orbitron and IBM Plex Sans Condensed / Mono files (SIL Open Font License) into `www/fonts` and swap the `<link>` for `@font-face` rules.
 5. **Privacy.** The game stores only records, achievements and the effects setting on the device (`localStorage`). It sends nothing anywhere, so the App Privacy label is "Data Not Collected".
-6. **Age rating.** Expect 12+ for frequent cartoon or fantasy violence.
+6. **Age rating.** The game shows blood by default (sprays, pools, glowing alien ichor). With blood on, answer "Frequent/Intense Cartoon or Fantasy Violence" in the age-rating questionnaire, which usually lands at 12+; if you add more realistic gore it can rise to 17+. Players can switch it off under Menu → Blood. To ship a gentler build, change the default in `game.js` (`let BLOOD = true`).
 7. **Screenshots.** App Store Connect needs at least one set for 6.9" iPhones (2868×1320 in landscape) and iPads if you support them.
 8. **Minimum functionality (Guideline 4.2).** A full offline game qualifies. Keep it free of links that leave the app.
