@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Orbitron:wght@600;800&display=swap">
 <style>
   /* Layout: one-screen arena. Command bar on top, battlefield canvas, recruit dock below.
      Single deliberate look: a torch-lit armory of dark leather, bone and brass. */
@@ -208,6 +208,63 @@
   .armory b { color: var(--bone); font-weight: 600; }
   .note { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.5; max-width: 90ch; }
 
+  /* ── Title screen: a futuristic command console over the live battle ── */
+  #start {
+    --neon: #4ad8ff; --neon-2: #ff5ad2; --glass: rgba(8, 14, 26, .72);
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(6,10,20,0) 0%, rgba(6,10,20,.55) 70%),
+      linear-gradient(rgba(74,216,255,.05) 1px, transparent 1px) 0 0 / 100% 4px;
+  }
+  #start::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(74,216,255,.08) 1px, transparent 1px) 0 0 / 48px 48px,
+      linear-gradient(rgba(74,216,255,.08) 1px, transparent 1px) 0 0 / 48px 48px;
+    mask-image: linear-gradient(transparent 55%, #000 100%);
+    -webkit-mask-image: linear-gradient(transparent 55%, #000 100%);
+  }
+  #start::after {
+    content: ""; position: fixed; left: 0; right: 0; top: -20%; height: 20%; pointer-events: none;
+    background: linear-gradient(transparent, rgba(74,216,255,.08), transparent);
+    animation: scan 7s linear infinite;
+  }
+  @keyframes scan { to { transform: translateY(600%); } }
+  #start .sheet {
+    position: relative; z-index: 1; background: var(--glass); border: 1px solid rgba(74,216,255,.35); border-radius: 4px;
+    backdrop-filter: blur(10px) saturate(1.2); -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: 0 0 0 1px rgba(255,90,210,.12), 0 0 40px rgba(74,216,255,.18), 0 30px 80px rgba(0,0,0,.6);
+    clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+  }
+  #start .sheet::before, #start .sheet::after {
+    content: ""; position: absolute; width: 18px; height: 18px; pointer-events: none; border-color: var(--neon); border-style: solid;
+  }
+  #start .sheet::before { left: 8px; top: 8px; border-width: 2px 0 0 2px; }
+  #start .sheet::after { right: 8px; bottom: 8px; border-width: 0 2px 2px 0; }
+  #start .title {
+    font-family: 'Orbitron', var(--display); font-weight: 800; font-size: clamp(40px, 9vw, 72px); line-height: .95; letter-spacing: .04em; text-transform: uppercase;
+    background: linear-gradient(100deg, #eaf8ff 10%, var(--neon) 45%, var(--neon-2) 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 14px rgba(74,216,255,.45));
+  }
+  #start .title em { color: transparent; }
+  #start .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--neon); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  #start .kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--neon-2); box-shadow: 0 0 10px var(--neon-2); animation: blink 1.6s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  #start .lede { color: #b8c8d8; }
+  #start .lbl { color: #7f9bb3; }
+  #start .eras span { border-color: rgba(74,216,255,.3); color: #a8d8ea; font-family: var(--mono); font-size: 10px; background: rgba(74,216,255,.05); }
+  #start .eras span:last-child { border-color: var(--neon-2); color: var(--neon-2); box-shadow: 0 0 8px rgba(255,90,210,.35); }
+  #start .seg { border-color: rgba(74,216,255,.35); }
+  #start .seg button { background: rgba(10,20,34,.8); color: #cfe6f4; }
+  #start .seg button + button { border-left-color: rgba(74,216,255,.25); }
+  #start .seg button.on { background: var(--neon); color: #04121c; box-shadow: inset 0 0 12px rgba(255,255,255,.4); }
+  #start .btn { background: rgba(10,20,34,.8); border-color: rgba(74,216,255,.4); color: #e2f4ff; }
+  #start .btn:hover:not(:disabled) { border-color: var(--neon); box-shadow: 0 0 14px rgba(74,216,255,.35); }
+  #start .btn.prime { background: linear-gradient(100deg, var(--neon), #7a8cff 60%, var(--neon-2)); color: #04121c; border-color: transparent; box-shadow: 0 0 22px rgba(74,216,255,.45); }
+  #start .big { font-family: 'Orbitron', var(--display); font-size: 17px; letter-spacing: .08em; text-transform: uppercase; padding: 11px 20px; }
+  #start .modenote, #start .records, #start .keys { color: #8fa8bd; }
+  #start .keys kbd { border-color: rgba(74,216,255,.35); color: #dff3ff; }
+  #start .linkbtn { color: var(--neon); }
+
   #end .result { font-family: var(--display); font-size: clamp(56px, 14vw, 100px); line-height: .85; }
   #end .result.win { color: var(--brass); }
   #end .result.loss { color: var(--blood); }
@@ -334,6 +391,9 @@
     .records { margin-top: 10px; }
     .eras { display: none; }
     .lede { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    #start .title { font-size: clamp(28px, 11vh, 46px); }
+    #start .kicker { font-size: 9.5px; letter-spacing: .22em; margin-bottom: 4px; }
+    #start .big { font-size: 14px; padding: 9px 14px; }
   }
   /* Very short screens: the dock shrinks to one compact row of cards. */
   @media (max-height: 420px) {
@@ -363,6 +423,7 @@
   @media (prefers-reduced-motion: reduce) {
     .rotico { animation: none; transform: rotate(-90deg); }
     .xpbar i, #banner, #toast, #unlock { transition: none; }
+    #start::after, #start .kicker::before { animation: none; }
   }
 </style>
 
@@ -439,6 +500,7 @@
 
 <div class="overlay" id="start">
   <div class="sheet">
+    <div class="kicker">Command link online · 8 ages of war</div>
     <div class="title">Dawn of <em>War</em></div>
     <p class="lede" id="lede">Train the fighters of Deadliest Warrior, plus the Aztec, Maya and Inca armies, across eight ages, from the Stone Age and Egypt to an alien invasion. Each warrior uses the right weapon for the range, just like the show's short, mid, long and special slots. Earn gold and experience from every kill, evolve your stronghold, and tear down the enemy's.</p>
     <div class="eras" id="eraList"></div>

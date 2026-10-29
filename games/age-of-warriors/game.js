@@ -47,6 +47,7 @@
     snipe: 'One precise, armor-piercing shot',
     hornets: 'A hornet nest that stings everyone nearby',
     heal: 'Magic that heals every wounded ally nearby',
+    beast: 'Unleashes the war jaguar: it leaps on the enemy, mauls and stuns it',
   };
 
   // ── Weapon building ─────────────────────────────────────────────────────
@@ -158,6 +159,7 @@
       snipe: { cd: 9, r: 340, dmg: p * 7, proj: 'bullet', pierce: 0.6 },
       hornets: { cd: 10, r: 180, dmg: p * 1, aoe: 62, dot: p * 1.6, dotT: 4, proj: 'nest' },
       heal: { cd: 7, r: 260, heal: p * 5, aura: 150 },
+      beast: { cd: 6, r: 130, dmg: p * 4.2, dot: p * 0.9, dotT: 3, stun: 0.7 },
     }[fx];
     Object.assign(w, { fx, ranged: false, dmg: 0, dot: 0, heal: 0 }, S);
     if (o.r) w.r = o.r;
@@ -380,7 +382,18 @@
       e.base.hp = e.base.maxHp = Infinity;
       S.wave = { n: 0, t: 8, queue: [], spawnT: 0 };
     }
-    if (mode === 'attract') { S.sides[0].gold = 400; S.sides[1].gold = 400; }
+    if (mode === 'attract') {
+      // The title screen shows the future: the alien invasion against modern
+      // troops, at dusk or night so the plasma and ion fire glow.
+      const eras = [ERA_IDX.alien, ERA_IDX.modern];
+      S.sides.forEach((sd, i) => {
+        sd.era = eras[i];
+        sd.base.hp = sd.base.maxHp = ERAS[sd.era].baseHp;
+        sd.gold = 1500 * ERAS[sd.era].costMul;
+        sd.xp = ERAS[sd.era].xp;
+      });
+      S.tod = 0.76 + Math.random() * 0.18;
+    }
   }
 
   const sideOf = (team) => S.sides[team];
@@ -813,6 +826,10 @@
         for (const a of S.teams[u.team]) if (Math.abs(a.x - u.x) < sp.aura) a.rallyT = 6;
         S.fx.push({ type: 'ring', x: u.x, y: GROUND - 20, r: sp.aura, t: 0, dur: 0.7, col: '#d9a944' });
         return true;
+      case 'beast':
+        if (dist > sp.r || u.pounce) return false;
+        u.pounce = { t: 0, dur: 0.85, target, dmg: sp.dmg * m, dot: sp.dot * m, dotT: sp.dotT, stun: sp.stun, name: sp.name, hit: false, from: 18, to: Math.max(18, dist - 4) };
+        return true;
       case 'heal': {
         const hurt = S.teams[u.team].filter((a) => !a.dead && Math.abs(a.x - u.x) < sp.aura && a.hp < a.maxHp * 0.85);
         if (!hurt.length) return false;
@@ -846,6 +863,21 @@
       for (const d of u.dots) { d.t -= dt; damage(u, d.dps * dt, d.team, 1, d.src, d.wname); }
       u.dots = u.dots.filter((d) => d.t > 0);
       if (u.dead) return;
+    }
+    if (u.pounce) {
+      const pc = u.pounce;
+      pc.t += dt;
+      if (!pc.hit && pc.t >= pc.dur * 0.42) {
+        pc.hit = true;
+        const tg = pc.target;
+        if (tg.isBase || !tg.dead) {
+          damage(tg, pc.dmg, u.team, 0.3, u, pc.name);
+          if (!tg.isBase && !tg.dead) { stun(tg, pc.stun); tg.dots.push({ dps: pc.dot, t: pc.dotT, team: u.team, kind: 'claw', src: u, wname: pc.name }); }
+          if (!S.sim) { hitFx(tg, { kind: 'sword' }, u.team); emitDust(tg.isBase ? baseEdge(tg.team) : tg.x, GROUND - 3, 5, 4); }
+          Sound.play('melee');
+        }
+      }
+      if (pc.t >= pc.dur) u.pounce = null;
     }
     if (u.stunT > 0) { u.stunT -= dt; return; }
     u.cd -= dt;
@@ -916,7 +948,8 @@
       }
     }
     const gap = u.ahead ? Math.abs(u.ahead.x - u.x) : Infinity;
-    const space = (def.mounted ? 20 : 11) + (u.ahead && u.ahead.def.mounted ? 20 : 11);
+    const wide = (d) => d.mounted || d.look.beast;
+    const space = (wide(def) ? 20 : 11) + (u.ahead && wide(u.ahead.def) ? 20 : 11);
     const wantMove = dist > hold && u.pauseT <= 0;
     // Battle orders: hold a line in the field, or fall back to the stronghold.
     const stance = sideOf(u.team).stance;
@@ -3717,6 +3750,57 @@ void main(){
       c.restore();
     }
     c.restore();
+    if (L.beast === 'jaguar') drawJaguar(c, o.beastX ?? 18, o.beastY ?? 0, walk, o.teamCol, o.leap || 0);
+  }
+
+  // The Aztec war jaguar: a spotted cat that walks at heel and pounces.
+  function drawJaguar(c, x, y, walk, teamCol, leap) {
+    const fur = '#d8a23a', dark = '#8a5a1a', spot = '#2a1a0a';
+    c.save();
+    c.translate(x, y);
+    c.scale(1.2, 1.2);
+    c.lineCap = 'round';
+    const gait = walk * 1.6;
+    const leg = (lx, ph, back) => {
+      const th = leap ? (lx > 0 ? -0.9 : 0.9) : Math.sin(gait + ph) * 0.55;
+      const kx = lx + Math.sin(th) * 4.5, ky = -9 + Math.cos(th) * 4.5;
+      const fx = kx + Math.sin(th * 0.6) * 4.5, fy = Math.min(0, ky + 4.5);
+      c.strokeStyle = back ? dark : fur; c.lineWidth = back ? 2.4 : 2.8;
+      c.beginPath(); c.moveTo(lx, -10); c.lineTo(kx, ky); c.lineTo(fx, fy); c.stroke();
+      c.fillStyle = back ? dark : '#c8902a'; ell(c, fx + 0.8, fy, 1.6, 0.9);
+    };
+    leg(-8, Math.PI, true); leg(7, 0, true);
+    // Tail curling up behind
+    c.strokeStyle = fur; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(-12, -13); c.quadraticCurveTo(-20, -12 + Math.sin(S_t() * 3) * 2, -20, -21); c.stroke();
+    c.strokeStyle = spot; c.lineWidth = 2; line(c, -20, -20, -20, -22);
+    // Body
+    const g = c.createLinearGradient(0, -18, 0, -7);
+    g.addColorStop(0, '#e8b84e'); g.addColorStop(1, dark);
+    c.fillStyle = g; ell(c, -1, -12.5, 12.5, 5.2, leap ? -0.15 : 0);
+    c.fillStyle = '#efdcb0'; ell(c, -1, -9, 9, 2);
+    c.fillStyle = spot;
+    // Rosettes: dark broken rings around a darker center
+    for (let i = 0; i < 10; i++) {
+      const sx = -11 + (i * 2.45) % 21, sy = -16 + ((i * 5) % 6);
+      c.beginPath(); c.arc(sx, sy, 1.3, 0.3, Math.PI * 1.8); c.strokeStyle = spot; c.lineWidth = 0.7; c.stroke();
+      c.fillStyle = 'rgba(138,90,26,.8)'; circle(c, sx, sy, 0.5);
+    }
+    // Broad round head, small rounded ears, heavy jaw
+    const hy = -17 - (leap ? 2 : 0);
+    c.fillStyle = fur; circle(c, 10.5, hy - 3.6, 1.8); circle(c, 14, hy - 3.8, 1.8);
+    c.fillStyle = spot; circle(c, 10.5, hy - 3.6, 0.8); circle(c, 14, hy - 3.8, 0.8);
+    c.fillStyle = fur; ell(c, 12.4, hy, 5.2, 4.6);
+    c.fillStyle = '#efdcb0'; ell(c, 15.4, hy + 1.6, 3, 2.3);
+    c.fillStyle = spot; ell(c, 17.6, hy + 0.6, 0.9, 0.7);
+    for (const [sx, sy] of [[10, hy - 1.5], [12, hy - 2.6], [9.6, hy + 1.2]]) circle(c, sx, sy, 0.55);
+    c.fillStyle = '#e0c040'; ell(c, 14.4, hy - 1.2, 1, 0.7); c.fillStyle = spot; circle(c, 14.6, hy - 1.2, 0.4);
+    if (leap) { c.fillStyle = '#7a1a1a'; poly(c, [[14, -14], [18, -13], [14, -12]]); c.fillStyle = '#f4efe4'; poly(c, [[15, -14], [15.6, -12.6], [16.2, -14]]); }
+    // Feathered war collar in team color
+    c.fillStyle = teamCol; rr(c, 7, -17, 3, 6, 1.2);
+    c.fillStyle = '#2f8a6a'; ell(c, 8.5, -11, 1, 2.2);
+    leg(-6, 0, false); leg(9, Math.PI, false);
+    c.restore();
   }
   const S_t = () => (S ? S.t : 0);
 
@@ -3896,7 +3980,15 @@ void main(){
     c.scale(dir * sc, sc);
     const sw = u.swingW;
     const showSwing = u.swing > 0 && sw && (!sw.fx || ((sw.fx === 'stun' || sw.fx === 'flurry') && !sw.proj));
-    drawFigure(c, u.def, { walk: u.walk, swing: u.swing, weapon: showSwing ? sw : u.weapon, teamCol: TEAM_COL[u.team], shield: u.shieldT > 0, light: LIGHT.dirs[u.team] });
+    let beastX = 18, beastY = 0, leap = 0;
+    if (u.pounce) {
+      // Out to the target and back, in a low arc.
+      const k = u.pounce.t / u.pounce.dur, out = k < 0.42 ? k / 0.42 : 1 - (k - 0.42) / 0.58;
+      beastX = u.pounce.from + (u.pounce.to - u.pounce.from) * out / sc;
+      beastY = -Math.sin(Math.min(1, k / 0.42) * Math.PI) * 14 * (k < 0.42 ? 1 : 0);
+      leap = k < 0.42 ? 1 : 0;
+    }
+    drawFigure(c, u.def, { walk: u.walk, swing: u.swing, weapon: showSwing ? sw : u.weapon, teamCol: TEAM_COL[u.team], shield: u.shieldT > 0, light: LIGHT.dirs[u.team], beastX, beastY, leap });
     c.restore();
     if (u.dead) return;
 
@@ -4386,9 +4478,9 @@ void main(){
     glow.addColorStop(0, def.hero ? 'rgba(230,184,78,.35)' : 'rgba(255,240,210,.16)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
     c.fillStyle = glow; c.fillRect(0, 0, W, H);
     c.fillStyle = shade(A.ground[0], -0.35); c.fillRect(0, H - 4 * r, W, 4 * r);
-    const chariot = def.look.mount === 'chariot';
-    const k = (size / (chariot ? 96 : def.mounted ? 78 : 62)) * r;
-    c.setTransform(k, 0, 0, k, W / 2 - (chariot ? 10 : 2) * k, H - 4 * r);
+    const chariot = def.look.mount === 'chariot', beast = !!def.look.beast;
+    const k = (size / (chariot ? 96 : beast ? 84 : def.mounted ? 78 : 62)) * r;
+    c.setTransform(k, 0, 0, k, W / 2 - (chariot ? 10 : beast ? 14 : 2) * k, H - 4 * r);
     c.fillStyle = 'rgba(0,0,0,.35)'; ell(c, 0, 0.5, def.mounted ? 20 : 10, 2.4);
     drawFigure(c, def, { walk: 0.6, swing: 0, weapon: def.normal.find((w) => w.kind === 'magic') || def.normal.find((w) => w.slot === 'mid') || def.normal[0], teamCol: TEAM_COL[team] });
   }

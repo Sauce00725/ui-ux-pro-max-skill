@@ -12,16 +12,17 @@
 // show: matchup and result. A result appears only where it was confirmed
 // against published episode guides; the rest list the opponent alone.
 // Weapon lists follow the show where sources confirm them (Apache, Gladiator,
-// Spartan, Samurai, Viking, Yakuza, Mafia, Green Beret, Spetsnaz, Washington,
-// Napoleon, Joan of Arc, William the Conqueror); the rest use each warrior's
-// historically documented weapons.
+// Spartan, Samurai, Viking, Yakuza, Green Beret, Spetsnaz, Washington,
+// Napoleon); the rest use each warrior's historically documented weapons.
+// The roster keeps the best-known fighters of each age, about six to eight.
 //
 // Weapon tuple: [name, slot, power, options]
 //   options: k weapon kind override, r range, cd cooldown (s), ammo thrown uses, pierce 0–1 armor
 //   ignored, proj projectile look, fx special effect, n volley size,
 //   aoe blast radius.
 // Special fx: shield, stun, charge, splash, volley, poison, fire, flurry,
-//   rally, fear, snipe, hornets, heal (magic: heals wounded allies nearby).
+//   rally, fear, snipe, hornets, heal (magic: heals wounded allies nearby),
+//   beast (a war animal at heel that pounces; look.beast picks it).
 // Magic weapons (staffs, scepters, spirit fire) fire sun bolts or spirit hexes.
 
 window.AOW_DATA = (() => {
@@ -34,7 +35,7 @@ window.AOW_DATA = (() => {
       turrets: [
         { id: 'slingpost', name: 'Slinger Rock Post', art: 'archers', culture: 'Stone Age hunters', by: ['slinger'], power: 4, cd: 1.0, r: 300, proj: 'stone' },
         { id: 'boulder', name: 'Boulder Hurler', art: 'catapult', culture: 'Cliff-top clans', by: ['neanderthal'], power: 7, cd: 3.4, r: 360, proj: 'stone', aoe: 48 },
-        { id: 'spearperch', name: 'Spear Perch', art: 'archers', culture: 'Mammoth hunters', by: ['spearhunter', 'otzi'], power: 6, cd: 1.8, r: 320, proj: 'javelin', pierce: 0.4, effect: 'line' },
+        { id: 'spearperch', name: 'Spear Perch', art: 'archers', culture: 'Mammoth hunters', by: ['otzi', 'chieftain'], power: 6, cd: 1.8, r: 320, proj: 'javelin', pierce: 0.4, effect: 'line' },
         { id: 'totem', name: 'Spirit Totem', art: 'totem', culture: 'Clan shamans', by: ['shaman'], power: 3, cd: 2.4, r: 320, proj: 'hex', aoe: 60, effect: 'slow' },
       ],
     },
@@ -44,7 +45,7 @@ window.AOW_DATA = (() => {
       sky: ['#4a8ac0', '#f4e2b4'], far: '#d8b67a', near: '#9a7440', ground: '#e2c486', dirt: '#b8955a',
       ability: { name: 'Wrath of Ra', desc: 'Sun fire rains down on the enemy line.', proj: 'sunbolt', n: 16, power: 6, cd: 46, fire: true },
       turrets: [
-        { id: 'medjayTower', name: 'Medjay Archer Tower', art: 'archers', culture: 'Medjay and Nubian bowmen', by: ['nubian', 'medjay'], power: 4, cd: 2.2, r: 330, proj: 'arrow', n: 4, effect: 'volley' },
+        { id: 'medjayTower', name: 'Medjay Archer Tower', art: 'archers', culture: 'Medjay and Nubian bowmen', by: ['nubian'], power: 4, cd: 2.2, r: 330, proj: 'arrow', n: 4, effect: 'volley' },
         { id: 'javelinRampart', name: 'Javelin Rampart', art: 'archers', culture: 'New Kingdom infantry', by: ['khopesh', 'chariot'], power: 6, cd: 1.6, r: 320, proj: 'javelin', pierce: 0.5, effect: 'line' },
         { id: 'mirrorRa', name: 'Mirror of Ra', art: 'mirror', culture: 'Sun temple of Heliopolis', by: ['priestRa', 'imhotep'], power: 7, cd: 2.4, r: 380, proj: 'sunbolt', burn: true, target: 'strongest' },
         { id: 'horusObelisk', name: 'Eye of Horus Obelisk', art: 'obelisk', culture: 'Temple guardians', by: ['anubis', 'isis'], power: 5, cd: 2.8, r: 340, proj: 'sunbolt', effect: 'stun' },
@@ -59,7 +60,7 @@ window.AOW_DATA = (() => {
         { id: 'scorpio', name: 'Scorpio Bolt Thrower', art: 'ballista', culture: 'Roman legions', by: ['centurion'], power: 7, cd: 1.6, r: 340, proj: 'bolt', pierce: 0.6, effect: 'line' },
         { id: 'onager', name: 'Onager', art: 'catapult', culture: 'Rome and Carthage', by: ['centurion', 'hannibal'], power: 8, cd: 3.4, r: 380, proj: 'stone', aoe: 50 },
         { id: 'immortalArchers', name: 'Immortal Archer Tower', art: 'archers', culture: 'Achaemenid Persia', by: ['immortal'], power: 4, cd: 2.2, r: 320, proj: 'arrow', n: 4, effect: 'volley' },
-        { id: 'zhugenu', name: 'Repeating Crossbow Nest', art: 'ballista', culture: 'Warring States China', by: ['suntzu'], power: 6, cd: 0.55, r: 290, proj: 'bolt' },
+        { id: 'zhugenu', name: 'Repeating Crossbow Nest', art: 'ballista', culture: 'Hannibal’s mercenary engineers', by: ['hannibal'], power: 6, cd: 0.55, r: 290, proj: 'bolt' },
       ],
     },
     {
@@ -68,9 +69,9 @@ window.AOW_DATA = (() => {
       sky: ['#5f6f7a', '#b9c2bd'], far: '#6b7470', near: '#4b5450', ground: '#6f7552', dirt: '#4d5236',
       ability: { name: 'Greek Fire', desc: 'Clay pots of liquid fire burst across the field.', proj: 'fire', n: 14, power: 6, cd: 48, fire: true },
       turrets: [
-        { id: 'springald', name: 'Springald', art: 'ballista', culture: 'Norman and French castles', by: ['knight', 'conqueror'], power: 7, cd: 1.3, r: 350, proj: 'bolt', pierce: 0.5, effect: 'line' },
-        { id: 'trebuchet', name: 'Trebuchet', art: 'catapult', culture: 'Siege engineers of Europe', by: ['conqueror', 'joan', 'wallace'], power: 9, cd: 3.6, r: 400, proj: 'stone', aoe: 62 },
-        { id: 'firearrows', name: 'Fire-Arrow Launcher', art: 'rack', culture: 'Ming China', by: ['ming'], power: 4, cd: 3.2, r: 340, proj: 'rocket', n: 6, effect: 'volley', burn: true },
+        { id: 'springald', name: 'Springald', art: 'ballista', culture: 'Norman and French castles', by: ['knight'], power: 7, cd: 1.3, r: 350, proj: 'bolt', pierce: 0.5, effect: 'line' },
+        { id: 'trebuchet', name: 'Trebuchet', art: 'catapult', culture: 'Siege engineers of Europe', by: ['knight', 'wallace'], power: 9, cd: 3.6, r: 400, proj: 'stone', aoe: 62 },
+        { id: 'firearrows', name: 'Fire-Arrow Launcher', art: 'rack', culture: 'Mongol siege engineers', by: ['mongol', 'genghis'], power: 4, cd: 3.2, r: 340, proj: 'rocket', n: 6, effect: 'volley', burn: true },
         { id: 'yagura', name: 'Yagura Archer Tower', art: 'archers', culture: 'Feudal Japan', by: ['samurai', 'ninja'], power: 6, cd: 1.1, r: 400, proj: 'arrow', target: 'strongest' },
       ],
     },
@@ -80,10 +81,10 @@ window.AOW_DATA = (() => {
       sky: ['#2f8a7c', '#e9c46a'], far: '#3f6e4a', near: '#2c5236', ground: '#7a6a3a', dirt: '#56492a',
       ability: { name: 'Atlatl Barrage', desc: 'Hundreds of atlatl darts rain down.', proj: 'dart', n: 30, power: 6, cd: 48 },
       turrets: [
-        { id: 'slingers', name: 'Huaraca Sling Tower', art: 'archers', culture: 'Inca Empire', by: ['inca', 'pachacuti'], power: 6, cd: 0.9, r: 330, proj: 'stone' },
-        { id: 'hornets', name: 'Hornet-Nest Catapult', art: 'catapult', culture: 'Maya city-states', by: ['holkan', 'nacom'], power: 8, cd: 3.2, r: 380, proj: 'nest', aoe: 60, burn: true },
+        { id: 'slingers', name: 'Huaraca Sling Tower', art: 'archers', culture: 'Inca Empire', by: ['inca'], power: 6, cd: 0.9, r: 330, proj: 'stone' },
+        { id: 'hornets', name: 'Hornet-Nest Catapult', art: 'catapult', culture: 'Maya city-states', by: ['holkan'], power: 8, cd: 3.2, r: 380, proj: 'nest', aoe: 60, burn: true },
         { id: 'atlatl', name: 'Atlatl Dart Platform', art: 'archers', culture: 'Aztec Empire', by: ['jaguar', 'eagle', 'cuauhtemoc'], power: 7, cd: 1.5, r: 330, proj: 'dart', pierce: 0.4, effect: 'line' },
-        { id: 'firelodge', name: 'Fire-Arrow Lodge', art: 'archers', culture: 'Apache and Comanche', by: ['apache', 'comanche', 'crazyhorse'], power: 5, cd: 1.4, r: 340, proj: 'arrow', burn: true },
+        { id: 'firelodge', name: 'Fire-Arrow Lodge', art: 'archers', culture: 'Apache and Comanche', by: ['apache', 'crazyhorse'], power: 5, cd: 1.4, r: 340, proj: 'arrow', burn: true },
       ],
     },
     {
@@ -94,8 +95,8 @@ window.AOW_DATA = (() => {
       turrets: [
         { id: 'swivel', name: 'Swivel Gun', art: 'gun', culture: 'Caribbean pirates', by: ['pirate'], power: 6, cd: 0.9, r: 330, proj: 'bullet' },
         { id: 'cannon', name: 'Field Cannon', art: 'cannon', culture: 'Grande Armée and Continental artillery', by: ['napoleon', 'washington', 'grenadier'], power: 9, cd: 3.2, r: 420, proj: 'shell', aoe: 70 },
-        { id: 'longrifle', name: 'Long Rifle Nest', art: 'rifle', culture: 'Continental Army sharpshooters', by: ['continental', 'washington'], power: 9, cd: 2.6, r: 480, proj: 'bullet', pierce: 0.5, target: 'strongest' },
-        { id: 'streltsyGallery', name: 'Streltsy Volley Gallery', art: 'gun', culture: 'Tsardom of Russia', by: ['streltsy', 'ivan'], power: 5, cd: 2.8, r: 340, proj: 'bullet', n: 4, effect: 'volley' },
+        { id: 'longrifle', name: 'Long Rifle Nest', art: 'rifle', culture: 'Continental Army sharpshooters', by: ['washington'], power: 9, cd: 2.6, r: 480, proj: 'bullet', pierce: 0.5, target: 'strongest' },
+        { id: 'streltsyGallery', name: 'Musket Volley Gallery', art: 'gun', culture: 'Musketeer and conquistador companies', by: ['musketeer', 'conquistador'], power: 5, cd: 2.8, r: 340, proj: 'bullet', n: 4, effect: 'volley' },
       ],
     },
     {
@@ -104,10 +105,10 @@ window.AOW_DATA = (() => {
       sky: ['#1d2b3a', '#56708a'], far: '#2d3b48', near: '#1f2a34', ground: '#4a4f4a', dirt: '#33372f',
       ability: { name: 'Airstrike', desc: 'Jets drop bombs along the enemy front.', proj: 'bomb', n: 12, power: 10, cd: 55, aoe: 70 },
       turrets: [
-        { id: 'm2', name: 'M2 Browning .50', art: 'gun', culture: 'U.S. Army', by: ['ranger', 'greenberet'], power: 5, cd: 0.28, r: 360, proj: 'bullet' },
-        { id: 'mortar', name: 'M252 Mortar', art: 'cannon', culture: 'Infantry support', by: ['greenberet', 'legion', 'gurkha'], power: 9, cd: 3, r: 440, proj: 'shell', aoe: 80 },
-        { id: 'sniper', name: 'Sniper Nest', art: 'rifle', culture: 'Navy SEALs and GSG-9', by: ['seal', 'gsg9', 'idf'], power: 10, cd: 3, r: 520, proj: 'bullet', pierce: 0.7, target: 'strongest' },
-        { id: 'rpg', name: 'RPG Nest', art: 'rpg', culture: 'Spetsnaz and the Korean People’s Army', by: ['spetsnaz', 'nkso'], power: 9, cd: 3.2, r: 380, proj: 'rocket', aoe: 70 },
+        { id: 'm2', name: 'M2 Browning .50', art: 'gun', culture: 'U.S. Army', by: ['greenberet', 'teddy'], power: 5, cd: 0.28, r: 360, proj: 'bullet' },
+        { id: 'mortar', name: 'M252 Mortar', art: 'cannon', culture: 'Infantry support', by: ['greenberet', 'gurkha'], power: 9, cd: 3, r: 440, proj: 'shell', aoe: 80 },
+        { id: 'sniper', name: 'Sniper Nest', art: 'rifle', culture: 'Navy SEALs and GSG-9', by: ['seal'], power: 10, cd: 3, r: 520, proj: 'bullet', pierce: 0.7, target: 'strongest' },
+        { id: 'rpg', name: 'RPG Nest', art: 'rpg', culture: 'Spetsnaz and the Korean People’s Army', by: ['spetsnaz', 'yakuza'], power: 9, cd: 3.2, r: 380, proj: 'rocket', aoe: 70 },
       ],
     },
     {
@@ -145,10 +146,6 @@ window.AOW_DATA = (() => {
     L(S.mid, '#9a7a4a', S.mid, 'headband', '#a8322a', { skirt: '#7a5a34', beads: '#efe4cf' }),
     [['Flint Knife', 'short', 3], ['Stone Hand Axe', 'mid', 4], ['Sling', 'long', 5], ['Rock Hail', 'special', 5, { fx: 'volley', proj: 'stone' }]],
     { uniform: 'Woven grass kilt, shell-bead necklace, red ochre headband' });
-  W('spearhunter', 'Spear Hunter', 0, 'infantry', 'Ice Age mammoth hunters', 'Added · not on the show',
-    L(S.light, '#a88a5a', S.light, 'pelt', '#8a8478', { skirt: '#6a5a44', paint: '#a8322a', fur: '#c8c0b0' }),
-    [['Flint Knife', 'short', 3], ['Fire-Hardened Spear', 'mid', 5, { r: 50 }], ['Atlatl Dart', 'long', 6], ['Hunting Charge', 'special', 5, { fx: 'charge' }]],
-    { uniform: 'Wolf-pelt hood, sewn hide parka, ochre war paint across the eyes' });
   W('neanderthal', 'Neanderthal Brute', 0, 'heavy', 'Ice Age Europe', 'Added · not on the show',
     L(S.tan, '#5a3a24', S.tan, 'none', '#2a1a10', { skirt: '#4a2e1a', fur: '#3a2416', beard: '#2a1a10' }),
     [['Hand Axe', 'short', 5], ['Tusk Maul', 'mid', 7, { k: 'club' }], ['Boulder Throw', 'long', 6, { k: 'throw', proj: 'stone', ammo: 2 }], ['Cave Bear Hide', 'special', 6, { fx: 'shield' }]],
@@ -181,10 +178,6 @@ window.AOW_DATA = (() => {
     L(S.dark, '#d9b45a', S.dark, 'feather', '#efe4cf', { skirt: '#a8322a', beads: '#d9b45a', torc: '#d9b45a' }),
     [['Dagger', 'short', 3], ['Mace', 'mid', 5], ['Nubian Longbow', 'long', 7], ['Arrow Storm', 'special', 6, { fx: 'volley' }]],
     { uniform: 'Red sash kilt, gold armlets, an ostrich feather in the hair' });
-  W('medjay', 'Medjay Scout', 1, 'infantry', 'Eastern Desert police', 'Added · not on the show',
-    L(S.brown, '#c9a26a', S.brown, 'headband', '#2a4a9a', { skirt: '#efe4cf', beads: '#2a4a9a' }),
-    [['Dagger', 'short', 4], ['Epsilon Axe', 'mid', 6], ['Throwing Stick', 'long', 5, { proj: 'stake', ammo: 3 }], ['Desert Ambush', 'special', 6, { fx: 'charge' }]],
-    { speed: 1.15, uniform: 'Leather kilt, blue headband, faience beads; the pharaoh’s desert guard' });
   W('chariot', 'Chariot Archer', 1, 'ranged', 'Battle of Kadesh · 1274 BC', 'Added · not on the show',
     L(S.mid, '#efe4cf', S.mid, 'wig', '#1a1a1a', { mounted: '#e8e0cc', mount: 'chariot', band: '#d9b45a', pattern: 'lamellar', pc: ['#c9a23a'] }),
     [['Dagger', 'short', 4], ['Javelin', 'mid', 6, { ammo: 3 }], ['Composite Bow', 'long', 8], ['Chariot Charge', 'special', 8, { fx: 'charge' }]],
@@ -205,10 +198,6 @@ window.AOW_DATA = (() => {
     L(S.mid, '#efe4cf', S.mid, 'khepresh', '#2a4a9a', { mounted: '#c9a26a', mount: 'chariot', beardFalse: true, pattern: 'lamellar', pc: ['#d9b45a'], cape: '#2a4a9a', capeTrim: '#d9b45a', neck: '#d9b45a' }),
     [['Dagger', 'short', 5], ['Khopesh', 'mid', 8], ['Composite Bow', 'long', 9], ['Kadesh Charge', 'special', 9, { fx: 'charge' }]],
     { uniform: 'Blue khepresh war crown, gold scale armor, the chariot he led at Kadesh' });
-  W('thutmose', 'Thutmose III', 1, 'hero', 'Egypt · r. 1479–1425 BC', 'Added · not on the show',
-    L(S.mid, '#efe4cf', S.mid, 'nemes', '#d9b45a', { stripe: '#2a4a9a', beardFalse: true, skirt: '#f4efe4', shield: '#c9a23a', shieldEmblem: 'sun', ec: '#2a4a9a', neck: '#2a4a9a', belt: '#d9b45a' }),
-    [['Dagger', 'short', 5], ['Khopesh', 'mid', 8], ['Composite Bow', 'long', 8], ['Megiddo Rally', 'special', 8, { fx: 'rally' }]],
-    { uniform: 'Gold-and-lapis nemes headcloth with the uraeus, royal shendyt, broad collar' });
   W('imhotep', 'High Priest Imhotep', 1, 'hero', 'Egypt · 27th c. BC', 'Added · not on the show',
     L(S.mid, '#f4efe4', S.mid, 'bald', '#1a1a1a', { robe: true, trim: '#d9b45a', neck: '#2a4a9a', cape: '#d9b45a', capeTrim: '#2a4a9a', beads: '#d9b45a' }),
     [['Dagger', 'short', 4], ['Scepter of Thoth', 'long', 8], ['Plague of Locusts', 'special', 9, { fx: 'hornets' }]],
@@ -224,9 +213,6 @@ window.AOW_DATA = (() => {
   W('gladiator', 'Gladiator', 2, 'infantry', 'Roman arena · 1st c.', 'S1 · vs Apache · Lost',
     L(S.mid, '#c8a25a', '#7b5a3a', 'gladiator', '#9ea3a6', {}),
     [['Cestus', 'short', 5], ['Scissor', 'short', 7], ['Trident & Net', 'mid', 7, { r: 52 }], ['Sling', 'long', 5], ['Sica', 'special', 7, { fx: 'flurry' }]]);
-  W('celt', 'Celt', 2, 'infantry', 'Gaul and Britain · 1st c. BC', 'S2 · vs Persian Immortal',
-    L(S.light, '#3f6b3a', '#8a6a3c', 'celt', '#c9a23a', { cape: '#5b7e3d', shield: '#3b5a8a' }),
-    [['Dagger', 'short', 4], ['Long Sword', 'mid', 8, { r: 36 }], ['Sling', 'long', 6], ['War Chariot', 'special', 8, { fx: 'charge' }]]);
   W('immortal', 'Persian Immortal', 2, 'ranged', 'Achaemenid Persia · 5th c. BC', 'S2 · vs Celt',
     L(S.mid, '#5a3d7a', '#3a2a55', 'tiara', '#e6d6b0', { shield: '#a07b3a' }),
     [['Sagaris', 'short', 6], ['Spear', 'mid', 6], ['Composite Bow', 'long', 7], ['Scythed Chariot', 'special', 7, { fx: 'charge' }]]);
@@ -236,12 +222,6 @@ window.AOW_DATA = (() => {
   W('hannibal', 'Hannibal Barca', 2, 'hero', 'Carthage · 247–181 BC', 'S3 · vs Genghis Khan',
     L(S.mid, '#6e2a3a', '#4a2a22', 'crest', '#b8913a', { plume: '#2a2a2a', cape: '#3a2a55' }),
     [['Falcata', 'short', 8], ['Iberian Spear', 'mid', 6], ['Balearic Sling', 'long', 7], ['War Elephant', 'special', 10, { fx: 'charge' }]]);
-  W('attila', 'Attila the Hun', 2, 'hero', 'Hunnic Empire · AD 434–453', 'S2 · vs Alexander the Great · Won',
-    L(S.tan, '#6b4a2a', '#3e2e22', 'fur', '#7a5a3a', { cape: '#3e2e22', mounted: '#5a3a26' }),
-    [['Hunnic Sword', 'short', 7], ['Kontos Lance', 'mid', 7, { r: 56 }], ['Hunnic Bow', 'long', 9], ['Lasso', 'special', 7, { fx: 'stun', r: 96 }]]);
-  W('suntzu', 'Sun Tzu', 2, 'hero', 'Zhou China · 5th c. BC', 'S2 · vs Vlad the Impaler',
-    L(S.light, '#2f4a6a', '#20324a', 'guan', '#1a1a1a', { cape: '#8a2a22' }),
-    [['Jian', 'short', 6], ['Ji', 'mid', 7, { r: 54 }], ['Repeating Crossbow', 'long', 7, { cd: 0.9 }], ['Fire Arrows', 'special', 8, { fx: 'fire' }]]);
 
   // ── Age of Steel ────────────────────────────────────────────────────────
   W('viking', 'Viking', 3, 'heavy', 'Scandinavia · 8th–11th c.', 'S1 · vs Samurai · Lost',
@@ -256,38 +236,20 @@ window.AOW_DATA = (() => {
   W('ninja', 'Ninja', 3, 'infantry', 'Feudal Japan · 15th–17th c.', 'S1 · vs Spartan · Lost',
     L(S.light, '#1d1f24', '#1d1f24', 'hood', '#1d1f24', {}),
     [['Ninjato', 'short', 7], ['Kusari-gama', 'mid', 6, { r: 58 }], ['Shuriken', 'long', 4, { r: 140 }], ['Blowgun', 'special', 6, { fx: 'poison' }]], { speed: 1.35, armor: 0 });
-  W('shaolin', 'Shaolin Monk', 3, 'infantry', 'Henan, China · 16th c.', 'S1 · vs Maori',
-    L(S.tan, '#d98a2b', '#a85a1a', 'bald', S.tan, {}),
-    [['Emei Piercers', 'short', 5], ['Three-Section Staff', 'mid', 6, { r: 50 }], ['Rope Dart', 'long', 5, { r: 120, proj: 'dart' }], ['Twin Hook Swords', 'special', 7, { fx: 'flurry' }]], { speed: 1.15 });
   W('mongol', 'Mongol', 3, 'ranged', 'Mongol Empire · 13th c.', 'S2 · vs Comanche',
     L(S.tan, '#3a5a8a', '#5a3a26', 'mongol', '#7a5a3a', { mounted: '#8a6a4a' }),
     [['Ild Sword', 'short', 6], ['Jida Lance', 'mid', 6, { r: 56 }], ['Composite Bow', 'long', 9], ['Horse Archer Volley', 'special', 7, { fx: 'volley' }]], { speed: 1.3 });
-  W('rajput', 'Rajput', 3, 'infantry', 'Rajputana, India · 12th–16th c.', 'S2 · vs Roman Centurion',
-    L(S.mid, '#e0b24a', '#a8322a', 'turban', '#d84a2a', { shield: '#6a4a2a' }),
-    [['Katar', 'short', 6], ['Khanda', 'mid', 7, { r: 36 }], ['Chakram', 'long', 5, { ammo: 3 }], ['Aara Whip-Sword', 'special', 6, { fx: 'flurry' }]]);
-  W('ming', 'Ming Warrior', 3, 'ranged', 'Ming China · 14th–17th c.', 'S2 · vs Musketeer',
-    L(S.light, '#a8322a', '#2a2a2a', 'ming', '#2a2a2a', { plume: '#a8322a' }),
-    [['Dao', 'short', 6], ['Guan Dao', 'mid', 7, { r: 54 }], ['Rocket Arrows', 'long', 6, { proj: 'rocket' }], ['Fire Lance', 'special', 7, { fx: 'fire', r: 120 }]]);
   W('wallace', 'William Wallace', 3, 'hero', 'Scotland · 1270–1305', 'S1 · vs Shaka Zulu',
     L(S.light, '#2f5a3a', '#3a5a8a', 'none', '#b8662a', { kilt: true, shield: '#7a5a3a', cape: '#2f4f8a', paint: '#3a6ab0' }),
     [['Targe & Dirk', 'short', 6], ['Claymore', 'mid', 9, { r: 40 }], ['Ball & Chain', 'mid', 7], ['Highland War Cry', 'special', 8, { fx: 'rally' }]]);
-  W('joan', 'Joan of Arc', 3, 'hero', 'France · 1412–1431', 'S3 · vs William the Conqueror',
-    L(S.light, '#c4c8cb', '#8a8f92', 'none', '#5a3a26', { shortHair: true, cape: '#2f4f8a', shield: '#2f4f8a' }),
-    [['French Arming Sword', 'short', 7], ['Lance', 'mid', 7, { r: 56 }], ['Iron Crossbow', 'long', 7], ['Siege Cannon', 'special', 9, { fx: 'splash' }]]);
-  W('conqueror', 'William the Conqueror', 3, 'hero', 'Normandy · 1028–1087', 'S3 · vs Joan of Arc',
-    L(S.light, '#8a8f92', '#5a3a26', 'nasal', '#9ea3a6', { shield: '#a8322a', kite: true, mounted: '#3a2a20' }),
-    [['Norman Broadsword', 'short', 8], ['Couched Lance', 'mid', 7, { r: 58 }], ['Composite Crossbow', 'long', 7], ['Torsion Catapult', 'special', 9, { fx: 'splash' }]]);
-  W('vlad', 'Vlad the Impaler', 3, 'hero', 'Wallachia · 1428–1477', 'S2 · vs Sun Tzu',
-    L(S.light, '#6a1a2a', '#2a1a1a', 'cap', '#6a1a2a', { plume: '#e0c46a', cape: '#2a1a1a', mustache: true }),
-    [['Kilij', 'short', 7], ['Halberd', 'mid', 8, { r: 54 }], ['Hand Cannon', 'long', 6, { r: 170, proj: 'bullet' }], ['Impalement Terror', 'special', 8, { fx: 'fear' }]]);
   W('genghis', 'Genghis Khan', 3, 'hero', 'Mongol Empire · 1162–1227', 'S3 · vs Hannibal',
     L(S.tan, '#8a2a22', '#3a2a22', 'mongol', '#b8913a', { cape: '#3a2a22', mounted: '#e2d6c0', mustache: true }),
     [['Turko-Mongol Sabre', 'short', 8], ['Lance', 'mid', 7, { r: 56 }], ['Mongol Bow', 'long', 9], ['Mangonel Fire Pots', 'special', 8, { fx: 'splash' }]]);
 
   // ── Empires of Sun & Plains ─────────────────────────────────────────────
   W('jaguar', 'Aztec Jaguar', 4, 'infantry', 'Aztec Empire · 15th–16th c.', 'S2 · vs Zande Warrior',
-    L(S.mid, '#d8a23a', '#d8a23a', 'jaguar', '#d8a23a', { spots: true, shield: '#2f6a8a' }),
-    [['Macuahuitl', 'short', 9], ['Tepoztopilli', 'mid', 7, { r: 52 }], ['Atlatl', 'long', 7], ['Jaguar Pounce', 'special', 7, { fx: 'charge' }]]);
+    L(S.mid, '#d8a23a', '#d8a23a', 'jaguar', '#d8a23a', { spots: true, shield: '#2f6a8a', beast: 'jaguar' }),
+    [['Macuahuitl', 'short', 9], ['Tepoztopilli', 'mid', 7, { r: 52 }], ['Atlatl', 'long', 7], ['War Jaguar', 'special', 8, { fx: 'beast' }]]);
   W('eagle', 'Aztec Eagle Warrior', 4, 'infantry', 'Aztec Empire · 15th–16th c.', 'Added · not on the show',
     L(S.mid, '#e6dccb', '#c9a23a', 'eagle', '#f0e6d0', { shield: '#a8322a', feathers: '#2f8a6a' }),
     [['Tecpatl Knife', 'short', 4], ['Macuahuitl', 'mid', 8, { r: 34 }], ['Tlahuitolli Bow', 'long', 6], ['Chimalli Shield', 'special', 7, { fx: 'shield' }]]);
@@ -297,33 +259,15 @@ window.AOW_DATA = (() => {
   W('inca', 'Inca Warrior', 4, 'infantry', 'Inca Empire · 15th–16th c.', 'Added · not on the show',
     L(S.mid, '#c8312b', '#2a2a2a', 'inca', '#e0c46a', { checker: true, shield: '#e0c46a' }),
     [['Tumi', 'short', 4], ['Champi Star Mace', 'mid', 8], ['Huaraca Sling', 'long', 7], ['Liwi Bola', 'special', 6, { fx: 'stun', r: 130 }]]);
-  W('maori', 'Maori', 4, 'infantry', 'Aotearoa (New Zealand) · 18th–19th c.', 'S1 · vs Shaolin Monk',
-    L(S.mid, '#5a3a26', '#3a2a1a', 'topknot', '#1a1a1a', { moko: true, skirt: true }),
-    [['Mere', 'short', 7], ['Taiaha', 'mid', 8, { r: 50 }], ['Stingray Spear', 'long', 5, { ammo: 1 }], ['Haka', 'special', 7, { fx: 'fear' }]]);
-  W('zande', 'Zande Warrior', 4, 'infantry', 'Central Africa · 19th c.', 'S2 · vs Aztec Jaguar',
-    L(S.dark, '#8a6a3a', '#6a4a2a', 'zande', '#a8322a', { shield: '#c9a24a', skirt: true }),
-    [['Makraka', 'short', 6], ['Spear', 'mid', 6, { r: 52 }], ['Kpinga', 'long', 8, { ammo: 3 }], ['Wicker Shield', 'special', 6, { fx: 'shield' }]]);
   W('apache', 'Apache', 4, 'ranged', 'American Southwest · 19th c.', 'S1 · vs Gladiator · Won',
     L(S.mid, '#c9a26a', '#6a4a2a', 'headband', '#a8322a', { longHair: true }),
     [['Tomahawk', 'short', 7], ['Knife', 'mid', 5], ['Bow & Arrow', 'long', 8], ['War Club', 'special', 6, { fx: 'stun', r: 34 }]], { speed: 1.15 });
-  W('comanche', 'Comanche', 4, 'ranged', 'Southern Plains · 19th c.', 'S2 · vs Mongol',
-    L(S.mid, '#a87a4a', '#6a4a2a', 'feather', '#f0e6d0', { longHair: true, mounted: '#e2d6c0', shield: '#d8c8a0' }),
-    [['Steel Knife', 'short', 5], ['Lance', 'mid', 7, { r: 56 }], ['Bow', 'long', 8], ['Horseback Charge', 'special', 8, { fx: 'charge' }]], { speed: 1.3 });
-  W('nacom', 'Maya Nacom', 4, 'hero', 'Maya war captain', 'Added · not on the show',
-    L(S.mid, '#2f8a7c', '#e0c46a', 'quetzal', '#2f8a7c', { feathers: '#2f9a6a', cape: '#2f8a7c', paint: '#1a1a1a' }),
-    [['Obsidian Blade', 'short', 7], ['War Club', 'mid', 8], ['Atlatl', 'long', 7], ['War Drums', 'special', 8, { fx: 'rally' }]]);
-  W('shaka', 'Shaka Zulu', 4, 'hero', 'Zulu Kingdom · 1787–1828', 'S1 · vs William Wallace',
-    L(S.dark, '#e6dccb', '#3a2a1a', 'zulu', '#1a1a1a', { shield: '#f0e6d0', cowhide: true, skirt: true }),
-    [['Iklwa', 'short', 8], ['Iwisa Knobkerrie', 'mid', 6], ['Throwing Assegai', 'long', 6, { ammo: 2 }], ['Bull Horn Formation', 'special', 8, { fx: 'rally' }]]);
   W('crazyhorse', 'Crazy Horse', 4, 'hero', 'Oglala Lakota · c. 1840–1877', 'S3 · vs Pancho Villa',
     L(S.mid, '#c9a26a', '#5a3a26', 'feather', '#f0e6d0', { longHair: true, mounted: '#6a4a3a' }),
     [['Stone War Club', 'short', 7], ['Lance', 'mid', 6, { r: 56 }], ['Winchester 1873', 'long', 8], ['Decoy Charge', 'special', 8, { fx: 'charge' }]]);
   W('cuauhtemoc', 'Cuauhtémoc', 4, 'hero', 'Last Aztec emperor · 1497–1525', 'Added · not on the show',
     L(S.mid, '#c9a23a', '#2f6a8a', 'quetzal', '#e0c46a', { feathers: '#2f9a6a', cape: '#2f6a8a', shield: '#e0c46a' }),
     [['Macuahuitl', 'short', 9], ['Tepoztopilli', 'mid', 7, { r: 52 }], ['Atlatl', 'long', 7], ['Defense of Tenochtitlan', 'special', 8, { fx: 'rally' }]]);
-  W('pachacuti', 'Pachacuti', 4, 'hero', 'Sapa Inca · 1438–1471', 'Added · not on the show',
-    L(S.mid, '#e0c46a', '#a8322a', 'inca', '#e0c46a', { checker: true, cape: '#a8322a', shield: '#e0c46a' }),
-    [['Champi', 'short', 8], ['Chuqui Lance', 'mid', 7, { r: 54 }], ['Huaraca Sling', 'long', 8], ['Pururauca Stones', 'special', 8, { fx: 'volley', proj: 'stone', n: 6 }]]);
 
   // ── Age of Powder ───────────────────────────────────────────────────────
   W('pirate', 'Pirate', 5, 'infantry', 'Caribbean · 17th–18th c.', 'S1 · vs Knight · Won',
@@ -335,30 +279,15 @@ window.AOW_DATA = (() => {
   W('conquistador', 'Conquistador', 5, 'heavy', 'Spain · 16th c. (Cortés’s soldiers)', 'Added · Hernán Cortés’s army',
     L(S.light, '#b9bec2', '#a8322a', 'morion', '#c4c8cb', { plume: '#a8322a', beard: '#2a1a1a' }),
     [['Toledo Sword', 'short', 8], ['Halberd', 'mid', 7, { r: 54 }], ['Arquebus', 'long', 7, { cd: 2.6 }], ['Steel Breastplate', 'special', 7, { fx: 'shield' }]], { armor: 0.35 });
-  W('streltsy', 'Streltsy', 5, 'ranged', 'Russia · 16th c. (Ivan’s musketeers)', 'Added · Ivan the Terrible’s army',
-    L(S.light, '#a8322a', '#e0c46a', 'streltsy', '#a8322a', { fur: '#5a3a26', beard: '#7a5a3a' }),
-    [['Sabre', 'short', 6], ['Bardiche', 'mid', 8, { r: 50 }], ['Pishchal', 'long', 7, { cd: 2.4 }], ['Volley Fire', 'special', 7, { fx: 'volley', proj: 'bullet' }]]);
-  W('continental', 'Continental Soldier', 5, 'ranged', 'American Revolution · 1775–1783', 'Added · George Washington’s army',
-    L(S.light, '#2f3f6a', '#e6dccb', 'tricorn', '#1d1f24', { facing: '#e6dccb' }),
-    [['Hanger Sword', 'short', 5], ['Bayonet', 'mid', 7, { r: 48 }], ['Pennsylvania Long Rifle', 'long', 8, { cd: 2.6 }], ['Grapeshot', 'special', 8, { fx: 'splash' }]]);
   W('grenadier', 'Old Guard Grenadier', 5, 'heavy', 'French Empire · 1804–1815', 'Added · Napoleon’s army',
     L(S.light, '#2f3f8a', '#e6dccb', 'bearskin', '#1d1f24', { plume: '#a8322a', facing: '#e6dccb' }),
     [['Briquet Sabre', 'short', 6], ['Charleville Bayonet', 'mid', 7, { r: 48 }], ['Charleville Musket', 'long', 7, { cd: 2.4 }], ['Hand Grenade', 'special', 8, { fx: 'splash' }]]);
-  W('cortes', 'Hernán Cortés', 5, 'hero', 'Spain · 1485–1547', 'S3 · vs Ivan the Terrible',
-    L(S.light, '#1d1f24', '#a8322a', 'morion', '#e0c46a', { plume: '#f0e6d0', beard: '#2a1a1a', cape: '#a8322a' }),
-    [['Toledo Rapier', 'short', 8], ['Halberd', 'mid', 7, { r: 54 }], ['Arquebus', 'long', 7], ['Lombard Cannon', 'special', 9, { fx: 'splash' }]]);
-  W('ivan', 'Ivan the Terrible', 5, 'hero', 'Tsardom of Russia · 1530–1584', 'S3 · vs Hernán Cortés',
-    L(S.light, '#e0c46a', '#a8322a', 'tsar', '#e0c46a', { fur: '#f0e6d0', beard: '#3a2a1a', cape: '#6a1a2a' }),
-    [['Shashka Sabre', 'short', 7], ['Bardiche', 'mid', 8, { r: 50 }], ['Pishchal', 'long', 7], ['Gulyay-Gorod', 'special', 8, { fx: 'shield' }]]);
   W('washington', 'George Washington', 5, 'hero', 'United States · 1732–1799', 'S3 · vs Napoleon · Won',
     L(S.light, '#2f3f6a', '#e6dccb', 'tricorn', '#1d1f24', { facing: '#e0c46a', whiteHair: true, mounted: '#f0e6d0' }),
     [['Colichemarde Sword', 'short', 7], ['Brown Bess Bayonet', 'mid', 7, { r: 48 }], ['Brown Bess Musket', 'long', 7], ['Pennsylvania Long Rifle', 'long', 8, { cd: 2.6 }], ['6-Pound Cannon', 'special', 9, { fx: 'splash' }]]);
   W('napoleon', 'Napoleon Bonaparte', 5, 'hero', 'French Empire · 1769–1821', 'S3 · vs George Washington · Lost',
     L(S.light, '#2f3f8a', '#e6dccb', 'bicorne', '#1d1f24', { facing: '#e0c46a', mounted: '#e2d6c0' }),
     [['Cavalry Saber', 'short', 7], ['Charleville Bayonet', 'mid', 7, { r: 48 }], ['1777 Charleville Musket', 'long', 7], ['8-Pound Cannon', 'special', 9, { fx: 'splash' }]]);
-  W('jessejames', 'Jesse James', 5, 'hero', 'American frontier · 1847–1882', 'S2 · vs Al Capone',
-    L(S.light, '#7a5a3a', '#3a3a4a', 'cowboy', '#4a3a2a', { duster: '#8a7a5a', mustache: true }),
-    [['Bowie Knife', 'short', 6], ['Coach Gun', 'mid', 8], ['Colt Navy Revolver', 'long', 7, { cd: 1.1, r: 160 }], ['Winchester Rapid Fire', 'special', 8, { fx: 'volley', proj: 'bullet' }]]);
 
   // ── Modern Warfare ──────────────────────────────────────────────────────
   W('greenberet', 'Green Beret', 6, 'ranged', 'U.S. Army Special Forces', 'S1 · vs Spetsnaz · Lost',
@@ -370,48 +299,18 @@ window.AOW_DATA = (() => {
   W('seal', 'Navy SEAL', 6, 'ranged', 'U.S. Navy special warfare', 'S2 · vs Israeli Commando',
     L(S.light, '#3a4a5a', '#2a3440', 'boonie', '#3a4a3a', { vest: '#2a2a2a' }),
     [['Ka-Bar', 'short', 5], ['SIG P226', 'mid', 6], ['Mk 11 Sniper', 'long', 9, { cd: 2.2 }], ['C4 Charge', 'special', 9, { fx: 'splash' }]]);
-  W('idf', 'Israeli Commando', 6, 'ranged', 'Sayeret Matkal', 'S2 · vs Navy SEAL',
-    L(S.tan, '#6a6a4a', '#4a4a32', 'helmet', '#5a5a3a', { vest: '#3a3a2a' }),
-    [['Krav Maga', 'short', 6], ['Mini-Uzi', 'mid', 7], ['Tavor TAR-21', 'long', 8, { cd: 0.8 }], ['Negev LMG', 'special', 8, { fx: 'volley', n: 7, proj: 'bullet' }]]);
-  W('swat', 'SWAT', 6, 'ranged', 'U.S. police tactical unit', 'S2 · vs GSG-9',
-    L(S.light, '#22262c', '#22262c', 'helmet', '#1a1a1a', { vest: '#3a3f46', letters: true }),
-    [['Glock 22', 'short', 5], ['Remington 870', 'mid', 8], ['Colt AR-15', 'long', 7, { cd: 0.8 }], ['Flashbang', 'special', 6, { fx: 'stun', r: 160, aoe: 60 }]]);
-  W('gsg9', 'GSG-9', 6, 'ranged', 'German federal counter-terrorism', 'S2 · vs SWAT',
-    L(S.light, '#2f4a3a', '#2f3a32', 'helmet', '#2a3a2a', { vest: '#22302a' }),
-    [['P7 Pistol', 'short', 5], ['MP5', 'mid', 7], ['PSG1 Sniper', 'long', 9, { cd: 2.2 }], ['Breaching Charge', 'special', 8, { fx: 'splash' }]]);
-  W('ranger', 'Army Ranger', 6, 'ranged', 'U.S. 75th Ranger Regiment', 'S3 · vs North Korean Special Ops',
-    L(S.light, '#7a7458', '#6a6448', 'helmet', '#6a6448', { vest: '#4a4834' }),
-    [['Ka-Bar', 'short', 5], ['M1014 Shotgun', 'mid', 8], ['M4A1', 'long', 8, { cd: 0.8 }], ['M249 SAW', 'special', 8, { fx: 'volley', n: 8, proj: 'bullet' }]]);
-  W('nkso', 'North Korean Special Ops', 6, 'ranged', 'Korean People’s Army', 'S3 · vs Army Rangers',
-    L(S.light, '#5a6a4a', '#4a5a3a', 'cap', '#4a5a3a', { star: true, vest: '#3a4a2a' }),
-    [['Bayonet', 'short', 5], ['Type 68 Pistol', 'mid', 5], ['Type 88 Rifle', 'long', 7, { cd: 0.85 }], ['RPG-7', 'special', 9, { fx: 'splash', proj: 'rocket' }]]);
   W('gurkha', 'Gurkha', 6, 'infantry', 'Nepal · British Army', 'S3 · vs French Foreign Legion',
     L(S.mid, '#5a6a3a', '#4a5a32', 'slouch', '#4a5a32', { vest: '#3a4228' }),
     [['Kukri', 'short', 9], ['L85 Bayonet', 'mid', 6, { r: 46 }], ['L85A2 Rifle', 'long', 7, { cd: 0.85 }], ['Kukri Charge', 'special', 8, { fx: 'flurry' }]], { speed: 1.15 });
-  W('legion', 'French Foreign Legion', 6, 'ranged', 'France', 'S3 · vs Gurkhas',
-    L(S.light, '#8a7a5a', '#6a5a42', 'kepi', '#f0e6d0', { vest: '#4a4232', sash: '#2f4f8a' }),
-    [['Combat Knife', 'short', 5], ['FAMAS Bayonet', 'mid', 6, { r: 46 }], ['FAMAS', 'long', 8, { cd: 0.8 }], ['Frag Grenade', 'special', 8, { fx: 'splash' }]]);
-  W('vietcong', 'Viet Cong', 6, 'ranged', 'Vietnam · 1955–1975', 'S2 · vs Nazi SS',
-    L(S.light, '#1d1f24', '#1d1f24', 'conical', '#c9b07a', {}),
-    [['Machete', 'short', 6], ['SKS Bayonet', 'mid', 6, { r: 46 }], ['AK-47', 'long', 8, { cd: 0.85 }], ['Punji Trap', 'special', 7, { fx: 'poison', r: 120, proj: 'stake' }]], { speed: 1.1 });
-  W('mafia', 'Mafia', 6, 'ranged', 'Chicago and New York · 1920s', 'S1 · vs Yakuza · Won',
-    L(S.light, '#3a3a42', '#2a2a32', 'fedora', '#2a2a32', { tie: '#a8322a' }),
-    [['Ice Pick', 'short', 4], ['Baseball Bat', 'short', 5], ['Sawed-off Shotgun', 'mid', 8], ['Thompson SMG', 'long', 8, { cd: 0.6, r: 190 }], ['Molotov Cocktail', 'special', 7, { fx: 'fire' }]]);
   W('yakuza', 'Yakuza', 6, 'ranged', 'Japan · 20th c.', 'S1 · vs Mafia · Lost',
     L(S.light, '#1d1f24', '#1d1f24', 'slick', '#1a1a1a', { tie: '#e6dccb', tattoo: true }),
     [['Nunchaku', 'short', 5], ['Sai', 'short', 5], ['Walther P38', 'mid', 6], ['Sten Gun', 'long', 7, { cd: 0.7, r: 190 }], ['Ceramic Grenade', 'special', 7, { fx: 'splash' }]], { speed: 1.1 });
   W('capone', 'Al Capone', 6, 'hero', 'Chicago · 1899–1947', 'S2 · vs Jesse James',
     L(S.light, '#e6dccb', '#3a3a42', 'fedora', '#e6dccb', { tie: '#2a2a32', coat: '#3a3a42' }),
     [['Brass Knuckles', 'short', 4], ['Sawed-off Shotgun', 'mid', 8], ['Thompson SMG', 'long', 8, { cd: 0.6, r: 190 }], ['Chicago Typewriter', 'special', 9, { fx: 'volley', n: 9, proj: 'bullet' }]]);
-  W('pancho', 'Pancho Villa', 6, 'hero', 'Mexico · 1878–1923', 'S3 · vs Crazy Horse',
-    L(S.mid, '#c9b07a', '#5a3a26', 'sombrero', '#c9a26a', { bandolier: true, mustache: true, mounted: '#5a3a26' }),
-    [['Machete', 'short', 6], ['Colt Revolver', 'mid', 6], ['Mauser Rifle', 'long', 8], ['División del Norte Charge', 'special', 9, { fx: 'charge' }]]);
   W('teddy', 'Teddy Roosevelt', 6, 'hero', 'Rough Riders · 1898', 'S3 · vs Lawrence of Arabia',
     L(S.light, '#a8925a', '#7a6a4a', 'slouch', '#a8925a', { mustache: true, glasses: true, neck: '#2f4f8a' }),
     [['Bowie Knife', 'short', 6], ['Colt Revolver', 'mid', 6], ['Krag-Jørgensen', 'long', 8], ['Gatling Gun', 'special', 9, { fx: 'volley', n: 8, proj: 'bullet' }]]);
-  W('lawrence', 'Lawrence of Arabia', 6, 'hero', 'Arab Revolt · 1916–1918', 'S3 · vs Teddy Roosevelt',
-    L(S.light, '#f0e6d0', '#e6dccb', 'keffiyeh', '#f0e6d0', { agal: '#2a2a2a', sash: '#c9a23a' }),
-    [['Jambiya', 'short', 6], ['Webley Revolver', 'mid', 6], ['Lee-Enfield', 'long', 8], ['Rail Demolition Charge', 'special', 9, { fx: 'splash' }]]);
 
   // ── Alien Invasion (fictional) ─────────────────────────────────────────
   // The final era, as in Age of War 2's future age. look.alien picks a body plan.
@@ -474,18 +373,12 @@ window.AOW_DATA = (() => {
       { body: '#a32020', pattern: 'mail', pc: ['#b9bec2'], phalerae: true, pteruges: '#5a3a22', cape: '#7a1414', shield: '#a32020', shieldEmblem: 'wings', ec: '#d9b45a', boots: '#b08a4a' }],
     gladiator: ['Murmillo kit: bare chest, wide bronze balteus belt, linen manica on the sword arm, brimmed grille helmet',
       { body: '#b07a52', belt: '#c9a23a', manica: '#e6dccb', legs: '#e6dccb', boots: '#c9a23a' }],
-    celt: ['Checked wool tunic and trousers, gold torc, green cloak pinned at the shoulder, lime-spiked hair',
-      { body: '#3f6b3a', pattern: 'tartan', pc: ['#c9a23a', '#a8322a'], legs: '#8a5a2a', torc: '#d9b45a', cape: '#2f5a2a', capeTrim: '#c9a23a', shieldEmblem: 'swirl', ec: '#e6dccb' }],
     immortal: ['Long saffron robe with blue borders, purple trousers and cloth tiara, the costly dyes of the king’s guard',
       { body: '#d9a63a', trim: '#2f4f9a', pattern: 'rosette', pc: ['#2f4f9a'], legs: '#5a2a6a', robe: true, cape: '#5a2a6a', hc: '#e6dccb' }],
     alexander: ['White linothorax edged in gold, royal purple cloak, white-plumed helmet',
       { body: '#efe6d0', trim: '#c9a23a', pteruges: '#efe6d0', cape: '#5a1f5a', capeTrim: '#d9b45a', plume: '#ffffff', boots: '#8a5a2a' }],
     hannibal: ['Bronze breastplate, crimson Carthaginian cloak, black horsehair crest',
       { body: '#6e2a3a', cuirass: '#b8853a', pteruges: '#4a2a22', cape: '#8e1b2e', capeTrim: '#d9b45a', plume: '#1a1a1a' }],
-    attila: ['Gold-trimmed riding coat over lamellar, fur collar and fur cap, wide steppe trousers',
-      { body: '#6b4a2a', pattern: 'lamellar', pc: ['#8a8f92'], trim: '#d9b45a', furCollar: '#8a6a4a', boots: '#3a2a1a' }],
-    suntzu: ['Black-lacquered lamellar over deep-blue robes, red silk cloak, scholar’s cap',
-      { body: '#22344e', pattern: 'lamellar', pc: ['#1a1a1a'], trim: '#c8312b', robe: true, cape: '#a8322a', capeTrim: '#d9b45a' }],
 
     viking: ['Mail byrnie over a wool tunic with tablet-woven trim, red-and-white painted shield',
       { body: '#4e5f72', pattern: 'mail', pc: ['#9aa3aa'], trim: '#c9a23a', shield: '#a8322a', shieldEmblem: 'quarters', ec: '#efe4cf', legs: '#5a4630', boots: '#3a2a1a' }],
@@ -495,22 +388,10 @@ window.AOW_DATA = (() => {
       { body: '#c4c8cb', tabard: '#2f4f9a', emblem: 'lion', ec: '#e0b84a', shieldEmblem: 'lion', ec2: '#e0b84a', legs: '#b9bec2', boots: '#9ea3a6' }],
     ninja: ['Indigo-black shinobi shozoku, crimson waist sash, split-toe tabi',
       { body: '#1b2030', legs: '#1b2030', sash: '#8a1a1a', boots: '#2a2a32' }],
-    shaolin: ['Saffron robe under a brown kasaya draped over one shoulder, wooden prayer beads',
-      { body: '#e0952b', robe: true, sash: '#7a3a1a', beads: '#5a3a1a', legs: '#e0952b' }],
     mongol: ['Blue deel coat belted in gold silk, iron lamellar, fur-trimmed helmet',
       { body: '#2f4f8a', pattern: 'lamellar', pc: ['#8a8f92'], belt: '#d9b45a', kaftan: true, boots: '#3a2a1a' }],
-    rajput: ['Saffron angarkha (kesariya, worn for a last stand), red jeweled turban, green cummerbund',
-      { body: '#e8a33a', trim: '#d9b45a', belt: '#2f6a4a', kaftan: true, legs: '#efe4cf', helmDots: '#efe4cf' }],
-    ming: ['Red padded brigandine studded with brass rivets, black lacquered helmet with red tassel',
-      { body: '#b0221c', pattern: 'studs', pc: ['#d9b45a'], kaftan: true, trim: '#1a1a1a', boots: '#1a1a1a' }],
     wallace: ['Belted plaid (great kilt) in green-and-blue tartan, blue woad across the face',
       { body: '#2f5a3a', pattern: 'tartan', pc: ['#2f4f8a', '#a8322a'], legs: '#d9c9a0', boots: '#5a3a22' }],
-    joan: ['Polished white harness under a blue surcoat sewn with gold fleurs-de-lis',
-      { body: '#d6dadd', tabard: '#2f4f9a', emblem: 'fleur', ec: '#e0b84a', shieldEmblem: 'fleur', ec2: '#e0b84a', legs: '#c4c8cb', boots: '#9ea3a6', capeTrim: '#e0b84a' }],
-    conqueror: ['Mail hauberk and nasal helm, kite shield bearing gold lions on red',
-      { body: '#8a8f92', pattern: 'mail', pc: ['#c4c8cb'], kaftan: true, shieldEmblem: 'lion', ec2: '#e0b84a', legs: '#5a3a26' }],
-    vlad: ['Crimson cap set with pearls and a gold star, fur-collared red cloak (after the Ambras Castle portrait)',
-      { body: '#5a1020', trim: '#d9b45a', cape: '#8e1020', capeTrim: '#d9b45a', furCollar: '#3a2a22', helmDots: '#f4efe4', buttons: '#d9b45a' }],
     genghis: ['Deel of red silk woven with gold, iron lamellar, fur-trimmed helmet',
       { body: '#8a2a22', pattern: 'brocade', pc: ['#d9b45a'], kaftan: true, furCollar: '#7a5a3a', boots: '#2a1a12' }],
 
@@ -522,24 +403,12 @@ window.AOW_DATA = (() => {
       { body: '#a8322a', pattern: 'quilt', pc: ['#7a1a14'], beads: '#3ab48a', legs: '#e6dccb' }],
     inca: ['Black-and-white checkerboard uncu with a red yoke, the uniform of the Inca army',
       { body: '#1a1a1a', pattern: 'checker', pc: ['#efe4cf'], trim: '#c8312b', yoke: '#c8312b', legs: '#5a3a26' }],
-    maori: ['Flax piupiu skirt, feathered kahu cloak, full facial moko',
-      { body: '#5a3a26', pattern: 'none', cape: '#6a4a2a', capeSpots: '#2a1a12', legs: '#3a2a1a', skirt: true, fringe: '#c9a26a' }],
-    zande: ['Bark-cloth wrap, basketry hat with a red plume, tall wicker shield',
-      { body: '#8a6a3a', pattern: 'quilt', pc: ['#6a4a2a'], shieldEmblem: 'diamonds', ec: '#5a3a1a' }],
     apache: ['Calico trade shirt, long breechcloth, red headband, knee-high moccasins',
       { body: '#c9a26a', pattern: 'calico', pc: ['#a8322a'], legs: '#7a5a3a', boots: '#b8925a' }],
-    comanche: ['Fringed buckskin war shirt, painted buffalo-hide shield, eagle feather',
-      { body: '#a87a4a', fringe: '#c99a6a', legs: '#7a5a3a', boots: '#b8925a', shieldEmblem: 'sun', ec: '#a8322a' }],
-    nacom: ['Jaguar-skin cape, jade collar, towering quetzal-feather headdress',
-      { body: '#2f8a7c', cape: '#d8a23a', capeSpots: '#3a2410', beads: '#3ab48a', trim: '#d9b45a' }],
-    shaka: ['Leopard-skin cape, white cowtail tassels at arms and knees, isicoco headring, white war shield',
-      { body: '#5a3620', pattern: 'leopard', pc: ['#d8a23a', '#2a1a0a'], tassels: '#f4efe4', shieldEmblem: 'spots', ec: '#1a1a1a' }],
     crazyhorse: ['Plain buckskin, a single hawk feather, painted lightning bolt and hail spots',
       { body: '#c9a26a', fringe: '#b8925a', paintBolt: true, legs: '#8a6a4a', boots: '#b8925a' }],
     cuauhtemoc: ['Turquoise-and-gold regalia, quetzal headdress, royal blue-green cloak',
       { body: '#2f8a9a', pattern: 'feathers', pc: ['#d9b45a'], cape: '#1f6a6a', capeTrim: '#d9b45a', beads: '#d9b45a', shieldEmblem: 'sun', ec: '#d9b45a' }],
-    pachacuti: ['Royal tocapu tunic, gold ear spools, red mascapaycha fringe on the brow',
-      { body: '#a8322a', pattern: 'tocapu', pc: ['#d9b45a', '#1a1a1a', '#2f6a8a'], cape: '#d9b45a', capeTrim: '#a8322a', trim: '#d9b45a' }],
 
     pirate: ['Crimson frock coat with gold buttons, red sash, tricorn, gold earring',
       { body: '#7a1a1a', kaftan: true, buttons: '#d9b45a', sash: '#c8312b', trim: '#d9b45a', legs: '#2a2a3a', boots: '#2a1a12' }],
@@ -547,22 +416,12 @@ window.AOW_DATA = (() => {
       { body: '#2f4f9a', trim: '#e6dccb', legs: '#5a3a26', boots: '#5a3a1a', lapels: null }],
     conquistador: ['Morion helmet, steel peto breastplate over a slashed red doublet',
       { body: '#a8322a', pattern: 'slashed', pc: ['#d9b45a'], cuirass: '#b9bec2', legs: '#3a2a22', boots: '#2a1a12' }],
-    streltsy: ['Long red kaftan in regimental color, fur-trimmed cap, yellow boots',
-      { body: '#b0221c', kaftan: true, trim: '#d9b45a', buttons: '#d9b45a', boots: '#d9a632', legs: '#2f4f8a' }],
-    continental: ['Blue coat with buff facings and white crossbelts, per the 1779 regulations',
-      { body: '#273a6a', lapels: '#d9c9a0', cuffs: '#d9c9a0', crossbelts: '#efe4cf', buttons: '#d9d9d0', legs: '#e6dccb', boots: '#1a1a1a' }],
     grenadier: ['Old Guard grenadier: dark blue coat, white lapels, red epaulettes and cuffs, tall bearskin, white trousers',
       { body: '#1f2e6a', lapels: '#f4efe4', cuffs: '#b0221c', epaulettes: '#c8312b', crossbelts: '#f4efe4', buttons: '#d9b45a', legs: '#f4efe4', boots: '#1a1a1a' }],
-    cortes: ['Black velvet doublet, gilded breastplate, crimson cape',
-      { body: '#1d1f24', cuirass: '#c9a23a', cape: '#8e1b16', capeTrim: '#d9b45a', legs: '#1d1f24', boots: '#2a1a12' }],
-    ivan: ['Gold brocade robe, sable collar, Cap of Monomakh with a fur rim',
-      { body: '#c9a23a', pattern: 'brocade', pc: ['#8e1b16'], robe: true, furCollar: '#3a2a22', cape: '#5a1020', capeTrim: '#d9b45a' }],
     washington: ['Blue general’s coat with buff facings and gold epaulettes, buff waistcoat and breeches',
       { body: '#273a6a', lapels: '#d9c9a0', cuffs: '#d9c9a0', epaulettes: '#d9b45a', buttons: '#d9b45a', legs: '#d9c9a0', boots: '#1a1a1a', sash: '#2f6aa8' }],
     napoleon: ['Grey greatcoat over a green chasseur uniform, bicorne worn side-on',
       { body: '#7c7d78', coat: '#7c7d78', lapels: '#2f5a3a', buttons: '#d9b45a', legs: '#efe4cf', boots: '#1a1a1a' }],
-    jessejames: ['Long linen duster over a dark vest, gun belt, wide-brim hat',
-      { body: '#3a3a4a', buttons: '#c9c9c0', belt: '#5a3a1a', boots: '#3a2a1a', scarf: '#a8322a' }],
 
     greenberet: ['Green beret with unit flash, woodland-pattern battle dress',
       { body: '#5a6a3a', pattern: 'woodland', pc: ['#3a4a2a', '#7a6a42', '#1e2418'], legs: '#5a6a3a', legsPattern: true, boots: '#1a1a1a' }],
@@ -570,34 +429,14 @@ window.AOW_DATA = (() => {
       { body: '#5a6a5a', pattern: 'digital', pc: ['#3a4a3a', '#7a7a5a'], legs: '#4a5a4a', legsPattern: true, boots: '#1a1a1a' }],
     seal: ['MultiCam fatigues, plate carrier and boonie hat',
       { body: '#8a7f62', pattern: 'multicam', pc: ['#5a6a42', '#a8946a', '#4a3a2a'], legs: '#8a7f62', legsPattern: true, boots: '#6a5a42' }],
-    idf: ['Olive-green fatigues, ceramic plate carrier, Sayeret Matkal brown boots',
-      { body: '#5e6442', legs: '#5e6442', boots: '#6a4a2a', belt: '#3a3a2a' }],
-    swat: ['Black tactical uniform with POLICE lettering and a ballistic vest',
-      { body: '#1e2226', legs: '#1e2226', boots: '#111' }],
-    gsg9: ['Federal police green tactical uniform, ballistic helmet with visor',
-      { body: '#2f4a3a', legs: '#2f4a3a', boots: '#111', belt: '#1a1a1a' }],
-    ranger: ['Tan beret tradition, OCP fatigues and plate carrier',
-      { body: '#8a7f62', pattern: 'multicam', pc: ['#6a7048', '#a8946a', '#4a3a2a'], legs: '#8a7f62', legsPattern: true, boots: '#a08a62' }],
-    nkso: ['Olive-drab uniform, peaked cap with the red star',
-      { body: '#5a6a4a', legs: '#5a6a4a', boots: '#1a1a1a', belt: '#3a2a1a', buttons: '#d9b45a' }],
     gurkha: ['Terai slouch hat, MTP fatigues, kukri worn at the belt',
       { body: '#7a7a52', pattern: 'multicam', pc: ['#5a6a42', '#9a8a62', '#3a3226'], legs: '#7a7a52', legsPattern: true, boots: '#3a2a1a' }],
-    legion: ['White kepi, green-and-red épaulettes de tradition, blue sash at the waist',
-      { body: '#8a7a5a', epaulettes: '#2f6a3a', epFringe: '#c8312b', belt: '#2f4f9a', legs: '#8a7a5a', boots: '#1a1a1a' }],
-    vietcong: ['Black cotton field clothes, conical hat, rubber sandals',
-      { body: '#1d1f24', legs: '#1d1f24', belt: '#5a4a2a', boots: '#2a2a2a' }],
-    mafia: ['Double-breasted pinstripe suit, silk tie, fedora',
-      { body: '#2c2c34', pattern: 'pinstripe', pc: ['#8a8a96'], lapels: '#22222a', legs: '#2c2c34', boots: '#111' }],
     yakuza: ['Black suit open over full-body irezumi tattoos',
       { body: '#16161c', lapels: '#0e0e12', legs: '#16161c', boots: '#111' }],
     capone: ['Cream pinstripe suit, cream fedora with a dark band, overcoat',
       { body: '#e6dccb', pattern: 'pinstripe', pc: ['#a89a82'], coat: '#d8ccb8', lapels: '#c8bca8', legs: '#e6dccb', boots: '#3a2a1a' }],
-    pancho: ['Charro jacket with crossed bandoliers, wide sombrero',
-      { body: '#c9b07a', trim: '#5a3a26', buttons: '#c9c9c0', legs: '#5a3a26', boots: '#3a2a1a' }],
     teddy: ['Rough Riders kit: dark blue flannel shirt, brown canvas trousers, slouch hat, blue polka-dot neckerchief',
       { body: '#2c3a5a', legs: '#a8925a', scarf: '#2f4f8a', scarfDots: '#efe4cf', boots: '#6a4a2a', belt: '#5a3a1a' }],
-    lawrence: ['White Arab robes, gold-hilted dagger at the waist, keffiyeh with black agal',
-      { body: '#f4efe4', robe: true, trim: '#d9b45a', belt: '#c9a23a', cape: '#e6dccb', capeTrim: '#d9b45a' }],
   };
   for (const w of warriors) {
     const u = UNIFORMS[w.id];
